@@ -186,8 +186,6 @@ function isSelfDeprecated(uint256 okbCum, CurveParams memory params) internal pu
 
 ```solidity
 address public immutable feeRecipient;
-address public immutable uniswapV4PoolManager;
-address public immutable uniswapV4PositionManager;
 address public immutable migrationTarget;
 
 address[] public allTokens;
@@ -213,7 +211,7 @@ function getTokenInfo(address token) external view returns (TokenInfo memory);
 - name 非空且不超过 32 字符。
 - symbol 非空且不超过 8 字符。
 - metadata URI 可为空或按产品策略校验。
-- fee recipient、deployer、Uniswap 地址、migration target 均非零。
+- fee recipient、migration target 均非零。
 
 Factory 不应具备：
 

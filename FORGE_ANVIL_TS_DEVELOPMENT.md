@@ -277,8 +277,6 @@ Factory 构造参数：
 ```solidity
 constructor(
     address feeRecipient,
-    address uniswapV4PoolManager,
-    address uniswapV4PositionManager,
     address migrationTarget
 )
 ```
@@ -296,7 +294,7 @@ function createToken(
 
 开发要求：
 
-- 所有外部地址构造时校验非零。
+- Factory 构造时校验 fee recipient 和 migration target 非零。
 - XLayer fork 测试中校验 Uniswap 和 migration target 外部地址 code。
 - 创建成功后写入 registry。
 - emit `TokenCreated`。

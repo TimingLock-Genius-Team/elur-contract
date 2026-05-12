@@ -18,6 +18,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - TypeScript sell CLI approves only the exact sell amount.
 - README now describes SATPAD instead of Foundry boilerplate.
 - Removed the unused `sat1HookDeployer` constructor dependency from the direct deployment architecture.
+- Removed unused Uniswap PoolManager and PositionManager immutables from `SatpadFactory`; these addresses remain deployment/fork verification inputs.
 
 ### Known Blockers
 

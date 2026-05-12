@@ -11,11 +11,8 @@ import {SatpadToken} from "../../src/token/SatpadToken.sol";
 
 contract FactoryValidationTest is SatpadTestBase {
     function test_RevertWhen_ExternalDependencyHasNoCode() public {
-        vm.expectRevert(abi.encodeWithSelector(SatpadFactory.MissingExternalCode.selector, address(0x1234)));
-        new SatpadFactory(feeRecipient, address(0x1234), address(positionManager), address(migrationTarget));
-
         vm.expectRevert(abi.encodeWithSelector(SatpadFactory.MissingExternalCode.selector, address(0x5678)));
-        new SatpadFactory(feeRecipient, address(poolManager), address(positionManager), address(0x5678));
+        new SatpadFactory(feeRecipient, address(0x5678));
     }
 
     function test_RevertWhen_NameOrSymbolInvalid() public {

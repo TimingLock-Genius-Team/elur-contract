@@ -20,8 +20,8 @@
 协议必须显式信任：
 
 - Factory 构造时传入的 fee recipient。
-- Factory 构造时传入的 Uniswap v4 PoolManager / PositionManager。
 - Factory 构造时传入的 migration target。
+- 部署和 fork 测试中验证的 Uniswap v4 PoolManager / PositionManager。
 
 这些地址必须在部署前通过 fork 测试和人工来源确认。
 

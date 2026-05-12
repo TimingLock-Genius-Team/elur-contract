@@ -23,15 +23,11 @@ contract XLayerAddressForkTest is Test {
         }
 
         address feeRecipient = vm.envAddress("TEAM_MULTISIG");
-        address poolManager = vm.envAddress("UNISWAP_V4_POOL_MANAGER");
-        address positionManager = vm.envAddress("UNISWAP_V4_POSITION_MANAGER");
         address migrationTarget = vm.envAddress("MIGRATION_TARGET");
 
-        SatpadFactory factory = new SatpadFactory(feeRecipient, poolManager, positionManager, migrationTarget);
+        SatpadFactory factory = new SatpadFactory(feeRecipient, migrationTarget);
 
         assertEq(factory.feeRecipient(), feeRecipient);
-        assertEq(factory.uniswapV4PoolManager(), poolManager);
-        assertEq(factory.uniswapV4PositionManager(), positionManager);
         assertEq(factory.migrationTarget(), migrationTarget);
     }
 

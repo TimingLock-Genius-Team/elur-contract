@@ -53,8 +53,6 @@ const migrationTarget = getAddress(
 
 const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [
   feeRecipient,
-  poolManager,
-  positionManager,
   migrationTarget,
 ]);
 

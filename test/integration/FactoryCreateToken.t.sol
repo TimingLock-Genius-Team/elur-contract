@@ -52,9 +52,9 @@ contract FactoryCreateTokenTest is SatpadTestBase {
 
     function test_ConstructorRejectsZeroAddresses() public {
         vm.expectRevert(SatpadFactory.ZeroAddress.selector);
-        new SatpadFactory(address(0), address(poolManager), address(positionManager), address(migrationTarget));
+        new SatpadFactory(address(0), address(migrationTarget));
 
         vm.expectRevert(SatpadFactory.ZeroAddress.selector);
-        new SatpadFactory(feeRecipient, address(0), address(positionManager), address(migrationTarget));
+        new SatpadFactory(feeRecipient, address(0));
     }
 }

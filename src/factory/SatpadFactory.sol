@@ -10,8 +10,6 @@ import {SatpadToken} from "../token/SatpadToken.sol";
 
 contract SatpadFactory is ISatpadFactory {
     address public immutable feeRecipient;
-    address public immutable uniswapV4PoolManager;
-    address public immutable uniswapV4PositionManager;
     address public immutable migrationTarget;
 
     address[] public allTokens;
@@ -35,31 +33,15 @@ contract SatpadFactory is ISatpadFactory {
     error SymbolTooLong();
     error UnknownToken();
 
-    constructor(
-        address feeRecipient_,
-        address uniswapV4PoolManager_,
-        address uniswapV4PositionManager_,
-        address migrationTarget_
-    ) {
-        if (
-            feeRecipient_ == address(0) || uniswapV4PoolManager_ == address(0)
-                || uniswapV4PositionManager_ == address(0) || migrationTarget_ == address(0)
-        ) {
+    constructor(address feeRecipient_, address migrationTarget_) {
+        if (feeRecipient_ == address(0) || migrationTarget_ == address(0)) {
             revert ZeroAddress();
-        }
-        if (uniswapV4PoolManager_.code.length == 0) {
-            revert MissingExternalCode(uniswapV4PoolManager_);
-        }
-        if (uniswapV4PositionManager_.code.length == 0) {
-            revert MissingExternalCode(uniswapV4PositionManager_);
         }
         if (migrationTarget_.code.length == 0) {
             revert MissingExternalCode(migrationTarget_);
         }
 
         feeRecipient = feeRecipient_;
-        uniswapV4PoolManager = uniswapV4PoolManager_;
-        uniswapV4PositionManager = uniswapV4PositionManager_;
         migrationTarget = migrationTarget_;
     }
 

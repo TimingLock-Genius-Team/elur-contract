@@ -213,7 +213,7 @@ createToken(name, symbol, metadataURI, socialURI)
 - name 超长 revert。
 - symbol 超长 revert。
 - fee recipient zero address 部署失败。
-- Uniswap v4 或 migration target 地址无 code 时部署或初始化失败。
+- migration target 地址无 code 时 Factory 部署失败。
 
 权限验证：
 
