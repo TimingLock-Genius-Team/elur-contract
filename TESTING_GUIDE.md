@@ -486,7 +486,7 @@ write deployment JSON
 
 Smoke 失败必须退出非零状态码，方便 CI 使用。
 
-TypeScript buy / sell CLI 默认拒绝 `--min-out 0`。只有本地 smoke 或调试流程可以显式传入 `--allow-zero-min-out`。
+TypeScript buy / sell CLI 默认拒绝 `--min-out 0`，Solidity buy / sell scripts 默认拒绝 `MIN_TOKENS_OUT=0` 或 `MIN_OKB_OUT=0`。只有本地 smoke 或调试流程可以显式传入 `--allow-zero-min-out` / `ALLOW_ZERO_MIN_OUT=true`。
 
 ## 18. CI 门禁
 

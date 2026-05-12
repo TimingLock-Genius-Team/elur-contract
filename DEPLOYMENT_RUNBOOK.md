@@ -95,10 +95,14 @@ npm run script:create-token
 
 ```bash
 npm run script:quote-buy
+MIN_TOKENS_OUT=<quote.tokensOut> \
 npm run script:buy
 npm run script:quote-sell
+MIN_OKB_OUT=<quote.netOkbOut> \
 npm run script:sell
 ```
+
+Solidity buy / sell scripts default to rejecting zero min-out. Local-only debugging can set `ALLOW_ZERO_MIN_OUT=true`; production and fork smoke must use quoted non-zero values.
 
 毕业迁移：
 

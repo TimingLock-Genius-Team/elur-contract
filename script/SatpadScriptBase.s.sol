@@ -8,6 +8,8 @@ import {ISatpadRouter} from "../src/interfaces/ISatpadRouter.sol";
 import {ISatpadToken} from "../src/interfaces/ISatpadToken.sol";
 
 abstract contract SatpadScriptBase is Script {
+    error UnsafeZeroMinOut(string envName);
+
     function _privateKey() internal view returns (uint256) {
         return vm.envUint("PRIVATE_KEY");
     }
@@ -30,6 +32,13 @@ abstract contract SatpadScriptBase is Script {
 
     function _recipient() internal view returns (address) {
         return vm.envOr("RECIPIENT", _broadcaster());
+    }
+
+    function _requiredMinOut(string memory envName) internal view returns (uint256 value) {
+        value = vm.envOr(envName, uint256(0));
+        if (value == 0 && !vm.envOr("ALLOW_ZERO_MIN_OUT", false)) {
+            revert UnsafeZeroMinOut(envName);
+        }
     }
 
     function _logTokenInfo(ISatpadFactory.TokenInfo memory info) internal view {

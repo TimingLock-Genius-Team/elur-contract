@@ -11,7 +11,7 @@ contract Buy is SatpadScriptBase {
     function run() external returns (uint256 tokensOut) {
         ISatpadFactory.TokenInfo memory info = _tokenInfo();
         uint256 okbIn = vm.envUint("OKB_IN");
-        uint256 minTokensOut = vm.envOr("MIN_TOKENS_OUT", uint256(0));
+        uint256 minTokensOut = _requiredMinOut("MIN_TOKENS_OUT");
         address recipient = _recipient();
 
         vm.startBroadcast(_privateKey());

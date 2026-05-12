@@ -12,7 +12,7 @@ contract Sell is SatpadScriptBase {
     function run() external returns (uint256 okbOut) {
         ISatpadFactory.TokenInfo memory info = _tokenInfo();
         uint256 tokensIn = vm.envUint("TOKENS_IN");
-        uint256 minOkbOut = vm.envOr("MIN_OKB_OUT", uint256(0));
+        uint256 minOkbOut = _requiredMinOut("MIN_OKB_OUT");
         address recipient = _recipient();
 
         // Forge simulates scripts before broadcasting; advance the simulated block
