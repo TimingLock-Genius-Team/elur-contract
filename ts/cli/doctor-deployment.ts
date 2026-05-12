@@ -25,7 +25,16 @@ function rpcUrlForNetwork(network: string): string | undefined {
 
 function expectedChainIdForNetwork(network: string): number | undefined {
   const configured = optionalArg("chain-id");
-  return configured ? Number(configured) : knownNetworkChainIds[network];
+  if (!configured) {
+    return knownNetworkChainIds[network];
+  }
+
+  const chainId = Number(configured);
+  if (!/^[1-9]\d*$/.test(configured) || !Number.isSafeInteger(chainId)) {
+    throw new Error("--chain-id must be a positive integer");
+  }
+
+  return chainId;
 }
 
 function codeReaderForRpc(rpcUrl: string): DeploymentCodeReader {
@@ -39,10 +48,13 @@ function codeReaderForRpc(rpcUrl: string): DeploymentCodeReader {
 async function main(): Promise<void> {
   const network = deploymentNetwork();
   const path = deploymentPath(network);
-  const rpcUrl = rpcUrlForNetwork(network);
-  const expectedChainId = expectedChainIdForNetwork(network);
+  let rpcUrl: string | undefined;
+  let expectedChainId: number | undefined;
 
   try {
+    rpcUrl = rpcUrlForNetwork(network);
+    expectedChainId = expectedChainIdForNetwork(network);
+
     const result = await doctorDeployment(readDeployment(network), {
       expectedChainId,
       codeReader: rpcUrl ? codeReaderForRpc(rpcUrl) : undefined,

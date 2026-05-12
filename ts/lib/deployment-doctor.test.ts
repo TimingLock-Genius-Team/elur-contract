@@ -1,5 +1,11 @@
 import { strict as assert } from "node:assert";
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { chdir, cwd } from "node:process";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { doctorDeployment, type DeploymentCodeReader } from "./deployment-doctor.js";
 import type { Deployment } from "./deployments.js";
 
@@ -89,4 +95,49 @@ test("doctorDeployment checks deployed contract code when a reader is available"
   assert.deepEqual(result.errors, [
     `${validDeployment.factory} has no code for factory`,
   ]);
+});
+
+test("doctor-deployment CLI rejects invalid --chain-id values before running checks", () => {
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "satpad-doctor-cli-"));
+  const deploymentDir = join(tempDir, "deployments", "anvil");
+  const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
+  const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
+
+  mkdirSync(deploymentDir, { recursive: true });
+  writeFileSync(join(deploymentDir, "latest.json"), `${JSON.stringify(validDeployment, null, 2)}\n`);
+  chdir(tempDir);
+
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import",
+      tsxLoaderPath,
+      scriptPath,
+      "--chain-id",
+      "not-a-number",
+    ], {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        ANVIL_RPC_URL: "",
+        DEPLOYMENT_NETWORK: "",
+        NODE_OPTIONS: "--no-warnings",
+        RPC_URL: "",
+      },
+      encoding: "utf8",
+    });
+
+    assert.equal(result.status, 1);
+    assert.deepEqual(JSON.parse(result.stdout), {
+      network: "anvil",
+      path: join(realpathSync(tempDir), "deployments", "anvil", "latest.json"),
+      rpcChecked: false,
+      ok: false,
+      errors: ["--chain-id must be a positive integer"],
+      warnings: [],
+    });
+  } finally {
+    chdir(originalCwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
 });

@@ -40,6 +40,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added a TypeScript deployment doctor to validate deployment JSON structure, expected chain id, and deployed code.
 - Made deployment doctor code checks run sequentially for deterministic diagnostics.
 - Added a Solidity `MigrationData` decoder/validator with tests for the real migration adapter input boundary.
+- Made the deployment doctor CLI reject invalid `--chain-id` values before running deployment checks.
 
 ### Known Blockers
 
