@@ -364,11 +364,14 @@ migrateLiquidity(migrationData)
 
 - Uniswap v4 地址无 code revert。
 - LP burn/lock 失败 revert。
+- `migrationData` 解码 / 校验失败必须 revert。
 - migration target 返回零 pool 或零 liquidity revert。
 - migration target 返回无效结果时必须回滚 `liquidityMigrated`、Hook OKB 和 target token balance。
 - 迁移后资产会计不一致 revert。
 
 如果迁移需要外部 position manager token id，必须测试 token id 所有权最终不可恢复到团队 EOA。
+
+当前 `test/unit/MigrationData.t.sol` 已覆盖真实 adapter 前置输入校验：currency ordering、pool fee、tick spacing/range、liquidity、amount max、deadline 和 LP burn recipient。真实 Uniswap v4 adapter 接入后，还必须增加 token / OKB pool 一致性、PositionManager 调用和 LP 归宿证明的集成 / fork 测试。
 
 ## 12. Fee 测试
 

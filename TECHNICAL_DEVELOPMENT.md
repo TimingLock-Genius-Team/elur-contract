@@ -325,12 +325,14 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 ```text
 1. 校验 selfDeprecated == true。
 2. 校验 liquidityMigrated == false。
-3. 计算可迁移 OKB 和 token。
-4. 调用 Uniswap v4 初始化或添加流动性。
-5. 校验返回 pool 和 liquidity 非零。
-6. 真实 migration target 负责 burn/lock LP 并 emit 证明事件。
-7. liquidityMigrated = true。
-8. Hook emit LiquidityMigrated / LiquidityMigrationResult。
+3. Hook 将原始 `migrationData` 透传给固定的 migration target。
+4. 真实 adapter 使用 `MigrationData.decodeAndValidate` 或等价逻辑校验 pool key、tick、liquidity、amount max、deadline 和 LP recipient。
+5. 计算可迁移 OKB 和 token。
+6. 调用 Uniswap v4 初始化或添加流动性。
+7. 校验返回 pool 和 liquidity 非零。
+8. 真实 migration target 负责 burn/lock LP 并 emit 证明事件。
+9. liquidityMigrated = true。
+10. Hook emit LiquidityMigrated / LiquidityMigrationResult。
 ```
 
 ## 9. `SatpadRouter`
