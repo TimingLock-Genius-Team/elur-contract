@@ -29,6 +29,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added `expectEmit` coverage for core factory, trading, fee, and migration events.
 - Added migration invalid-result rollback coverage for state and asset preservation.
 - Made TypeScript buy/sell CLI reject zero `--min-out` unless explicitly allowed for local smoke flows.
+- Added Forge XLayer deployment JSON output with external address code checks.
 
 ### Known Blockers
 

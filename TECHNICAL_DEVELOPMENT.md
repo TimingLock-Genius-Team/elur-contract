@@ -446,7 +446,7 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 6. 验证 Factory 源码。
 7. 创建测试 token。
 8. 小额 buy / sell smoke test。
-9. 保存部署产物。
+9. 脚本写入 `deployments/xlayer/latest.json`。
 ```
 
 部署产物：
@@ -468,7 +468,8 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
     "feeBps": 30,
     "selfDeprecationBps": 9900,
     "maxBuyOkb": "10000000000000000000"
-  }
+  },
+  "createdTokens": []
 }
 ```
 
@@ -504,8 +505,7 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 
 - 将 migration target 替换为真实 Uniswap v4 + LP burn/lock 适配器。
 - 补齐 `test/fork/*` 中对真实 XLayer 外部地址和 migration path 的验证。
-- 部署脚本必须在 XLayer 上校验所有外部依赖 code。
-- deployment JSON 必须记录 chain id、commit、factory、fee recipient、Uniswap、migration target 和 curve params。
+- 使用真实 XLayer 地址跑通 Forge 部署脚本的外部依赖 code 校验和 deployment JSON 输出。
 - 源码验证命令必须成为 runbook 的一部分。
 - 审计前冻结接口和事件格式。
 

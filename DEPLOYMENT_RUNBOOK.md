@@ -160,7 +160,7 @@ Fork 测试必须验证：
 4. 确认 `.env` 地址。
 5. 运行完整验证。
 
-TypeScript 部署脚本在环境变量提供外部地址时会检查这些地址是否已有 code：
+TypeScript 本地部署脚本和 Forge XLayer 部署脚本都会检查外部地址是否已有 code：
 
 - `UNISWAP_V4_POOL_MANAGER`
 - `UNISWAP_V4_POSITION_MANAGER`
@@ -169,15 +169,16 @@ TypeScript 部署脚本在环境变量提供外部地址时会检查这些地址
 部署：
 
 ```bash
-forge script script/DeployFactory.s.sol:DeployFactory \
-  --rpc-url $XLAYER_RPC_URL \
-  --broadcast \
-  --verify
+GIT_COMMIT=$(git rev-parse --short HEAD) \
+DEPLOYMENT_NETWORK=xlayer \
+npm run script:deploy-xlayer
 ```
+
+`DeployFactory` 会在部署后写入 `deployments/xlayer/latest.json`。如果需要固定 ISO 时间戳，可额外设置 `DEPLOYED_AT`；否则脚本使用 `block.timestamp` 字符串。
 
 部署后：
 
-1. 保存 `deployments/xlayer/latest.json`。
+1. 检查 `deployments/xlayer/latest.json` 中的 chainId、commit、deployer、Factory、Uniswap 地址和 migration target。
 2. 在区块浏览器验证源码。
 3. 创建一个小额测试 token。
 4. 执行小额 buy。
