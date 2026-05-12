@@ -36,6 +36,8 @@
 - 与官方来源或团队签名确认一致。
 - 写入 `.env.example`、部署脚本、fork 测试和 deployment JSON。
 
+已确认的 Ethereum mainnet sat1 参考地址包括 `Sat1HookDeployer` `0xcbE096C140dB48199CC7e481116FD835BC33eDC6`、`Sat1Hook` `0x2a0A30dd78aF7698E6f40212b8B8324fcE2ee888` 和 `Sat1Token` `0x8f66337a0c2A02202fd91Dd596c411CF977c6060`。这些地址只能作为合约工厂复用 sat1 Hook deployer 的参考；商业部署仍必须确认目标链地址和 fork 证明。
+
 ### P0: 真实迁移适配器
 
 当前 migration target 只证明协议 Hook 能把 OKB/token 迁出并标记一次性迁移。商业版本必须实现或接入真实适配器：
@@ -51,7 +53,7 @@
 
 - 构造函数固定并校验 Uniswap v4 PoolManager、PositionManager、LP recipient / burn / lock 地址。
 - `migrationData` 必须解码并验证 pool key、tick range、liquidity、amount0/amount1 max、deadline、recipient / locker。
-- 当前已提供 `MigrationData` Solidity 校验库，覆盖 currency ordering、fee、tick spacing/range、liquidity、amount max、deadline 和 burn recipient；真实 adapter 必须在调用 Uniswap v4 前复用或等价实现这些校验，并额外校验 token / OKB 与预期 pool 一致。
+- 当前已提供 `MigrationData` Solidity 校验库和 `BaseUniswapV4MigrationTarget` 外壳，覆盖 dependency code、currency ordering、fee、tick spacing/range、liquidity、amount max、deadline、burn / lock recipient 和 LP 证明事件；真实 adapter 仍必须实现具体 Uniswap v4 mint / lock 调用并在 fork 中证明。
 - adapter 必须拒绝过期 deadline、零 liquidity、零 token / OKB 数量、错误 pool currency 排序和非预期 recipient。
 - adapter 必须发出 LP 归宿证明事件，包含 token、pool、position id 或 LP 标识、liquidity 和最终 LP recipient / burn / lock 地址。
 - fork 测试必须证明 migration 后 position owner 不是团队 EOA，且团队 EOA 无法转回或赎回 LP。

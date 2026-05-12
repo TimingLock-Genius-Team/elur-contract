@@ -12,6 +12,14 @@ contract MigrationDataHarness {
     {
         return MigrationData.decodeAndValidate(data, currentTimestamp);
     }
+
+    function decodeAndValidateWithRecipient(bytes calldata data, uint256 currentTimestamp, address expectedLpRecipient)
+        external
+        pure
+        returns (MigrationData.Params memory)
+    {
+        return MigrationData.decodeAndValidate(data, currentTimestamp, expectedLpRecipient);
+    }
 }
 
 contract MigrationDataTest is Test {
@@ -110,6 +118,17 @@ contract MigrationDataTest is Test {
         params.lpRecipient = makeAddr("team-eoa");
         vm.expectRevert(MigrationData.UnsafeLpRecipient.selector);
         harness.decodeAndValidate(abi.encode(params), block.timestamp);
+    }
+
+    function test_DecodeAndValidateAcceptsConfiguredLockRecipient() public {
+        address lockRecipient = makeAddr("lp-locker");
+        MigrationData.Params memory params = _validParams();
+        params.lpRecipient = lockRecipient;
+
+        MigrationData.Params memory decoded =
+            harness.decodeAndValidateWithRecipient(abi.encode(params), block.timestamp, lockRecipient);
+
+        assertEq(decoded.lpRecipient, lockRecipient);
     }
 
     function test_RevertWhen_TicksInvalid() public {

@@ -11,6 +11,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Deployment provenance fields in deployment JSON: `commit`, `deployedAt`, and `deployer`.
 - Root MIT license.
 - CI command and full Anvil smoke command.
+- Verified Ethereum mainnet sat1 `Sat1HookDeployer` reference address in deployment and readiness documentation.
 
 ### Changed
 
@@ -41,6 +42,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Made deployment doctor code checks run sequentially for deterministic diagnostics.
 - Added a Solidity `MigrationData` decoder/validator with tests for the real migration adapter input boundary.
 - Made the deployment doctor CLI reject invalid `--chain-id` values before running deployment checks.
+- Added `BaseUniswapV4MigrationTarget` as a tested adapter shell for dependency validation, migration input checks, and LP custody proof events.
 
 ### Known Blockers
 

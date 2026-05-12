@@ -263,7 +263,7 @@ event LiquidityMigrationResult(address indexed token, address indexed pool, uint
 ```
 
 事件是合约后端对外的数据接口，必须足够支持第三方客户端重建代币列表、交易历史、毕业状态和迁移状态。
-`LiquidityMigrationResult` 只表示 migration target 返回的 pool / liquidity，不作为 LP 已 burn/lock 的证明；真实 Uniswap v4 adapter 必须单独 emit LP 归宿证明事件。
+`LiquidityMigrationResult` 只表示 migration target 返回的 pool / liquidity，不作为 LP 已 burn/lock 的证明；当前 adapter 外壳定义了 `LpCustodyProven` 事件形状，真实 Uniswap v4 adapter 必须在 LP burn / lock 成功后 emit 该事件或等价证明事件。
 
 ## 11. 非功能要求
 

@@ -35,6 +35,14 @@ library MigrationData {
         pure
         returns (Params memory params)
     {
+        return decodeAndValidate(data, currentTimestamp, BURN_ADDRESS);
+    }
+
+    function decodeAndValidate(bytes calldata data, uint256 currentTimestamp, address expectedLpRecipient)
+        internal
+        pure
+        returns (Params memory params)
+    {
         params = abi.decode(data, (Params));
 
         if (params.currency0 >= params.currency1) revert InvalidCurrencyOrder();
@@ -47,6 +55,6 @@ library MigrationData {
         if (params.liquidity == 0) revert ZeroLiquidity();
         if (params.amount0Max == 0 || params.amount1Max == 0) revert ZeroAmountMax();
         if (params.deadline < currentTimestamp) revert ExpiredDeadline();
-        if (params.lpRecipient != BURN_ADDRESS) revert UnsafeLpRecipient();
+        if (expectedLpRecipient == address(0) || params.lpRecipient != expectedLpRecipient) revert UnsafeLpRecipient();
     }
 }
