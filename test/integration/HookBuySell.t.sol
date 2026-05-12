@@ -2,6 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
+import {MockRejectNative} from "../mocks/MockRejectNative.sol";
 import {BuyQuote, SellQuote} from "../../src/curve/CurveTypes.sol";
 import {SatpadHook} from "../../src/hook/SatpadHook.sol";
 import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
@@ -102,6 +103,26 @@ contract HookBuySellTest is SatpadTestBase {
         vm.prank(feeRecipient);
         vm.expectRevert(SatpadHook.NoClaimableFees.selector);
         hook.claimFees(recipient);
+    }
+
+    function test_RevertWhen_ClaimFeesRecipientRejectsNativeOkbAndPreservesFees() public {
+        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        MockRejectNative rejectNative = new MockRejectNative();
+        buy(router, token, trader, 1e18);
+
+        uint256 claimableBefore = hook.claimableFeeOkb();
+
+        vm.prank(feeRecipient);
+        vm.expectRevert();
+        hook.claimFees(address(rejectNative));
+
+        assertEq(hook.claimableFeeOkb(), claimableBefore);
+        assertEq(address(hook).balance, hook.okbCum() + claimableBefore);
+
+        vm.prank(feeRecipient);
+        hook.claimFees(recipient);
+
+        assertEq(hook.claimableFeeOkb(), 0);
     }
 
     function test_SameBlockSellProtectionIsPerUser() public {

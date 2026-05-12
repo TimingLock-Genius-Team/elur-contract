@@ -378,6 +378,7 @@ migrateLiquidity(migrationData)
 - claim 不得提取用户可赎回储备。
 - claim 后 emit event。
 - fee recipient 拒收 native OKB 不得导致 buy / sell revert。
+- claim recipient 拒收 native OKB 时必须整体 revert，且 `claimableFeeOkb` 保持不变。
 - 迁移只迁移曲线储备，不迁移未 claim fee。
 
 当前实现采用累计 claim，测试必须覆盖 claim 权限、claim 后余额、迁移后 fee 仍可领取。
