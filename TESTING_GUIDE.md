@@ -448,11 +448,11 @@ claimFee
 - Uniswap v4 PositionManager 有 code。
 - migration target 有 code。
 - Factory 可部署。
+- Factory 可创建 token。
+- 小额 buy / sell 成功。
 
 真实 Uniswap v4 migration adapter 完成后，必须新增 fork 测试覆盖：
 
-- Factory 可创建 token。
-- 小额 buy / sell 成功。
 - migration 调用路径在 fork 上可执行。
 - LP owner / burn / lock 结果可证明，团队 EOA 不能取回 LP。
 - 无效 `migrationData` 或错误 pool 参数必须 revert。

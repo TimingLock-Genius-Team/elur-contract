@@ -34,6 +34,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Renamed Hook migration result event from `LiquidityBurned` to `LiquidityMigrationResult` so LP burn/lock proof remains the adapter's responsibility.
 - Documented `IMigrationTarget` as an adapter boundary and added concrete real-adapter acceptance checks.
 - Hardened Forge deployment provenance so `GIT_COMMIT` and `DEPLOYED_AT` must be explicit non-empty values.
+- Expanded guarded XLayer fork coverage to create a token and execute small buy/sell flows.
 
 ### Known Blockers
 
