@@ -26,6 +26,14 @@ contract FactoryValidationTest is SatpadTestBase {
         factory.createToken("Demo", "TOO-LONG!", "ipfs://demo", "");
     }
 
+    function test_RevertWhen_MetadataOrSocialUriTooLong() public {
+        vm.expectRevert(SatpadFactory.MetadataURITooLong.selector);
+        factory.createToken("Demo", "DEMO", _stringOfLength(513), "");
+
+        vm.expectRevert(SatpadFactory.SocialURITooLong.selector);
+        factory.createToken("Demo", "DEMO", "ipfs://demo", _stringOfLength(257));
+    }
+
     function test_CreateTokenDeploysIsolatedTokenHookRouterAndRegistry() public {
         vm.prank(creator);
         (address tokenAddr, address hookAddr, address routerAddr) =
@@ -58,5 +66,13 @@ contract FactoryValidationTest is SatpadTestBase {
         assertEq(params.feeBps, 30);
         assertEq(params.selfDeprecationBps, 9900);
         assertEq(params.maxBuyOkb, 10e18);
+    }
+
+    function _stringOfLength(uint256 length) internal pure returns (string memory) {
+        bytes memory data = new bytes(length);
+        for (uint256 i = 0; i < length; i++) {
+            data[i] = "a";
+        }
+        return string(data);
     }
 }

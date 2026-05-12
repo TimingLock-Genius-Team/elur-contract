@@ -21,6 +21,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Removed unused Uniswap PoolManager and PositionManager immutables from `SatpadFactory`; these addresses remain deployment/fork verification inputs.
 - Replaced instant fee transfers with pull-based fee accounting through `claimableFeeOkb` and `claimFees`.
 - Added Solidity and TypeScript fee-claim scripts and included fee claim in the local smoke flow.
+- Added Factory-side length limits for metadata and social URIs.
 
 ### Known Blockers
 

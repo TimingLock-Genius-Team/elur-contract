@@ -215,6 +215,8 @@ createToken(name, symbol, metadataURI, socialURI)
 - 空 symbol revert。
 - name 超长 revert。
 - symbol 超长 revert。
+- metadata URI 超过 512 bytes revert。
+- social URI 超过 256 bytes revert。
 - fee recipient zero address 部署失败。
 - migration target 地址无 code 时 Factory 部署失败。
 

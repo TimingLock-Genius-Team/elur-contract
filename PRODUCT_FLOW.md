@@ -15,6 +15,13 @@
 
 创建者不能修改曲线参数、fee、毕业阈值、Router、Hook，也不能 mint、burn 或删除代币。
 
+输入边界：
+
+- `name` 必须为 1 到 32 bytes。
+- `symbol` 必须为 1 到 8 bytes。
+- `metadataURI` 最多 512 bytes。
+- `socialURI` 最多 256 bytes。
+
 ### 交易用户
 
 交易用户只通过 token 绑定的 `SatpadRouter` 交易：

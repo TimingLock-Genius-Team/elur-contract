@@ -210,7 +210,8 @@ function getTokenInfo(address token) external view returns (TokenInfo memory);
 
 - name 非空且不超过 32 字符。
 - symbol 非空且不超过 8 字符。
-- metadata URI 可为空或按产品策略校验。
+- metadata URI 可为空且不超过 512 bytes。
+- social URI 可为空且不超过 256 bytes。
 - fee recipient、migration target 均非零。
 
 Factory 不应具备：
@@ -514,4 +515,3 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 2. XLayer Uniswap v4 PoolManager / PositionManager 完整地址。
 3. LP burn/lock 的具体接口。
 4. entropy 是否进入 MVP。
-5. metadata URI 最大长度和校验策略。

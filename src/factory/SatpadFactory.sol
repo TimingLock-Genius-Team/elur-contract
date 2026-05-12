@@ -9,6 +9,11 @@ import {SatpadRouter} from "../router/SatpadRouter.sol";
 import {SatpadToken} from "../token/SatpadToken.sol";
 
 contract SatpadFactory is ISatpadFactory {
+    uint256 public constant MAX_NAME_BYTES = 32;
+    uint256 public constant MAX_SYMBOL_BYTES = 8;
+    uint256 public constant MAX_METADATA_URI_BYTES = 512;
+    uint256 public constant MAX_SOCIAL_URI_BYTES = 256;
+
     address public immutable feeRecipient;
     address public immutable migrationTarget;
 
@@ -31,6 +36,8 @@ contract SatpadFactory is ISatpadFactory {
     error EmptySymbol();
     error NameTooLong();
     error SymbolTooLong();
+    error MetadataURITooLong();
+    error SocialURITooLong();
     error UnknownToken();
 
     constructor(address feeRecipient_, address migrationTarget_) {
@@ -51,7 +58,7 @@ contract SatpadFactory is ISatpadFactory {
         string calldata metadataURI,
         string calldata socialURI
     ) external returns (address token, address hook, address router) {
-        _validateTokenMetadata(name, symbol);
+        _validateTokenMetadata(name, symbol, metadataURI, socialURI);
 
         CurveParams memory params = Curve.defaultParams();
         SatpadToken tokenContract = new SatpadToken(name, symbol, address(this));
@@ -95,7 +102,12 @@ contract SatpadFactory is ISatpadFactory {
         return Curve.defaultParams();
     }
 
-    function _validateTokenMetadata(string calldata name, string calldata symbol) internal pure {
+    function _validateTokenMetadata(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI
+    ) internal pure {
         bytes calldata nameBytes = bytes(name);
         bytes calldata symbolBytes = bytes(symbol);
 
@@ -105,11 +117,17 @@ contract SatpadFactory is ISatpadFactory {
         if (symbolBytes.length == 0) {
             revert EmptySymbol();
         }
-        if (nameBytes.length > 32) {
+        if (nameBytes.length > MAX_NAME_BYTES) {
             revert NameTooLong();
         }
-        if (symbolBytes.length > 8) {
+        if (symbolBytes.length > MAX_SYMBOL_BYTES) {
             revert SymbolTooLong();
+        }
+        if (bytes(metadataURI).length > MAX_METADATA_URI_BYTES) {
+            revert MetadataURITooLong();
+        }
+        if (bytes(socialURI).length > MAX_SOCIAL_URI_BYTES) {
+            revert SocialURITooLong();
         }
     }
 }

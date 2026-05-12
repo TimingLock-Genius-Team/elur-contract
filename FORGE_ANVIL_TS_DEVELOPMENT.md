@@ -300,6 +300,7 @@ function createToken(
 - 创建成功后写入 registry。
 - emit `TokenCreated`。
 - 不收额外部署费。
+- `metadataURI` 最多 512 bytes，`socialURI` 最多 256 bytes。
 - 不提供删除 token 功能。
 
 ## 8. `SatpadHook` 开发要求
@@ -560,4 +561,3 @@ forge coverage
 2. XLayer Uniswap v4 PoolManager / PositionManager 地址。
 3. LP burn/lock 的具体接口。
 4. entropy 是否进入 MVP。
-5. metadata URI 最大长度。
