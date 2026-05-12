@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { getArg } from "./args.js";
 
 export type Deployment = {
   chainId: number;
@@ -21,15 +22,19 @@ export type Deployment = {
   createdTokens: Array<{ token: `0x${string}`; hook: `0x${string}`; router: `0x${string}` }>;
 };
 
-export function deploymentPath(network = "anvil"): string {
+export function deploymentNetwork(): string {
+  return getArg("network", process.env.DEPLOYMENT_NETWORK || "anvil");
+}
+
+export function deploymentPath(network = deploymentNetwork()): string {
   return join(process.cwd(), "deployments", network, "latest.json");
 }
 
-export function readDeployment(network = "anvil"): Deployment {
+export function readDeployment(network = deploymentNetwork()): Deployment {
   return JSON.parse(readFileSync(deploymentPath(network), "utf8")) as Deployment;
 }
 
-export function writeDeployment(deployment: Deployment, network = "anvil"): void {
+export function writeDeployment(deployment: Deployment, network = deploymentNetwork()): void {
   const path = deploymentPath(network);
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, `${JSON.stringify(deployment, null, 2)}\n`);

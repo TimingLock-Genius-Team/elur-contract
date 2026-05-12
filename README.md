@@ -119,6 +119,8 @@ npm run sell -- --token <token> --tokens <amount> --min-out <netOkbOut>
 
 The TypeScript buy/sell CLIs require an explicit non-zero `--min-out`. Local smoke tests may pass `--allow-zero-min-out` for deterministic development flows only.
 
+TypeScript deployment and CLI tools read `deployments/anvil/latest.json` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json`.
+
 Simulate graduation and migration:
 
 ```bash

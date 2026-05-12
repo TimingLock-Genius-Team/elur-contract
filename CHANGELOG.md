@@ -35,6 +35,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Documented `IMigrationTarget` as an adapter boundary and added concrete real-adapter acceptance checks.
 - Hardened Forge deployment provenance so `GIT_COMMIT` and `DEPLOYED_AT` must be explicit non-empty values.
 - Expanded guarded XLayer fork coverage to create a token and execute small buy/sell flows.
+- Added TypeScript deployment network selection via `DEPLOYMENT_NETWORK` / `--network` and CI-covered Node tests.
 
 ### Known Blockers
 
