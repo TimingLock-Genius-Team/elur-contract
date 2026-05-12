@@ -13,7 +13,7 @@
     "test": "forge test",
     "test:fuzz": "forge test --fuzz-runs 10000",
     "test:invariant": "forge test --match-path 'test/invariant/*'",
-    "test:fork:xlayer": "forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "test:fork:xlayer": "XLAYER_CHAIN_ID=${XLAYER_CHAIN_ID:-196} forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
     "slither": "slither .",
     "script:check-chain": "forge script script/CheckChain.s.sol:CheckChain --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545}",
     "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",

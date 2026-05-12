@@ -204,6 +204,7 @@ npm install --save-dev vitest
 
 ```text
 XLAYER_RPC_URL=
+XLAYER_CHAIN_ID=196
 ANVIL_RPC_URL=http://127.0.0.1:8545
 PRIVATE_KEY=
 TEAM_MULTISIG=
@@ -456,7 +457,7 @@ npm run sell -- --token <address> --tokens <value> --min-out <value>
 运行：
 
 ```bash
-forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
+XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 ```
 
 验证：
@@ -514,7 +515,7 @@ npm run smoke:anvil
 主网部署前：
 
 ```bash
-forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL
+XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL
 forge test --gas-report
 forge coverage
 ```

@@ -135,7 +135,7 @@ Fork 测试要求真实 `XLAYER_RPC_URL`：
 
 ```bash
 npm run script:verify-xlayer-addresses
-forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
+XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 ```
 
 Fork 测试必须验证：

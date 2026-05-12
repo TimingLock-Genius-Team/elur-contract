@@ -111,7 +111,7 @@ forge test --match-path "test/invariant/*" --fuzz-runs 1000
 XLayer fork：
 
 ```bash
-forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
+XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 ```
 
 Gas：
@@ -426,6 +426,7 @@ claimFee（如果采用 claim 模型）
 - sat1 Hook Deployer 完整地址有 code。
 - Uniswap v4 PoolManager 有 code。
 - Uniswap v4 PositionManager 有 code。
+- migration target 有 code。
 - Factory 可部署。
 - Factory 可创建 token。
 - 小额 buy / sell 成功。
