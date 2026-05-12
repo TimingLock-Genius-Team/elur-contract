@@ -1,3 +1,4 @@
+import { execSync } from "node:child_process";
 import { getAddress } from "viem";
 import { publicClient, walletClient } from "../lib/clients.js";
 import { bytecodeOf, abiOf } from "../lib/artifacts.js";
@@ -6,6 +7,18 @@ import { printJson } from "../lib/json.js";
 
 const wallet = walletClient();
 const publicRpc = publicClient();
+
+function currentCommit(): string {
+  if (process.env.GIT_COMMIT) {
+    return process.env.GIT_COMMIT;
+  }
+
+  try {
+    return execSync("git rev-parse --short HEAD", { encoding: "utf8" }).trim();
+  } catch {
+    return "unknown";
+  }
+}
 
 async function deploy(artifact: string, args: readonly unknown[] = []) {
   const hash = await wallet.deployContract({
@@ -21,9 +34,12 @@ async function deploy(artifact: string, args: readonly unknown[] = []) {
 }
 
 const chainId = await publicRpc.getChainId();
+const deployer = getAddress((await wallet.getAddresses())[0]);
+const commit = currentCommit();
+const deployedAt = new Date().toISOString();
 
 const feeRecipient = getAddress(
-  process.env.TEAM_MULTISIG ?? (await wallet.getAddresses())[0],
+  process.env.TEAM_MULTISIG ?? deployer,
 );
 const sat1HookDeployer = getAddress(
   process.env.SAT1_HOOK_DEPLOYER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
@@ -48,6 +64,9 @@ const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [
 
 writeDeployment({
   chainId,
+  commit,
+  deployedAt,
+  deployer,
   factory,
   feeRecipient,
   sat1HookDeployer,
@@ -64,4 +83,15 @@ writeDeployment({
   createdTokens: [],
 });
 
-printJson({ chainId, factory, feeRecipient, sat1HookDeployer, poolManager, positionManager, migrationTarget });
+printJson({
+  chainId,
+  commit,
+  deployedAt,
+  deployer,
+  factory,
+  feeRecipient,
+  sat1HookDeployer,
+  poolManager,
+  positionManager,
+  migrationTarget,
+});

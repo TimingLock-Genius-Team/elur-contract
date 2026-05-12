@@ -470,6 +470,9 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 ```json
 {
   "chainId": 196,
+  "commit": "fd46a81",
+  "deployedAt": "2026-05-12T00:00:00.000Z",
+  "deployer": "0x...",
   "factory": "0x...",
   "feeRecipient": "0x...",
   "sat1HookDeployer": "0x...",

@@ -478,6 +478,9 @@ XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC
 ```json
 {
   "chainId": 31337,
+  "commit": "fd46a81",
+  "deployedAt": "2026-05-12T00:00:00.000Z",
+  "deployer": "0x...",
   "factory": "0x...",
   "feeRecipient": "0x...",
   "sat1HookDeployer": "0x...",

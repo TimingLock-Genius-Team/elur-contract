@@ -3,6 +3,9 @@ import { dirname, join } from "node:path";
 
 export type Deployment = {
   chainId: number;
+  commit: string;
+  deployedAt: string;
+  deployer: `0x${string}`;
   factory: `0x${string}`;
   feeRecipient: `0x${string}`;
   sat1HookDeployer: `0x${string}`;
