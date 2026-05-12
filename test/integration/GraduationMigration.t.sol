@@ -56,17 +56,28 @@ contract GraduationMigrationTest is SatpadTestBase {
 
     function test_RevertWhen_MigrationTargetReturnsInvalidResult() public {
         MockBadMigrationTarget zeroPoolTarget = new MockBadMigrationTarget(address(0), 1e18);
-        (, SatpadHook zeroPoolHook,) = _createGraduatedToken(new SatpadFactory(feeRecipient, address(zeroPoolTarget)));
+        (SatpadToken zeroPoolToken, SatpadHook zeroPoolHook,) =
+            _createGraduatedToken(new SatpadFactory(feeRecipient, address(zeroPoolTarget)));
+        uint256 zeroPoolHookBalance = address(zeroPoolHook).balance;
+        uint256 zeroPoolTargetTokenBalance = zeroPoolToken.balanceOf(address(zeroPoolTarget));
 
         vm.expectRevert(SatpadHook.InvalidMigrationResult.selector);
         zeroPoolHook.migrateLiquidity("");
+        assertFalse(zeroPoolHook.liquidityMigrated());
+        assertEq(address(zeroPoolHook).balance, zeroPoolHookBalance);
+        assertEq(zeroPoolToken.balanceOf(address(zeroPoolTarget)), zeroPoolTargetTokenBalance);
 
         MockBadMigrationTarget zeroLiquidityTarget = new MockBadMigrationTarget(address(0xBEEF), 0);
-        (, SatpadHook zeroLiquidityHook,) =
+        (SatpadToken zeroLiquidityToken, SatpadHook zeroLiquidityHook,) =
             _createGraduatedToken(new SatpadFactory(feeRecipient, address(zeroLiquidityTarget)));
+        uint256 zeroLiquidityHookBalance = address(zeroLiquidityHook).balance;
+        uint256 zeroLiquidityTargetTokenBalance = zeroLiquidityToken.balanceOf(address(zeroLiquidityTarget));
 
         vm.expectRevert(SatpadHook.InvalidMigrationResult.selector);
         zeroLiquidityHook.migrateLiquidity("");
+        assertFalse(zeroLiquidityHook.liquidityMigrated());
+        assertEq(address(zeroLiquidityHook).balance, zeroLiquidityHookBalance);
+        assertEq(zeroLiquidityToken.balanceOf(address(zeroLiquidityTarget)), zeroLiquidityTargetTokenBalance);
     }
 
     function _createGraduatedToken(SatpadFactory factory_)

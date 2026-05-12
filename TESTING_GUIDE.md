@@ -365,6 +365,7 @@ migrateLiquidity(migrationData)
 - Uniswap v4 地址无 code revert。
 - LP burn/lock 失败 revert。
 - migration target 返回零 pool 或零 liquidity revert。
+- migration target 返回无效结果时必须回滚 `liquidityMigrated`、Hook OKB 和 target token balance。
 - 迁移后资产会计不一致 revert。
 
 如果迁移需要外部 position manager token id，必须测试 token id 所有权最终不可恢复到团队 EOA。
