@@ -357,7 +357,8 @@ migrateLiquidity(migrationData)
 - 添加流动性金额符合协议定义。
 - LP 被 burn 或 lock。
 - `liquidityMigrated = true`。
-- emit `LiquidityMigrated` 和 `LiquidityBurned`。
+- Hook emit `LiquidityMigrated` 和 `LiquidityMigrationResult`。
+- 真实 adapter 必须额外 emit 可验证的 LP burn/lock 证明事件。
 
 失败路径：
 
@@ -407,7 +408,9 @@ token.balanceOf(address(router)) == 0
 - `TokenCreated` 必须包含 creator、metadataURI 和 socialURI。
 - `Bought` / `Sold` 必须包含 token、user、recipient 和完整 quote 会计字段。
 - `FeesClaimed` 必须包含 recipient 和 amount。
-- `LiquidityMigrated` / `LiquidityBurned` 必须包含 pool、迁移金额、token 数量和 liquidity。
+- `LiquidityMigrated` 必须包含 pool、迁移金额和 token 数量。
+- `LiquidityMigrationResult` 必须包含 pool 和 migration target 返回的 liquidity。
+- 真实 adapter 的 LP burn/lock 事件必须包含 LP 归宿证明。
 
 ## 15. Invariant 测试
 

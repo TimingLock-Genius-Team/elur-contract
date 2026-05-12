@@ -43,7 +43,8 @@
 - `TokenCreated` 重建 token 列表。
 - `Bought` / `Sold` 重建交易历史、fee、曲线位置。
 - `SelfDeprecated` 识别毕业触发。
-- `LiquidityMigrated` / `LiquidityBurned` 识别迁移结果。
+- `LiquidityMigrated` / `LiquidityMigrationResult` 识别 Hook 迁移结果。
+- 真实 migration adapter 的 LP burn/lock 证明事件识别 LP 最终归宿。
 
 ## 2. 创建 Token 流程
 
@@ -203,7 +204,7 @@ Caller
       -> migrationTarget.migrate{value: okbAmount}(...)
       -> liquidityMigrated = true
       -> emit LiquidityMigrated
-      -> emit LiquidityBurned
+      -> emit LiquidityMigrationResult
 ```
 
 商业可用门槛：
@@ -212,6 +213,7 @@ Caller
 - migration target 必须只调用验证过的 Uniswap v4 PoolManager / PositionManager。
 - migration target 必须返回非零 pool 和非零 liquidity。
 - LP ownership 必须 burn 或 lock，且 fork 测试能证明团队 EOA 不能取回。
+- LP burn/lock 证明必须由真实 migration adapter 事件提供，Hook 不自行宣称 LP 已 burn。
 - 迁移只能执行一次。
 
 ## 8. Fee 流程
@@ -236,7 +238,8 @@ feeRecipient -> claimFees(recipient)
 4. 用户通过 Router buy / sell。
 5. 监听 `Bought` / `Sold` 更新交易历史。
 6. 监听 `SelfDeprecated` 更新毕业状态。
-7. 监听 `LiquidityMigrated` / `LiquidityBurned` 更新迁移状态。
+7. 监听 `LiquidityMigrated` / `LiquidityMigrationResult` 更新 Hook 迁移状态。
+8. 监听真实 migration adapter 的 LP burn/lock 证明事件更新 LP 归宿状态。
 
 ## 10. 商业可用状态定义
 

@@ -49,7 +49,7 @@ contract SatpadHook is ReentrancyGuard {
     event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
     event FeesClaimed(address indexed recipient, uint256 amount);
     event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
-    event LiquidityBurned(address indexed token, address indexed pool, uint256 liquidity);
+    event LiquidityMigrationResult(address indexed token, address indexed pool, uint256 liquidity);
 
     error OnlyFactory();
     error OnlyRouter();
@@ -285,7 +285,7 @@ contract SatpadHook is ReentrancyGuard {
         }
 
         emit LiquidityMigrated(address(token), pool, okbAmount, tokenAmount);
-        emit LiquidityBurned(address(token), pool, liquidity);
+        emit LiquidityMigrationResult(address(token), pool, liquidity);
     }
 
     receive() external payable {}

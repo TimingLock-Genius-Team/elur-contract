@@ -259,10 +259,11 @@ event Sold(address indexed token, address indexed user, address indexed recipien
 event FeesClaimed(address indexed recipient, uint256 amount);
 event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
 event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
-event LiquidityBurned(address indexed token, address indexed pool, uint256 liquidity);
+event LiquidityMigrationResult(address indexed token, address indexed pool, uint256 liquidity);
 ```
 
 事件是合约后端对外的数据接口，必须足够支持第三方客户端重建代币列表、交易历史、毕业状态和迁移状态。
+`LiquidityMigrationResult` 只表示 migration target 返回的 pool / liquidity，不作为 LP 已 burn/lock 的证明；真实 Uniswap v4 adapter 必须单独 emit LP 归宿证明事件。
 
 ## 11. 非功能要求
 

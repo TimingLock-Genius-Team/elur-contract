@@ -39,7 +39,7 @@ contract EventEmissionTest is SatpadTestBase {
     );
     event FeesClaimed(address indexed recipient, uint256 amount);
     event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
-    event LiquidityBurned(address indexed token, address indexed pool, uint256 liquidity);
+    event LiquidityMigrationResult(address indexed token, address indexed pool, uint256 liquidity);
 
     function test_CreateTokenEmitsMetadataAndSocialUri() public {
         vm.expectEmit(false, false, false, true, address(factory));
@@ -111,7 +111,7 @@ contract EventEmissionTest is SatpadTestBase {
         vm.expectEmit(true, true, false, true, address(hook));
         emit LiquidityMigrated(address(token), pool, okbAmount, tokenAmount);
         vm.expectEmit(true, true, false, true, address(hook));
-        emit LiquidityBurned(address(token), pool, liquidity);
+        emit LiquidityMigrationResult(address(token), pool, liquidity);
         hook.migrateLiquidity("migration-data");
     }
 }

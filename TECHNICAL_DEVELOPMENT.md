@@ -328,9 +328,9 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 3. 计算可迁移 OKB 和 token。
 4. 调用 Uniswap v4 初始化或添加流动性。
 5. 校验返回 pool 和 liquidity 非零。
-6. burn/lock LP。
+6. 真实 migration target 负责 burn/lock LP 并 emit 证明事件。
 7. liquidityMigrated = true。
-8. emit LiquidityMigrated / LiquidityBurned。
+8. Hook emit LiquidityMigrated / LiquidityMigrationResult。
 ```
 
 ## 9. `SatpadRouter`
@@ -415,10 +415,11 @@ event FeesClaimed(address indexed recipient, uint256 amount);
 
 event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
 event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
-event LiquidityBurned(address indexed token, address indexed pool, uint256 liquidity);
+event LiquidityMigrationResult(address indexed token, address indexed pool, uint256 liquidity);
 ```
 
 事件必须覆盖第三方读取协议状态所需的最小数据。
+Hook 的 `LiquidityMigrationResult` 只表示 migration target 返回结果，不宣称 LP 已 burn/lock；真实 adapter 必须发出独立 LP 归宿证明事件。
 
 ## 12. 部署流程
 
