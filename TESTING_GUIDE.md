@@ -129,10 +129,16 @@ forge coverage
 Static analysis：
 
 ```bash
-slither .
+slither src --exclude-informational --exclude-low
 ```
 
 TypeScript smoke：
+
+```bash
+npm run smoke:anvil
+```
+
+或逐步执行：
 
 ```bash
 npm run deploy:anvil
@@ -473,12 +479,20 @@ Smoke 失败必须退出非零状态码，方便 CI 使用。
 每个 PR 至少运行：
 
 ```bash
+npm run ci
+```
+
+CI 展开命令：
+
+```bash
 forge fmt --check
 forge build
 forge test
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
-slither .
+forge test --match-path "test/fork/*"
+npx tsc --noEmit
+slither src --exclude-informational --exclude-low
 ```
 
 主网部署前额外运行：
@@ -496,7 +510,7 @@ npm run smoke:anvil
 - unit / integration / fuzz / invariant 通过。
 - fork tests 通过。
 - Slither 无 high / medium 未处理项。
-- 部署脚本输出完整 deployment JSON。
+- 部署脚本输出完整 deployment JSON，包含 `commit`、`deployedAt` 和 `deployer`。
 - 文档与实现参数一致。
 
 ## 18. 当前覆盖状态

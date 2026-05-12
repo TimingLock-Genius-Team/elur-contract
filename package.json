@@ -13,8 +13,10 @@
     "test": "forge test",
     "test:fuzz": "forge test --fuzz-runs 10000",
     "test:invariant": "forge test --match-path 'test/invariant/*'",
+    "test:fork:local": "forge test --match-path 'test/fork/*'",
     "test:fork:xlayer": "XLAYER_CHAIN_ID=${XLAYER_CHAIN_ID:-196} forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
-    "slither": "slither .",
+    "slither": "slither src --exclude-informational --exclude-low",
+    "ci": "forge fmt --check && forge build && forge test --fuzz-runs 10000 && forge test --match-path 'test/invariant/*' && forge test --match-path 'test/fork/*' && npx tsc --noEmit && npm run slither",
     "script:check-chain": "forge script script/CheckChain.s.sol:CheckChain --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545}",
     "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
     "script:deploy-local": "forge script script/LocalDeployFactory.s.sol:LocalDeployFactory --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
@@ -35,7 +37,7 @@
     "sell": "tsx ts/cli/sell.ts",
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
-    "smoke:anvil": "npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1"
+    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity"
   },
   "repository": {
     "type": "git",
@@ -43,7 +45,7 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "module",
   "bugs": {
     "url": "https://github.com/TimingLock-Genius-Team/satpad-contract/issues"

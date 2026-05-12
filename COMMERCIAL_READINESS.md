@@ -16,6 +16,7 @@
 | Migration | 本地适配 | 当前通过 mock/adapter 接口验证流程，真实 Uniswap v4 target 仍待实现和 fork 测试。 |
 | Solidity scripts | 已实现本地流 | 本地 Anvil deploy/create/quote/buy/sell/graduation/migration 可跑。 |
 | TypeScript CLI | 已实现本地流 | 用于本地部署、调试和 deployment JSON。 |
+| CI | 已实现基础门禁 | GitHub Actions 运行格式、构建、Forge 测试、invariant、guarded fork、TS 类型检查和 Slither。 |
 | Fork tests | 待补强 | 需要真实 XLayer RPC 和外部地址。 |
 | 审计 | 未完成 | 主网上线前必须完成外部审计或独立安全 review。 |
 
@@ -97,11 +98,18 @@ Fork 测试必须覆盖：
 PR / 阶段提交前：
 
 ```bash
+npm run ci
+```
+
+等价展开命令：
+
+```bash
 forge fmt --check
 forge build
 forge test
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
+forge test --match-path "test/fork/*"
 npx tsc --noEmit
 slither src --exclude-informational --exclude-low
 ```

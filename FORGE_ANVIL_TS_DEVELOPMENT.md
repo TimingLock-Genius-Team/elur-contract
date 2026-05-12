@@ -183,8 +183,10 @@ npm install --save-dev vitest
     "test": "forge test",
     "test:fuzz": "forge test --fuzz-runs 10000",
     "test:invariant": "forge test --match-path 'test/invariant/*'",
-    "test:fork:xlayer": "forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
-    "slither": "slither .",
+    "test:fork:local": "forge test --match-path 'test/fork/*'",
+    "test:fork:xlayer": "XLAYER_CHAIN_ID=${XLAYER_CHAIN_ID:-196} forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "slither": "slither src --exclude-informational --exclude-low",
+    "ci": "forge fmt --check && forge build && forge test --fuzz-runs 10000 && forge test --match-path 'test/invariant/*' && forge test --match-path 'test/fork/*' && npx tsc --noEmit && npm run slither",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
     "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
     "create-token": "tsx ts/cli/create-token.ts",
@@ -195,7 +197,7 @@ npm install --save-dev vitest
     "sell": "tsx ts/cli/sell.ts",
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
-    "smoke:anvil": "npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1"
+    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity"
   }
 }
 ```
@@ -510,7 +512,7 @@ forge build
 forge test
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
-slither .
+slither src --exclude-informational --exclude-low
 npm run deploy:anvil
 npm run smoke:anvil
 ```

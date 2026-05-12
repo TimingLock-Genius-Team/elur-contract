@@ -35,6 +35,7 @@ The project is not yet mainnet-commercial-ready until the production external ad
 - Foundry (`forge`, `cast`, `anvil`)
 - Node.js and npm
 - Slither for static analysis
+- `PRIVATE_KEY` for local Anvil deploy and smoke commands
 
 Install TypeScript dependencies:
 
@@ -80,6 +81,12 @@ Run static analysis:
 npm run slither
 ```
 
+Run the local CI gate:
+
+```bash
+npm run ci
+```
+
 ## Local Anvil Flow
 
 Start Anvil:
@@ -115,6 +122,12 @@ Simulate graduation and migration:
 ```bash
 npm run simulate:graduation -- --token <token>
 npm run migrate:liquidity -- --token <token>
+```
+
+Run the full local smoke flow:
+
+```bash
+PRIVATE_KEY=<anvil-private-key> npm run smoke:anvil
 ```
 
 ## Pre-Commit Verification
