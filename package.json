@@ -1,5 +1,5 @@
 {
-  "name": "uniswap-hook-pool",
+  "name": "satpad-contract",
   "version": "1.0.0",
   "description": "SATPAD contract backend built with Foundry, Anvil, and TypeScript.",
   "main": "index.js",

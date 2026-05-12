@@ -27,7 +27,7 @@ Protocol: sat1 bonding curve + Factory + per-token Hook/Router
 ## 2. 工程目录
 
 ```text
-uniswap-hook-pool/
+satpad-contract/
   foundry.toml
   remappings.txt
   package.json
