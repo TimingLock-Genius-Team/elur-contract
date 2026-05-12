@@ -371,7 +371,7 @@ migrateLiquidity(migrationData)
 
 如果迁移需要外部 position manager token id，必须测试 token id 所有权最终不可恢复到团队 EOA。
 
-当前 `test/unit/MigrationData.t.sol`、`test/unit/UniswapV4PoolKey.t.sol` 和 `test/unit/BaseUniswapV4MigrationTarget.t.sol` 已覆盖真实 adapter 前置输入校验：dependency code、currency ordering、pool fee、tick spacing/range、liquidity、amount max、deadline、burn / lock recipient、PoolId 编码、OKB/token max 和 LP 证明事件。真实 Uniswap v4 adapter 接入后，还必须增加 PositionManager 调用、position owner 和 LP 归宿证明的集成 / fork 测试。
+当前 `test/unit/MigrationData.t.sol`、`test/unit/UniswapV4PoolKey.t.sol`、`test/unit/BaseUniswapV4MigrationTarget.t.sol` 和 `test/unit/UniswapV4MintPositionTarget.t.sol` 已覆盖真实 adapter 前置输入校验：dependency code、currency ordering、pool fee、tick spacing/range、liquidity、amount max、deadline、burn / lock recipient、PoolId 编码、OKB/token max、v4 `MINT_POSITION` / `SETTLE_PAIR` 编码、残留资产拒绝和 LP 证明事件。真实 XLayer 接入后，还必须增加 PositionManager fork 调用、position owner 和 LP 归宿证明测试。
 
 ## 12. Fee 测试
 

@@ -44,10 +44,11 @@ All notable changes to SATPAD contract backend are tracked here.
 - Made the deployment doctor CLI reject invalid `--chain-id` values before running deployment checks.
 - Added `BaseUniswapV4MigrationTarget` as a tested adapter shell for dependency validation, migration input checks, and LP custody proof events.
 - Added `UniswapV4PoolKey` to compute v4 PoolIds from validated migration data.
+- Added `UniswapV4MintPositionTarget` to encode v4 `MINT_POSITION` / `SETTLE_PAIR` migrations and reject residual OKB/token.
 
 ### Known Blockers
 
 - Real XLayer external addresses are not confirmed in repo.
-- Real Uniswap v4 migration adapter and LP burn/lock path are not implemented.
+- Uniswap v4 migration adapter still needs XLayer fork verification and LP burn/lock proof against production PositionManager.
 - XLayer fork migration test requires verified production addresses and RPC.
 - External audit is not complete.

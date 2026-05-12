@@ -213,6 +213,7 @@ Caller
 - migration target 必须只调用验证过的 Uniswap v4 PoolManager / PositionManager。
 - migration target 必须严格校验 `migrationData`，包括 pool currency 顺序、tick range、liquidity、amount max、deadline 和 LP burn/lock recipient；当前 `BaseUniswapV4MigrationTarget` 已定义该外壳。
 - Uniswap v4 pool 身份必须使用 `PoolId` 追踪，不能把 PoolManager 地址误当成独立 pool address。
+- 当前 `UniswapV4MintPositionTarget` 第一版会调用 PositionManager `modifyLiquidities`，并要求迁移后 adapter 不残留 OKB 或 token。
 - migration target 必须返回非零 pool 和非零 liquidity。
 - LP ownership 必须 burn 或 lock，且 fork 测试能证明团队 EOA 不能取回。
 - LP burn/lock 证明必须由真实 migration adapter 事件提供，Hook 不自行宣称 LP 已 burn。

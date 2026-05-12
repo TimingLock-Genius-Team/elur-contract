@@ -91,7 +91,7 @@ Migration 是当前最大生产风险，因为它依赖外部 Uniswap v4 和 LP 
 
 - migration target 作为不可变地址写入 Factory/Hook。
 - target 源码可验证。
-- target 必须在外部调用前校验 `migrationData`，当前 `MigrationData` 库和 `BaseUniswapV4MigrationTarget` 外壳定义了最低校验项。
+- target 必须在外部调用前校验 `migrationData`，当前 `MigrationData`、`UniswapV4PoolKey`、`BaseUniswapV4MigrationTarget` 和 `UniswapV4MintPositionTarget` 定义了最低校验与资产残留约束。
 - fork 测试证明外部调用路径和 LP 归宿。
 - target 返回的 pool 和 liquidity 必须非零。
 - 迁移完成后 emit 完整事件。
