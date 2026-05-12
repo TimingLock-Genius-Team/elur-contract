@@ -36,6 +36,8 @@ All notable changes to SATPAD contract backend are tracked here.
 - Hardened Forge deployment provenance so `GIT_COMMIT` and `DEPLOYED_AT` must be explicit non-empty values.
 - Expanded guarded XLayer fork coverage to create a token and execute small buy/sell flows.
 - Added TypeScript deployment network selection via `DEPLOYMENT_NETWORK` / `--network` and CI-covered Node tests.
+- Added TypeScript RPC client network selection for Anvil and XLayer.
+- Added a TypeScript deployment doctor to validate deployment JSON structure, expected chain id, and deployed code.
 
 ### Known Blockers
 

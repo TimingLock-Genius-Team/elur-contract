@@ -200,6 +200,7 @@ npm install --save-dev vitest
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
     "claim:fees": "tsx ts/cli/claim-fees.ts",
+    "doctor:deployment": "tsx ts/cli/doctor-deployment.ts",
     "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 --allow-zero-min-out && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 --allow-zero-min-out && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
   }
 }

@@ -122,7 +122,15 @@ forge build
 forge test
 forge test --match-path "test/invariant/*"
 npx tsc --noEmit
+npm run test:ts
+npm run doctor:deployment -- --network anvil
 slither src --exclude-informational --exclude-low
+```
+
+部署 JSON 或生产参数变更后，先运行 doctor 检查必填字段、chainId、地址格式和已创建 token 记录。提供 RPC 时会额外检查 chainId 和合约 code：
+
+```bash
+npm run doctor:deployment -- --network xlayer --rpc-url "$XLAYER_RPC_URL" --chain-id 196
 ```
 
 主网候选前运行更严格版本：
@@ -184,11 +192,12 @@ npm run script:deploy-xlayer
 部署后：
 
 1. 检查 `deployments/xlayer/latest.json` 中的 chainId、commit、deployer、Factory、Uniswap 地址和 migration target。
-2. 在区块浏览器验证源码。
-3. 创建一个小额测试 token。
-4. 执行小额 buy。
-5. 下一块执行小额 sell。
-6. 记录 tx hash、block number、地址和验证链接。
+2. 运行 `npm run doctor:deployment -- --network xlayer --rpc-url $XLAYER_RPC_URL`。
+3. 在区块浏览器验证源码。
+4. 创建一个小额测试 token。
+5. 执行小额 buy。
+6. 下一块执行小额 sell。
+7. 记录 tx hash、block number、地址和验证链接。
 
 ## 7. 回滚与失败处理
 
