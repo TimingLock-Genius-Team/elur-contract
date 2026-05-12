@@ -87,6 +87,23 @@ contract HookBuySellTest is SatpadTestBase {
         hook.claimFees(trader);
     }
 
+    function test_RevertWhen_ClaimFeesRecipientIsZero() public {
+        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        buy(router, token, trader, 1e18);
+
+        vm.prank(feeRecipient);
+        vm.expectRevert(SatpadHook.ZeroAddress.selector);
+        hook.claimFees(address(0));
+    }
+
+    function test_RevertWhen_ClaimFeesWithoutAccruedFees() public {
+        (, SatpadHook hook,) = createDemoToken();
+
+        vm.prank(feeRecipient);
+        vm.expectRevert(SatpadHook.NoClaimableFees.selector);
+        hook.claimFees(recipient);
+    }
+
     function test_SameBlockSellProtectionIsPerUser() public {
         (SatpadToken token,, SatpadRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
