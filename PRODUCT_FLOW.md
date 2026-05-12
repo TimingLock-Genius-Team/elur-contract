@@ -206,6 +206,7 @@ Caller
 
 - XLayer 上 `migrationTarget` 必须有 code。
 - migration target 必须只调用验证过的 Uniswap v4 PoolManager / PositionManager。
+- migration target 必须返回非零 pool 和非零 liquidity。
 - LP ownership 必须 burn 或 lock，且 fork 测试能证明团队 EOA 不能取回。
 - 迁移只能执行一次。
 

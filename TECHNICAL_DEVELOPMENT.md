@@ -326,9 +326,10 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 2. 校验 liquidityMigrated == false。
 3. 计算可迁移 OKB 和 token。
 4. 调用 Uniswap v4 初始化或添加流动性。
-5. burn/lock LP。
-6. liquidityMigrated = true。
-7. emit LiquidityMigrated / LiquidityBurned。
+5. 校验返回 pool 和 liquidity 非零。
+6. burn/lock LP。
+7. liquidityMigrated = true。
+8. emit LiquidityMigrated / LiquidityBurned。
 ```
 
 ## 9. `SatpadRouter`

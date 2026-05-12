@@ -22,6 +22,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Replaced instant fee transfers with pull-based fee accounting through `claimableFeeOkb` and `claimFees`.
 - Added Solidity and TypeScript fee-claim scripts and included fee claim in the local smoke flow.
 - Added Factory-side length limits for metadata and social URIs.
+- Added migration result validation so zero pool or zero liquidity results revert.
 
 ### Known Blockers
 

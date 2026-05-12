@@ -63,6 +63,7 @@ contract SatpadHook is ReentrancyGuard {
     error NotSelfDeprecated();
     error LiquidityAlreadyMigrated();
     error MigrationTargetMissing();
+    error InvalidMigrationResult();
     error NoClaimableFees();
     error TokenTransferFailed();
 
@@ -277,6 +278,10 @@ contract SatpadHook is ReentrancyGuard {
         (pool, liquidity) = IMigrationTarget(migrationTarget).migrate{value: okbAmount}(
             address(token), okbAmount, tokenAmount, migrationData
         );
+        // slither-disable-next-line incorrect-equality
+        if (pool == address(0) || liquidity == 0) {
+            revert InvalidMigrationResult();
+        }
 
         emit LiquidityMigrated(address(token), pool, okbAmount, tokenAmount);
         emit LiquidityBurned(address(token), pool, liquidity);

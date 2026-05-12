@@ -90,6 +90,7 @@ Migration 是当前最大生产风险，因为它依赖外部 Uniswap v4 和 LP 
 - migration target 作为不可变地址写入 Factory/Hook。
 - target 源码可验证。
 - fork 测试证明外部调用路径和 LP 归宿。
+- target 返回的 pool 和 liquidity 必须非零。
 - 迁移完成后 emit 完整事件。
 - 迁移失败必须整体 revert。
 
