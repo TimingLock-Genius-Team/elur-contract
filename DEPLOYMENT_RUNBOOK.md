@@ -23,6 +23,16 @@ MIGRATION_TARGET=
 - 所有外部地址来自官方或团队签名来源。
 - `.env` 不进入 git。
 
+待核验的 Ethereum mainnet sat1 参考线索（不能作为部署依据）：
+
+- `Sat1HookDeployer`: `0xcbE096C140dB48199CC7e481116FD835BC33eDC6`
+- `Sat1Hook`: `0x2a0A30dd78aF7698E6f40212b8B8324fcE2ee888`
+- `Sat1Token`: `0x8f66337a0c2A02202fd91Dd596c411CF977c6060`
+- deployer EOA: `0x248C2FCEBAc1413fCA4da21B675cdaEb4fF20681`
+- `Sat1HookDeployer` deployment tx: `0x7a60ceb20059b775d9b71d113193e318aad43c73af637e54321d5712802d4f8c`
+
+这些地址当前只作为 sat1 参考实现和 Hook deployer 复用设计的待核验线索；不能直接视为 XLayer 生产外部地址，也不能用于部署参数。若 Factory 重新引入 `Sat1HookDeployer` 依赖，部署前必须通过官方来源、区块浏览器和 `cast code` / `cast tx` 在目标链确认同名合约地址、源码、code 和权限位都匹配预期。
+
 ## 2. 本地部署流程
 
 启动 Anvil：
