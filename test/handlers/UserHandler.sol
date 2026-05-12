@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
-import {BuyQuote} from "../../src/curve/CurveTypes.sol";
+import {BuyQuote, SellQuote} from "../../src/curve/CurveTypes.sol";
 import {SatpadHook} from "../../src/hook/SatpadHook.sol";
 import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
 import {SatpadToken} from "../../src/token/SatpadToken.sol";
@@ -48,12 +48,24 @@ contract UserHandler is Test {
             return;
         }
 
-        uint256 tokensIn = bound(tokenSeed, 1, balance);
+        uint256 maxSell = balance;
+        uint256 curveMinted = hook.totalMinted();
+        if (curveMinted < maxSell) {
+            maxSell = curveMinted;
+        }
+        if (maxSell == 0) {
+            return;
+        }
+
+        uint256 tokensIn = bound(tokenSeed, 1, maxSell);
+        SellQuote memory quote = hook.quoteSell(tokensIn);
         vm.roll(block.number + 1);
 
         vm.startPrank(user);
         token.approve(address(router), tokensIn);
-        try router.sell(address(token), tokensIn, 0, user) returns (uint256) {} catch {}
+        try router.sell(address(token), tokensIn, 0, user) returns (uint256) {
+            ghostFeeCollected += quote.fee;
+        } catch {}
         vm.stopPrank();
     }
 }
