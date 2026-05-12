@@ -32,6 +32,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added Forge XLayer deployment JSON output with external address code checks.
 - Aligned testing documentation with existing fork files and separated current XLayer fork coverage from future migration-adapter fork requirements.
 - Renamed Hook migration result event from `LiquidityBurned` to `LiquidityMigrationResult` so LP burn/lock proof remains the adapter's responsibility.
+- Documented `IMigrationTarget` as an adapter boundary and added concrete real-adapter acceptance checks.
 
 ### Known Blockers
 

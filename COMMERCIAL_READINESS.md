@@ -44,8 +44,16 @@
 - 添加 OKB/token 流动性。
 - 获得 LP / position 权益。
 - 将 LP / position burn 或永久锁定。
-- emit 可索引事件。
+- emit 可索引事件，至少区分 Hook 迁移结果和 adapter LP 归宿证明。
 - fork 测试证明迁移后团队 EOA 无法取回 LP。
+
+真实 adapter 的验收标准：
+
+- 构造函数固定并校验 Uniswap v4 PoolManager、PositionManager、LP recipient / burn / lock 地址。
+- `migrationData` 必须解码并验证 pool key、tick range、liquidity、amount0/amount1 max、deadline、recipient / locker。
+- adapter 必须拒绝过期 deadline、零 liquidity、零 token / OKB 数量、错误 pool currency 排序和非预期 recipient。
+- adapter 必须发出 LP 归宿证明事件，包含 token、pool、position id 或 LP 标识、liquidity 和最终 LP recipient / burn / lock 地址。
+- fork 测试必须证明 migration 后 position owner 不是团队 EOA，且团队 EOA 无法转回或赎回 LP。
 
 ### P0: XLayer fork 门禁
 
