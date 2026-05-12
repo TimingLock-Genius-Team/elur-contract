@@ -13,6 +13,7 @@ contract SatpadFactory is ISatpadFactory {
     address public immutable sat1HookDeployer;
     address public immutable uniswapV4PoolManager;
     address public immutable uniswapV4PositionManager;
+    address public immutable migrationTarget;
 
     address[] public allTokens;
     mapping(address token => TokenInfo info) private _tokenInfo;
@@ -39,11 +40,12 @@ contract SatpadFactory is ISatpadFactory {
         address feeRecipient_,
         address sat1HookDeployer_,
         address uniswapV4PoolManager_,
-        address uniswapV4PositionManager_
+        address uniswapV4PositionManager_,
+        address migrationTarget_
     ) {
         if (
             feeRecipient_ == address(0) || sat1HookDeployer_ == address(0) || uniswapV4PoolManager_ == address(0)
-                || uniswapV4PositionManager_ == address(0)
+                || uniswapV4PositionManager_ == address(0) || migrationTarget_ == address(0)
         ) {
             revert ZeroAddress();
         }
@@ -56,11 +58,15 @@ contract SatpadFactory is ISatpadFactory {
         if (uniswapV4PositionManager_.code.length == 0) {
             revert MissingExternalCode(uniswapV4PositionManager_);
         }
+        if (migrationTarget_.code.length == 0) {
+            revert MissingExternalCode(migrationTarget_);
+        }
 
         feeRecipient = feeRecipient_;
         sat1HookDeployer = sat1HookDeployer_;
         uniswapV4PoolManager = uniswapV4PoolManager_;
         uniswapV4PositionManager = uniswapV4PositionManager_;
+        migrationTarget = migrationTarget_;
     }
 
     function createToken(
@@ -73,8 +79,7 @@ contract SatpadFactory is ISatpadFactory {
 
         CurveParams memory params = Curve.defaultParams();
         SatpadToken tokenContract = new SatpadToken(name, symbol, address(this));
-        SatpadHook hookContract =
-            new SatpadHook(tokenContract, feeRecipient, address(this), uniswapV4PositionManager, params);
+        SatpadHook hookContract = new SatpadHook(tokenContract, feeRecipient, address(this), migrationTarget, params);
         SatpadRouter routerContract = new SatpadRouter(ISatpadFactory(address(this)), tokenContract, hookContract);
 
         tokenContract.setHook(address(hookContract));

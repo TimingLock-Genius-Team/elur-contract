@@ -1,4 +1,3 @@
-import { maxUint256 } from "viem";
 import { publicClient, walletClient } from "../lib/clients.js";
 import { getArg } from "../lib/args.js";
 import { hookAbi, resolveTokenInfo, routerAbi, tokenAbi } from "../lib/contracts.js";
@@ -16,7 +15,7 @@ const approvalHash = await wallet.writeContract({
   address: info.token,
   abi: tokenAbi,
   functionName: "approve",
-  args: [info.router, maxUint256],
+  args: [info.router, tokens],
 });
 await client.waitForTransactionReceipt({ hash: approvalHash });
 

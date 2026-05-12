@@ -14,6 +14,16 @@ Protocol: sat1 bonding curve + Factory + per-token Hook/Router
 
 当前开发范围不包含客户端应用。TypeScript 只用于部署、命令行调试、smoke test、地址验证和生成部署产物。
 
+开发过程中必须同步维护：
+
+- `PRODUCT_DOCUMENT.md`
+- `PRODUCT_FLOW.md`
+- `TECHNICAL_DEVELOPMENT.md`
+- `TESTING_GUIDE.md`
+- `COMMERCIAL_READINESS.md`
+- `DEPLOYMENT_RUNBOOK.md`
+- `SECURITY_MODEL.md`
+
 ## 2. 工程目录
 
 ```text
@@ -42,6 +52,9 @@ uniswap-hook-pool/
       ISatpadRouter.sol
     libraries/
       NativeOkbTransfer.sol
+    mocks/
+      LocalExternalDependency.sol
+      LocalMigrationTarget.sol
 
   test/
     unit/
@@ -51,7 +64,17 @@ uniswap-hook-pool/
     handlers/
 
   script/
+    CheckChain.s.sol
+    LocalDeployFactory.s.sol
     DeployFactory.s.sol
+    CreateToken.s.sol
+    InspectToken.s.sol
+    QuoteBuy.s.sol
+    Buy.s.sol
+    QuoteSell.s.sol
+    Sell.s.sol
+    SimulateGraduation.s.sol
+    MigrateLiquidity.s.sol
     VerifyXLayerAddresses.s.sol
 
   ts/
@@ -163,6 +186,7 @@ npm install --save-dev vitest
     "test:fork:xlayer": "forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
     "slither": "slither .",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
+    "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
     "create-token": "tsx ts/cli/create-token.ts",
     "inspect-token": "tsx ts/cli/inspect-token.ts",
     "quote:buy": "tsx ts/cli/quote-buy.ts",
@@ -186,6 +210,7 @@ TEAM_MULTISIG=
 SAT1_HOOK_DEPLOYER=
 UNISWAP_V4_POOL_MANAGER=
 UNISWAP_V4_POSITION_MANAGER=
+MIGRATION_TARGET=
 ```
 
 ## 5. 合约开发顺序
@@ -252,7 +277,8 @@ constructor(
     address feeRecipient,
     address sat1HookDeployer,
     address uniswapV4PoolManager,
-    address uniswapV4PositionManager
+    address uniswapV4PositionManager,
+    address migrationTarget
 )
 ```
 
@@ -270,7 +296,7 @@ function createToken(
 开发要求：
 
 - 所有外部地址构造时校验非零。
-- XLayer fork 测试中校验外部地址 code。
+- XLayer fork 测试中校验 sat1、Uniswap 和 migration target 外部地址 code。
 - 创建成功后写入 registry。
 - emit `TokenCreated`。
 - 不收额外部署费。
@@ -456,6 +482,7 @@ forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
   "sat1HookDeployer": "0x...",
   "uniswapV4PoolManager": "0x...",
   "uniswapV4PositionManager": "0x...",
+  "migrationTarget": "0x...",
   "curve": {
     "k": "21000000000000000000000000",
     "s": "100000000000000000000",
@@ -468,6 +495,8 @@ forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 ```
 
 部署脚本必须覆盖旧文件，或写入带 timestamp 的历史文件并更新 `latest.json`。
+
+生产部署产物还必须记录 commit hash、deployer、源码验证链接、smoke tx hash 和外部地址来源。
 
 ## 14. CI 建议
 
@@ -512,7 +541,19 @@ forge coverage
 - 未验证地址硬编码。
 - secrets 入库。
 
-## 16. 待确认事项
+## 16. 商业可用迭代规则
+
+每个阶段都必须遵循：
+
+1. 先更新产品/技术/测试文档中受影响的规则。
+2. 再写或更新测试。
+3. 再改合约、脚本或 TypeScript。
+4. 跑对应验证命令。
+5. 提交一个阶段 commit。
+
+不能把“本地 mock 跑通”等同于“主网可用”。涉及外部协议的功能必须有 fork test 和部署 runbook。
+
+## 17. 待确认事项
 
 1. 团队 Safe 多签完整地址。
 2. sat1 Hook Deployer 完整地址。

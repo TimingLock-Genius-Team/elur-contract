@@ -16,6 +16,7 @@
     "test:fork:xlayer": "forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
     "slither": "slither .",
     "script:check-chain": "forge script script/CheckChain.s.sol:CheckChain --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545}",
+    "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
     "script:deploy-local": "forge script script/LocalDeployFactory.s.sol:LocalDeployFactory --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "script:create-token": "forge script script/CreateToken.s.sol:CreateToken --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "script:inspect-token": "forge script script/InspectToken.s.sol:InspectToken --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545}",

@@ -26,13 +26,16 @@ const feeRecipient = getAddress(
   process.env.TEAM_MULTISIG ?? (await wallet.getAddresses())[0],
 );
 const sat1HookDeployer = getAddress(
-  process.env.SAT1_HOOK_DEPLOYER ?? (await deploy("MockExternalDependency.sol/MockExternalDependency.json")),
+  process.env.SAT1_HOOK_DEPLOYER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
 );
 const poolManager = getAddress(
-  process.env.UNISWAP_V4_POOL_MANAGER ?? (await deploy("MockExternalDependency.sol/MockExternalDependency.json")),
+  process.env.UNISWAP_V4_POOL_MANAGER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
 );
 const positionManager = getAddress(
-  process.env.UNISWAP_V4_POSITION_MANAGER ?? (await deploy("MockMigrationTarget.sol/MockMigrationTarget.json")),
+  process.env.UNISWAP_V4_POSITION_MANAGER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
+);
+const migrationTarget = getAddress(
+  process.env.MIGRATION_TARGET ?? (await deploy("LocalMigrationTarget.sol/LocalMigrationTarget.json")),
 );
 
 const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [
@@ -40,6 +43,7 @@ const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [
   sat1HookDeployer,
   poolManager,
   positionManager,
+  migrationTarget,
 ]);
 
 writeDeployment({
@@ -49,6 +53,7 @@ writeDeployment({
   sat1HookDeployer,
   uniswapV4PoolManager: poolManager,
   uniswapV4PositionManager: positionManager,
+  migrationTarget,
   curve: {
     k: "21000000000000000000000000",
     s: "100000000000000000000",
@@ -59,4 +64,4 @@ writeDeployment({
   createdTokens: [],
 });
 
-printJson({ chainId, factory, feeRecipient, sat1HookDeployer, poolManager, positionManager });
+printJson({ chainId, factory, feeRecipient, sat1HookDeployer, poolManager, positionManager, migrationTarget });

@@ -13,6 +13,8 @@
 - 支持 OKB buy、token sell、毕业迁移、LP burn/lock。
 - 输出完整 ABI、事件和部署产物，供第三方客户端或脚本使用。
 
+商业可用版本还必须满足 `COMMERCIAL_READINESS.md`、`DEPLOYMENT_RUNBOOK.md` 和 `SECURITY_MODEL.md` 中的门禁。本文档描述技术设计，不能替代 fork 验证、源码验证和安全审计。
+
 ## 2. 系统架构
 
 ```text
@@ -50,7 +52,8 @@ Curve
 XLayer native OKB
 sat1 Hook Deployer: 0xcbE096C1...（必须补全并验证）
 Uniswap v4 PoolManager / PositionManager（必须在 XLayer 验证）
-OpenZeppelin ERC-20 / Ownable 或等价权限模块
+Migration target（真实 Uniswap v4 + LP burn/lock 适配器，必须在 XLayer fork 验证）
+PRBMath fixed-point math
 ```
 
 ## 3. 曲线数学
@@ -187,6 +190,7 @@ address public immutable feeRecipient;
 address public immutable sat1HookDeployer;
 address public immutable uniswapV4PoolManager;
 address public immutable uniswapV4PositionManager;
+address public immutable migrationTarget;
 
 address[] public allTokens;
 mapping(address token => TokenInfo) public tokenInfo;
@@ -211,7 +215,7 @@ function getTokenInfo(address token) external view returns (TokenInfo memory);
 - name 非空且不超过 32 字符。
 - symbol 非空且不超过 8 字符。
 - metadata URI 可为空或按产品策略校验。
-- fee recipient、deployer、Uniswap 地址均非零。
+- fee recipient、deployer、Uniswap 地址、migration target 均非零。
 
 Factory 不应具备：
 
@@ -452,11 +456,13 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 1. 验证 chainId。
 2. 验证 sat1 Hook Deployer 地址有 code。
 3. 验证 Uniswap v4 地址有 code。
-4. 部署 Factory。
-5. 验证 Factory 源码。
-6. 创建测试 token。
-7. 小额 buy / sell smoke test。
-8. 保存部署产物。
+4. 验证 migration target 地址有 code。
+5. 运行 fork tests。
+6. 部署 Factory。
+7. 验证 Factory 源码。
+8. 创建测试 token。
+9. 小额 buy / sell smoke test。
+10. 保存部署产物。
 ```
 
 部署产物：
@@ -469,6 +475,7 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
   "sat1HookDeployer": "0x...",
   "uniswapV4PoolManager": "0x...",
   "uniswapV4PositionManager": "0x...",
+  "migrationTarget": "0x...",
   "curve": {
     "k": "21000000000000000000000000",
     "s": "100000000000000000000",
@@ -505,9 +512,20 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 - 未验证地址硬编码。
 - private key / RPC secret 入库。
 
-## 14. 待确认事项
+## 14. 商业可用技术缺口
 
-实现前必须确认：
+当前实现已覆盖本地 MVP，但主网商业部署前必须完成：
+
+- 将 migration target 替换为真实 Uniswap v4 + LP burn/lock 适配器。
+- 补齐 `test/fork/*` 中对真实 XLayer 外部地址和 migration path 的验证。
+- 部署脚本必须在 XLayer 上校验所有外部依赖 code。
+- deployment JSON 必须记录 chain id、commit、factory、fee recipient、sat1、Uniswap、migration target 和 curve params。
+- 源码验证命令必须成为 runbook 的一部分。
+- 审计前冻结接口和事件格式。
+
+## 15. 待确认事项
+
+商业部署前必须确认：
 
 1. 团队 Safe 多签完整地址。
 2. sat1 Hook Deployer 完整地址。

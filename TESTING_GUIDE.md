@@ -29,6 +29,8 @@ Backend smoke scripts: TypeScript + viem
 Static analysis: Slither
 ```
 
+商业可用测试还必须满足 `COMMERCIAL_READINESS.md` 和 `SECURITY_MODEL.md` 的上线门禁。本地 unit/integration/invariant 通过只能证明 MVP 行为，不能替代 XLayer fork、真实迁移适配器验证和审计。
+
 ## 2. 测试目录
 
 ```text
@@ -77,6 +79,7 @@ ts/cli/
   sell.ts
   inspect-token.ts
   simulate-graduation.ts
+  migrate-liquidity.ts
 ```
 
 ## 3. 测试命令
@@ -495,7 +498,35 @@ npm run smoke:anvil
 - 部署脚本输出完整 deployment JSON。
 - 文档与实现参数一致。
 
-## 18. 上线前清单
+## 18. 当前覆盖状态
+
+已覆盖：
+
+- Curve 数学、反函数、fee quote、rounding dust。
+- Factory 创建和参数校验。
+- Token hook-only mint/burn 和无 transfer tax。
+- Hook buy / sell 成功与失败路径。
+- Router settlement 和资产不残留。
+- Same-block sell 防护。
+- Self-deprecation 和毕业后 buy 关闭。
+- 本地 migration mock 一次性迁移。
+- 多 token 隔离。
+- Fee accounting invariant。
+- Router asset invariant。
+- Factory isolation invariant。
+- Graduation invariant。
+
+仍需补齐：
+
+- 真实 XLayer fork tests。
+- sat1 Hook Deployer 真实地址校验。
+- Uniswap v4 PoolManager / PositionManager 真实地址校验。
+- 真实 migration target 和 LP burn/lock fork 测试。
+- Gas snapshot 留档。
+- Coverage 留档。
+- 审计后回归测试。
+
+## 19. 上线前清单
 
 - [ ] 团队多签地址确认。
 - [ ] sat1 Hook Deployer 地址确认。
@@ -512,7 +543,7 @@ npm run smoke:anvil
 - [ ] Slither 无 high / medium 未处理项。
 - [ ] 合约已验证。
 
-## 19. 失败处理原则
+## 20. 失败处理原则
 
 如果测试失败：
 

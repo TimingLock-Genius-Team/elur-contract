@@ -19,15 +19,22 @@ contract SatpadTestBase is Test {
 
     MockExternalDependency internal sat1HookDeployer;
     MockExternalDependency internal poolManager;
+    MockExternalDependency internal positionManager;
     MockMigrationTarget internal migrationTarget;
     SatpadFactory internal factory;
 
     function setUp() public virtual {
         sat1HookDeployer = new MockExternalDependency();
         poolManager = new MockExternalDependency();
+        positionManager = new MockExternalDependency();
         migrationTarget = new MockMigrationTarget();
-        factory =
-            new SatpadFactory(feeRecipient, address(sat1HookDeployer), address(poolManager), address(migrationTarget));
+        factory = new SatpadFactory(
+            feeRecipient,
+            address(sat1HookDeployer),
+            address(poolManager),
+            address(positionManager),
+            address(migrationTarget)
+        );
     }
 
     function createDemoToken() internal returns (SatpadToken token, SatpadHook hook, SatpadRouter router) {
@@ -54,8 +61,13 @@ contract SatpadTestBase is Test {
     }
 
     function deployFactory(address feeRecipient_) internal returns (SatpadFactory) {
-        return
-            new SatpadFactory(feeRecipient_, address(sat1HookDeployer), address(poolManager), address(migrationTarget));
+        return new SatpadFactory(
+            feeRecipient_,
+            address(sat1HookDeployer),
+            address(poolManager),
+            address(positionManager),
+            address(migrationTarget)
+        );
     }
 
     function buy(SatpadRouter router, SatpadToken token, address buyer, uint256 okbIn)

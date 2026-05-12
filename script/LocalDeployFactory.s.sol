@@ -33,9 +33,15 @@ contract LocalDeployFactory is Script {
         vm.startBroadcast(deployerKey);
         LocalExternalDependency sat1HookDeployer = new LocalExternalDependency();
         LocalExternalDependency poolManager = new LocalExternalDependency();
-        LocalMigrationTarget positionManager = new LocalMigrationTarget();
-        factory =
-            new SatpadFactory(feeRecipient, address(sat1HookDeployer), address(poolManager), address(positionManager));
+        LocalExternalDependency positionManager = new LocalExternalDependency();
+        LocalMigrationTarget migrationTarget = new LocalMigrationTarget();
+        factory = new SatpadFactory(
+            feeRecipient,
+            address(sat1HookDeployer),
+            address(poolManager),
+            address(positionManager),
+            address(migrationTarget)
+        );
         vm.stopBroadcast();
 
         console2.log("chainId", block.chainid);
@@ -44,5 +50,6 @@ contract LocalDeployFactory is Script {
         console2.log("sat1HookDeployer", address(sat1HookDeployer));
         console2.log("uniswapV4PoolManager", address(poolManager));
         console2.log("uniswapV4PositionManager", address(positionManager));
+        console2.log("migrationTarget", address(migrationTarget));
     }
 }
