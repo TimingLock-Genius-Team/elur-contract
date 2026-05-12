@@ -40,6 +40,24 @@ contract SatpadTestBase is Test {
         router = SatpadRouter(payable(routerAddr));
     }
 
+    function createToken(string memory name, string memory symbol, address tokenCreator)
+        internal
+        returns (SatpadToken token, SatpadHook hook, SatpadRouter router)
+    {
+        vm.prank(tokenCreator);
+        (address tokenAddr, address hookAddr, address routerAddr) =
+            factory.createToken(name, symbol, "ipfs://demo", "https://demo.example");
+
+        token = SatpadToken(tokenAddr);
+        hook = SatpadHook(payable(hookAddr));
+        router = SatpadRouter(payable(routerAddr));
+    }
+
+    function deployFactory(address feeRecipient_) internal returns (SatpadFactory) {
+        return
+            new SatpadFactory(feeRecipient_, address(sat1HookDeployer), address(poolManager), address(migrationTarget));
+    }
+
     function buy(SatpadRouter router, SatpadToken token, address buyer, uint256 okbIn)
         internal
         returns (uint256 tokensOut)
