@@ -189,7 +189,7 @@ npm install --save-dev vitest
     "ci": "forge fmt --check && forge build && forge test --fuzz-runs 10000 && forge test --match-path 'test/invariant/*' && forge test --match-path 'test/fork/*' && npx tsc --noEmit && npm run slither",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
     "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
-    "script:deploy-xlayer": "GIT_COMMIT=${GIT_COMMIT:-$(git rev-parse --short HEAD)} DEPLOYMENT_NETWORK=${DEPLOYMENT_NETWORK:-xlayer} forge script script/DeployFactory.s.sol:DeployFactory --rpc-url $XLAYER_RPC_URL --broadcast --verify",
+    "script:deploy-xlayer": "GIT_COMMIT=${GIT_COMMIT:-$(git rev-parse --short HEAD)} DEPLOYED_AT=${DEPLOYED_AT:-$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")} DEPLOYMENT_NETWORK=${DEPLOYMENT_NETWORK:-xlayer} forge script script/DeployFactory.s.sol:DeployFactory --rpc-url $XLAYER_RPC_URL --broadcast --verify",
     "create-token": "tsx ts/cli/create-token.ts",
     "inspect-token": "tsx ts/cli/inspect-token.ts",
     "quote:buy": "tsx ts/cli/quote-buy.ts",

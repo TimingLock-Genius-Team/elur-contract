@@ -10,6 +10,8 @@ import {SatpadFactory} from "../src/factory/SatpadFactory.sol";
 contract DeployFactory is Script {
     using stdJson for string;
 
+    error MissingDeploymentMetadata(string envName);
+
     struct DeploymentRecord {
         address deployer;
         address factory;
@@ -63,14 +65,21 @@ contract DeployFactory is Script {
 
     function _writeDeploymentJson(DeploymentRecord memory record) internal {
         string memory network = vm.envOr("DEPLOYMENT_NETWORK", string("xlayer"));
-        string memory commit = vm.envOr("GIT_COMMIT", string("unknown"));
-        string memory deployedAt = vm.envOr("DEPLOYED_AT", vm.toString(block.timestamp));
+        string memory commit = _requiredString("GIT_COMMIT");
+        string memory deployedAt = _requiredString("DEPLOYED_AT");
 
         string memory json = _serializeDeployment(record, commit, deployedAt, _serializeCurve());
 
         string memory directory = string.concat("deployments/", network);
         vm.createDir(directory, true);
         json.write(string.concat(directory, "/latest.json"));
+    }
+
+    function _requiredString(string memory envName) internal view returns (string memory value) {
+        value = vm.envOr(envName, string(""));
+        if (bytes(value).length == 0) {
+            revert MissingDeploymentMetadata(envName);
+        }
     }
 
     function _serializeCurve() internal returns (string memory curveJson) {
