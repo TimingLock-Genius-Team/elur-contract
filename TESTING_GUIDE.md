@@ -400,7 +400,16 @@ token.balanceOf(address(router)) == 0
 - Router 不能被用来调用未注册 Hook。
 - Router quote 与 Hook quote 一致。
 
-## 14. Invariant 测试
+## 14. Event 测试
+
+关键事件必须使用 `expectEmit` 固定索引字段和 data 字段：
+
+- `TokenCreated` 必须包含 creator、metadataURI 和 socialURI。
+- `Bought` / `Sold` 必须包含 token、user、recipient 和完整 quote 会计字段。
+- `FeesClaimed` 必须包含 recipient 和 amount。
+- `LiquidityMigrated` / `LiquidityBurned` 必须包含 pool、迁移金额、token 数量和 liquidity。
+
+## 15. Invariant 测试
 
 Handler 随机执行：
 
@@ -427,7 +436,7 @@ claimFee
 - 已迁移 token 不能重复迁移。
 - LP burn/lock 后不可恢复。
 
-## 15. XLayer Fork 测试
+## 16. XLayer Fork 测试
 
 必须验证：
 
@@ -446,7 +455,7 @@ claimFee
 - 凭记忆硬编码地址。
 - 在测试中提交真实 private key 或 RPC secret。
 
-## 16. TypeScript Smoke 测试
+## 17. TypeScript Smoke 测试
 
 脚本必须覆盖：
 
@@ -476,7 +485,7 @@ write deployment JSON
 
 Smoke 失败必须退出非零状态码，方便 CI 使用。
 
-## 17. CI 门禁
+## 18. CI 门禁
 
 每个 PR 至少运行：
 
@@ -515,7 +524,7 @@ npm run smoke:anvil
 - 部署脚本输出完整 deployment JSON，包含 `commit`、`deployedAt` 和 `deployer`。
 - 文档与实现参数一致。
 
-## 18. 当前覆盖状态
+## 19. 当前覆盖状态
 
 已覆盖：
 
@@ -542,7 +551,7 @@ npm run smoke:anvil
 - Coverage 留档。
 - 审计后回归测试。
 
-## 19. 上线前清单
+## 20. 上线前清单
 
 - [ ] 团队多签地址确认。
 - [ ] Uniswap v4 地址确认。
@@ -558,7 +567,7 @@ npm run smoke:anvil
 - [ ] Slither 无 high / medium 未处理项。
 - [ ] 合约已验证。
 
-## 20. 失败处理原则
+## 21. 失败处理原则
 
 如果测试失败：
 

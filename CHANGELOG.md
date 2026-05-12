@@ -26,6 +26,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added TypeScript deployment checks for configured external addresses.
 - Extended same-block sell protection to mark both buy payer and token recipient.
 - Added coverage for fee claim recipient transfer rejection preserving accrued fees.
+- Added `expectEmit` coverage for core factory, trading, fee, and migration events.
 
 ### Known Blockers
 

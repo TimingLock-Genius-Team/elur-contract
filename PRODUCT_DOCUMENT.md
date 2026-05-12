@@ -253,7 +253,7 @@ deployment JSON
 必须事件：
 
 ```solidity
-event TokenCreated(address indexed token, address indexed hook, address indexed router, address creator, string metadataURI);
+event TokenCreated(address indexed token, address indexed hook, address indexed router, address creator, string metadataURI, string socialURI);
 event Bought(address indexed token, address indexed user, address indexed recipient, uint256 grossOkbIn, uint256 fee, uint256 tokensOut, uint256 oldOkbCum, uint256 newOkbCum);
 event Sold(address indexed token, address indexed user, address indexed recipient, uint256 tokensIn, uint256 grossOkbOut, uint256 fee, uint256 netOkbOut, uint256 oldOkbCum, uint256 newOkbCum);
 event FeesClaimed(address indexed recipient, uint256 amount);
