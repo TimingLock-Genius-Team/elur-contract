@@ -1,0 +1,31 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.26;
+
+import {console2} from "forge-std/Script.sol";
+import {ISatpadFactory} from "../src/interfaces/ISatpadFactory.sol";
+import {ISatpadHook} from "../src/interfaces/ISatpadHook.sol";
+import {ISatpadRouter} from "../src/interfaces/ISatpadRouter.sol";
+import {SatpadScriptBase} from "./SatpadScriptBase.s.sol";
+
+contract Buy is SatpadScriptBase {
+    function run() external returns (uint256 tokensOut) {
+        ISatpadFactory.TokenInfo memory info = _tokenInfo();
+        uint256 okbIn = vm.envUint("OKB_IN");
+        uint256 minTokensOut = vm.envOr("MIN_TOKENS_OUT", uint256(0));
+        address recipient = _recipient();
+
+        vm.startBroadcast(_privateKey());
+        tokensOut = ISatpadRouter(info.router).buy{value: okbIn}(info.token, minTokensOut, recipient);
+        vm.stopBroadcast();
+
+        ISatpadHook hook = ISatpadHook(info.hook);
+        console2.log("chainId", block.chainid);
+        console2.log("token", info.token);
+        console2.log("recipient", recipient);
+        console2.log("okbIn", okbIn);
+        console2.log("tokensOut", tokensOut);
+        console2.log("okbCum", hook.okbCum());
+        console2.log("totalMinted", hook.totalMinted());
+        console2.log("selfDeprecated", hook.selfDeprecated());
+    }
+}

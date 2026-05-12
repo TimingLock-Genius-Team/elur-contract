@@ -20,5 +20,7 @@ interface ISatpadHook {
 
     function quoteBuy(uint256 okbIn) external view returns (BuyQuote memory);
     function quoteSell(uint256 tokensIn) external view returns (SellQuote memory);
+    function totalMinted() external view returns (uint256);
+    function currentPrice() external view returns (uint256);
     function migrateLiquidity(bytes calldata migrationData) external returns (address pool, uint256 liquidity);
 }
