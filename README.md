@@ -117,6 +117,8 @@ npm run quote:sell -- --token <token> --tokens <amount>
 npm run sell -- --token <token> --tokens <amount> --min-out <netOkbOut>
 ```
 
+The TypeScript buy/sell CLIs require an explicit non-zero `--min-out`. Local smoke tests may pass `--allow-zero-min-out` for deterministic development flows only.
+
 Simulate graduation and migration:
 
 ```bash

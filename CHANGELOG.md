@@ -28,6 +28,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added coverage for fee claim recipient transfer rejection preserving accrued fees.
 - Added `expectEmit` coverage for core factory, trading, fee, and migration events.
 - Added migration invalid-result rollback coverage for state and asset preservation.
+- Made TypeScript buy/sell CLI reject zero `--min-out` unless explicitly allowed for local smoke flows.
 
 ### Known Blockers
 

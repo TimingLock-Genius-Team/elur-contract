@@ -13,3 +13,11 @@ export function getArg(name: string, fallback?: string): string {
 export function hasArg(name: string): boolean {
   return process.argv.includes(`--${name}`);
 }
+
+export function getRequiredMinOutArg(): bigint {
+  const minOut = BigInt(getArg("min-out"));
+  if (minOut === 0n && !hasArg("allow-zero-min-out")) {
+    throw new Error("Refusing --min-out 0 without --allow-zero-min-out");
+  }
+  return minOut;
+}

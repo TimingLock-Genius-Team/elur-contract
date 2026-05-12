@@ -39,7 +39,7 @@
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
     "claim:fees": "tsx ts/cli/claim-fees.ts",
-    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
+    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 --allow-zero-min-out && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 --allow-zero-min-out && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
   },
   "repository": {
     "type": "git",

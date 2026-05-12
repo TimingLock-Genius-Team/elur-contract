@@ -1,5 +1,5 @@
 import { publicClient, walletClient } from "../lib/clients.js";
-import { getArg } from "../lib/args.js";
+import { getArg, getRequiredMinOutArg } from "../lib/args.js";
 import { hookAbi, resolveTokenInfo, routerAbi } from "../lib/contracts.js";
 import { printJson } from "../lib/json.js";
 import { parseOkb } from "../lib/units.js";
@@ -8,7 +8,7 @@ const wallet = walletClient();
 const client = publicClient();
 const info = await resolveTokenInfo();
 const okb = parseOkb(getArg("okb"));
-const minOut = BigInt(getArg("min-out", "0"));
+const minOut = getRequiredMinOutArg();
 const recipient = getArg("recipient", (await wallet.getAddresses())[0]) as `0x${string}`;
 
 const hash = await wallet.writeContract({
