@@ -43,6 +43,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added a Solidity `MigrationData` decoder/validator with tests for the real migration adapter input boundary.
 - Made the deployment doctor CLI reject invalid `--chain-id` values before running deployment checks.
 - Added `BaseUniswapV4MigrationTarget` as a tested adapter shell for dependency validation, migration input checks, and LP custody proof events.
+- Added `UniswapV4PoolKey` to compute v4 PoolIds from validated migration data.
 
 ### Known Blockers
 

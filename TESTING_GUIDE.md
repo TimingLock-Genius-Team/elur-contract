@@ -371,7 +371,7 @@ migrateLiquidity(migrationData)
 
 如果迁移需要外部 position manager token id，必须测试 token id 所有权最终不可恢复到团队 EOA。
 
-当前 `test/unit/MigrationData.t.sol` 和 `test/unit/BaseUniswapV4MigrationTarget.t.sol` 已覆盖真实 adapter 前置输入校验：dependency code、currency ordering、pool fee、tick spacing/range、liquidity、amount max、deadline、burn / lock recipient、OKB/token max 和 LP 证明事件。真实 Uniswap v4 adapter 接入后，还必须增加 PositionManager 调用、position owner 和 LP 归宿证明的集成 / fork 测试。
+当前 `test/unit/MigrationData.t.sol`、`test/unit/UniswapV4PoolKey.t.sol` 和 `test/unit/BaseUniswapV4MigrationTarget.t.sol` 已覆盖真实 adapter 前置输入校验：dependency code、currency ordering、pool fee、tick spacing/range、liquidity、amount max、deadline、burn / lock recipient、PoolId 编码、OKB/token max 和 LP 证明事件。真实 Uniswap v4 adapter 接入后，还必须增加 PositionManager 调用、position owner 和 LP 归宿证明的集成 / fork 测试。
 
 ## 12. Fee 测试
 
@@ -411,9 +411,9 @@ token.balanceOf(address(router)) == 0
 - `TokenCreated` 必须包含 creator、metadataURI 和 socialURI。
 - `Bought` / `Sold` 必须包含 token、user、recipient 和完整 quote 会计字段。
 - `FeesClaimed` 必须包含 recipient 和 amount。
-- `LiquidityMigrated` 必须包含 pool、迁移金额和 token 数量。
-- `LiquidityMigrationResult` 必须包含 pool 和 migration target 返回的 liquidity。
-- 真实 adapter 的 LP burn/lock 事件必须包含 LP 归宿证明；`BaseUniswapV4MigrationTarget.LpCustodyProven` 是当前最小事件形状。
+- `LiquidityMigrated` 必须包含 migration target 返回的 pool / venue address、迁移金额和 token 数量。
+- `LiquidityMigrationResult` 必须包含 migration target 返回的 pool / venue address 和 liquidity。
+- 真实 adapter 的 LP burn/lock 事件必须包含 LP 归宿证明和 Uniswap v4 `PoolId`；`BaseUniswapV4MigrationTarget.LpCustodyProven` 是当前最小事件形状，后续真实 adapter 需要补齐 PoolId 事件字段。
 
 ## 15. Invariant 测试
 

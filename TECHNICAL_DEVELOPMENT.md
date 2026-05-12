@@ -331,7 +331,7 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 4. 真实 adapter 使用 `BaseUniswapV4MigrationTarget` / `MigrationData.decodeAndValidate` 或等价逻辑校验 pool key、tick、liquidity、amount max、deadline 和 burn / lock recipient。
 5. 计算可迁移 OKB 和 token。
 6. 调用 Uniswap v4 初始化或添加流动性。
-7. 校验返回 pool 和 liquidity 非零。
+7. 校验返回 pool / venue address 和 liquidity 非零；Uniswap v4 的真实 pool 身份必须额外用 `UniswapV4PoolKey.toId` 记录 `PoolId`。
 8. 真实 migration target 负责 burn/lock LP 并 emit 证明事件。
 9. liquidityMigrated = true。
 10. Hook emit LiquidityMigrated / LiquidityMigrationResult。
@@ -423,7 +423,7 @@ event LiquidityMigrationResult(address indexed token, address indexed pool, uint
 ```
 
 事件必须覆盖第三方读取协议状态所需的最小数据。
-Hook 的 `LiquidityMigrationResult` 只表示 migration target 返回结果，不宣称 LP 已 burn/lock；`BaseUniswapV4MigrationTarget` 定义了 `LpCustodyProven` 事件，真实 adapter 必须在实际 Uniswap v4 mint / lock 成功后发出等价 LP 归宿证明。
+Hook 的 `LiquidityMigrationResult` 只表示 migration target 返回结果，不宣称 LP 已 burn/lock；Uniswap v4 pool 不是独立 pool address，真实 adapter 必须用 `UniswapV4PoolKey.toId` 记录 `PoolId`，并在实际 mint / lock 成功后发出 `LpCustodyProven` 或等价 LP 归宿证明。
 
 ## 12. 部署流程
 
