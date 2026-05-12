@@ -42,12 +42,15 @@ test/
 
   integration/
     FactoryCreateToken.t.sol
+    EventEmission.t.sol
     HookBuy.t.sol
+    HookBuySell.t.sol
     HookSell.t.sol
+    GraduationMigration.t.sol
     RouterSettlement.t.sol
     SameBlockProtection.t.sol
     SelfDeprecation.t.sol
-    GraduationMigration.t.sol
+    SelfDeprecationAndMigration.t.sol
     TokenIsolation.t.sol
 
   invariant/
@@ -59,13 +62,9 @@ test/
 
   fork/
     XLayerAddressFork.t.sol
-    Sat1HookDeployerFork.t.sol
-    UniswapV4MigrationFork.t.sol
 
   handlers/
     UserHandler.sol
-    FactoryHandler.sol
-    GraduationHandler.sol
 ```
 
 TypeScript smoke：
@@ -439,16 +438,21 @@ claimFee
 
 ## 16. XLayer Fork 测试
 
-必须验证：
+当前 `XLayerAddressFork.t.sol` 已验证：
 
 - chainId 与 XLayer 配置一致。
 - Uniswap v4 PoolManager 有 code。
 - Uniswap v4 PositionManager 有 code。
 - migration target 有 code。
 - Factory 可部署。
+
+真实 Uniswap v4 migration adapter 完成后，必须新增 fork 测试覆盖：
+
 - Factory 可创建 token。
 - 小额 buy / sell 成功。
 - migration 调用路径在 fork 上可执行。
+- LP owner / burn / lock 结果可证明，团队 EOA 不能取回 LP。
+- 无效 `migrationData` 或错误 pool 参数必须 revert。
 
 禁止：
 

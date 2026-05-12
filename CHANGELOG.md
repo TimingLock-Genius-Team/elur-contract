@@ -30,6 +30,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added migration invalid-result rollback coverage for state and asset preservation.
 - Made TypeScript and Solidity buy/sell scripts reject zero min-out unless explicitly allowed for local smoke flows.
 - Added Forge XLayer deployment JSON output with external address code checks.
+- Aligned testing documentation with existing fork files and separated current XLayer fork coverage from future migration-adapter fork requirements.
 
 ### Known Blockers
 
