@@ -8,7 +8,6 @@ export type Deployment = {
   deployer: `0x${string}`;
   factory: `0x${string}`;
   feeRecipient: `0x${string}`;
-  sat1HookDeployer: `0x${string}`;
   uniswapV4PoolManager: `0x${string}`;
   uniswapV4PositionManager: `0x${string}`;
   migrationTarget: `0x${string}`;

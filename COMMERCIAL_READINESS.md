@@ -25,7 +25,6 @@
 ### P0: 外部地址验证
 
 - 团队 Safe 多签地址。
-- sat1 Hook Deployer 完整地址。
 - XLayer Uniswap v4 PoolManager 地址。
 - XLayer Uniswap v4 PositionManager 地址。
 - LP burn 或 lock 合约地址。

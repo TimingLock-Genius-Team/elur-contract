@@ -10,7 +10,6 @@ import {SatpadToken} from "../token/SatpadToken.sol";
 
 contract SatpadFactory is ISatpadFactory {
     address public immutable feeRecipient;
-    address public immutable sat1HookDeployer;
     address public immutable uniswapV4PoolManager;
     address public immutable uniswapV4PositionManager;
     address public immutable migrationTarget;
@@ -38,19 +37,15 @@ contract SatpadFactory is ISatpadFactory {
 
     constructor(
         address feeRecipient_,
-        address sat1HookDeployer_,
         address uniswapV4PoolManager_,
         address uniswapV4PositionManager_,
         address migrationTarget_
     ) {
         if (
-            feeRecipient_ == address(0) || sat1HookDeployer_ == address(0) || uniswapV4PoolManager_ == address(0)
+            feeRecipient_ == address(0) || uniswapV4PoolManager_ == address(0)
                 || uniswapV4PositionManager_ == address(0) || migrationTarget_ == address(0)
         ) {
             revert ZeroAddress();
-        }
-        if (sat1HookDeployer_.code.length == 0) {
-            revert MissingExternalCode(sat1HookDeployer_);
         }
         if (uniswapV4PoolManager_.code.length == 0) {
             revert MissingExternalCode(uniswapV4PoolManager_);
@@ -63,7 +58,6 @@ contract SatpadFactory is ISatpadFactory {
         }
 
         feeRecipient = feeRecipient_;
-        sat1HookDeployer = sat1HookDeployer_;
         uniswapV4PoolManager = uniswapV4PoolManager_;
         uniswapV4PositionManager = uniswapV4PositionManager_;
         migrationTarget = migrationTarget_;

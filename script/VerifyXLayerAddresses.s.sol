@@ -13,7 +13,6 @@ contract VerifyXLayerAddresses is Script {
             revert WrongChain(block.chainid);
         }
 
-        _requireCode(vm.envAddress("SAT1_HOOK_DEPLOYER"));
         _requireCode(vm.envAddress("UNISWAP_V4_POOL_MANAGER"));
         _requireCode(vm.envAddress("UNISWAP_V4_POSITION_MANAGER"));
         _requireCode(vm.envAddress("MIGRATION_TARGET"));

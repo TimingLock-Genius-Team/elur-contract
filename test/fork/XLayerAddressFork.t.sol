@@ -12,7 +12,6 @@ contract XLayerAddressForkTest is Test {
             return;
         }
 
-        _requireCode(vm.envAddress("SAT1_HOOK_DEPLOYER"));
         _requireCode(vm.envAddress("UNISWAP_V4_POOL_MANAGER"));
         _requireCode(vm.envAddress("UNISWAP_V4_POSITION_MANAGER"));
         _requireCode(vm.envAddress("MIGRATION_TARGET"));
@@ -24,16 +23,13 @@ contract XLayerAddressForkTest is Test {
         }
 
         address feeRecipient = vm.envAddress("TEAM_MULTISIG");
-        address sat1HookDeployer = vm.envAddress("SAT1_HOOK_DEPLOYER");
         address poolManager = vm.envAddress("UNISWAP_V4_POOL_MANAGER");
         address positionManager = vm.envAddress("UNISWAP_V4_POSITION_MANAGER");
         address migrationTarget = vm.envAddress("MIGRATION_TARGET");
 
-        SatpadFactory factory =
-            new SatpadFactory(feeRecipient, sat1HookDeployer, poolManager, positionManager, migrationTarget);
+        SatpadFactory factory = new SatpadFactory(feeRecipient, poolManager, positionManager, migrationTarget);
 
         assertEq(factory.feeRecipient(), feeRecipient);
-        assertEq(factory.sat1HookDeployer(), sat1HookDeployer);
         assertEq(factory.uniswapV4PoolManager(), poolManager);
         assertEq(factory.uniswapV4PositionManager(), positionManager);
         assertEq(factory.migrationTarget(), migrationTarget);

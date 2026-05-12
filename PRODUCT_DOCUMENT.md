@@ -297,9 +297,8 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 商业部署前必须确认：
 
 1. 团队多签完整地址。
-2. sat1 Hook Deployer 完整地址。
-3. XLayer 上 Uniswap v4 PoolManager / PositionManager 地址。
-4. LP burn 或 lock 的具体合约路径。
-5. metadata URI 是否只存 URI，还是部分字段上链。
-6. fee recipient 是否能稳定接收 native OKB。
-7. entropy 启动窗口是否进入 MVP。
+2. XLayer 上 Uniswap v4 PoolManager / PositionManager 地址。
+3. LP burn 或 lock 的具体合约路径。
+4. metadata URI 是否只存 URI，还是部分字段上链。
+5. fee recipient 是否能稳定接收 native OKB。
+6. entropy 启动窗口是否进入 MVP。

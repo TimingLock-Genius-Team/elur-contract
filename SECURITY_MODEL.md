@@ -20,7 +20,6 @@
 协议必须显式信任：
 
 - Factory 构造时传入的 fee recipient。
-- Factory 构造时传入的 sat1 Hook Deployer。
 - Factory 构造时传入的 Uniswap v4 PoolManager / PositionManager。
 - Factory 构造时传入的 migration target。
 

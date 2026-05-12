@@ -8,13 +8,12 @@ contract DeployFactory is Script {
     function run() external returns (SatpadFactory factory) {
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address feeRecipient = vm.envAddress("TEAM_MULTISIG");
-        address sat1HookDeployer = vm.envAddress("SAT1_HOOK_DEPLOYER");
         address poolManager = vm.envAddress("UNISWAP_V4_POOL_MANAGER");
         address positionManager = vm.envAddress("UNISWAP_V4_POSITION_MANAGER");
         address migrationTarget = vm.envAddress("MIGRATION_TARGET");
 
         vm.startBroadcast(deployerKey);
-        factory = new SatpadFactory(feeRecipient, sat1HookDeployer, poolManager, positionManager, migrationTarget);
+        factory = new SatpadFactory(feeRecipient, poolManager, positionManager, migrationTarget);
         vm.stopBroadcast();
     }
 }

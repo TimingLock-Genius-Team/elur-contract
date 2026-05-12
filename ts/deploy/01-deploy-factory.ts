@@ -41,9 +41,6 @@ const deployedAt = new Date().toISOString();
 const feeRecipient = getAddress(
   process.env.TEAM_MULTISIG ?? deployer,
 );
-const sat1HookDeployer = getAddress(
-  process.env.SAT1_HOOK_DEPLOYER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
-);
 const poolManager = getAddress(
   process.env.UNISWAP_V4_POOL_MANAGER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
 );
@@ -56,7 +53,6 @@ const migrationTarget = getAddress(
 
 const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [
   feeRecipient,
-  sat1HookDeployer,
   poolManager,
   positionManager,
   migrationTarget,
@@ -69,7 +65,6 @@ writeDeployment({
   deployer,
   factory,
   feeRecipient,
-  sat1HookDeployer,
   uniswapV4PoolManager: poolManager,
   uniswapV4PositionManager: positionManager,
   migrationTarget,
@@ -90,7 +85,6 @@ printJson({
   deployer,
   factory,
   feeRecipient,
-  sat1HookDeployer,
   poolManager,
   positionManager,
   migrationTarget,

@@ -213,7 +213,7 @@ createToken(name, symbol, metadataURI, socialURI)
 - name 超长 revert。
 - symbol 超长 revert。
 - fee recipient zero address 部署失败。
-- sat1 Hook Deployer 地址无 code 时部署或初始化失败。
+- Uniswap v4 或 migration target 地址无 code 时部署或初始化失败。
 
 权限验证：
 
@@ -429,7 +429,6 @@ claimFee（如果采用 claim 模型）
 必须验证：
 
 - chainId 与 XLayer 配置一致。
-- sat1 Hook Deployer 完整地址有 code。
 - Uniswap v4 PoolManager 有 code。
 - Uniswap v4 PositionManager 有 code。
 - migration target 有 code。
@@ -534,7 +533,6 @@ npm run smoke:anvil
 仍需补齐：
 
 - 真实 XLayer fork tests。
-- sat1 Hook Deployer 真实地址校验。
 - Uniswap v4 PoolManager / PositionManager 真实地址校验。
 - 真实 migration target 和 LP burn/lock fork 测试。
 - Gas snapshot 留档。
@@ -544,7 +542,6 @@ npm run smoke:anvil
 ## 19. 上线前清单
 
 - [ ] 团队多签地址确认。
-- [ ] sat1 Hook Deployer 地址确认。
 - [ ] Uniswap v4 地址确认。
 - [ ] Curve 数学测试通过。
 - [ ] Factory 创建测试通过。

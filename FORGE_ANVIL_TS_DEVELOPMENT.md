@@ -210,7 +210,6 @@ XLAYER_CHAIN_ID=196
 ANVIL_RPC_URL=http://127.0.0.1:8545
 PRIVATE_KEY=
 TEAM_MULTISIG=
-SAT1_HOOK_DEPLOYER=
 UNISWAP_V4_POOL_MANAGER=
 UNISWAP_V4_POSITION_MANAGER=
 MIGRATION_TARGET=
@@ -278,7 +277,6 @@ Factory 构造参数：
 ```solidity
 constructor(
     address feeRecipient,
-    address sat1HookDeployer,
     address uniswapV4PoolManager,
     address uniswapV4PositionManager,
     address migrationTarget
@@ -299,7 +297,7 @@ function createToken(
 开发要求：
 
 - 所有外部地址构造时校验非零。
-- XLayer fork 测试中校验 sat1、Uniswap 和 migration target 外部地址 code。
+- XLayer fork 测试中校验 Uniswap 和 migration target 外部地址 code。
 - 创建成功后写入 registry。
 - emit `TokenCreated`。
 - 不收额外部署费。
@@ -465,7 +463,6 @@ XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC
 验证：
 
 - chainId 正确。
-- `SAT1_HOOK_DEPLOYER` 有 code。
 - `UNISWAP_V4_POOL_MANAGER` 有 code。
 - `UNISWAP_V4_POSITION_MANAGER` 有 code。
 - Factory 可部署。
@@ -485,7 +482,6 @@ XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC
   "deployer": "0x...",
   "factory": "0x...",
   "feeRecipient": "0x...",
-  "sat1HookDeployer": "0x...",
   "uniswapV4PoolManager": "0x...",
   "uniswapV4PositionManager": "0x...",
   "migrationTarget": "0x...",
@@ -562,9 +558,8 @@ forge coverage
 ## 17. 待确认事项
 
 1. 团队 Safe 多签完整地址。
-2. sat1 Hook Deployer 完整地址。
-3. XLayer Uniswap v4 PoolManager / PositionManager 地址。
-4. LP burn/lock 的具体接口。
-5. fee 模型：即时转账或累计 claim。
-6. entropy 是否进入 MVP。
-7. metadata URI 最大长度。
+2. XLayer Uniswap v4 PoolManager / PositionManager 地址。
+3. LP burn/lock 的具体接口。
+4. fee 模型：即时转账或累计 claim。
+5. entropy 是否进入 MVP。
+6. metadata URI 最大长度。

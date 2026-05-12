@@ -50,7 +50,6 @@ Curve
 
 ```text
 XLayer native OKB
-sat1 Hook Deployer: 0xcbE096C1...（必须补全并验证）
 Uniswap v4 PoolManager / PositionManager（必须在 XLayer 验证）
 Migration target（真实 Uniswap v4 + LP burn/lock 适配器，必须在 XLayer fork 验证）
 PRBMath fixed-point math
@@ -178,7 +177,7 @@ function isSelfDeprecated(uint256 okbCum, CurveParams memory params) internal pu
 
 - 对外开放 `createToken`。
 - 校验创建参数。
-- 部署或调用 sat1 Hook Deployer 创建独立 Token、Hook、Router。
+- 直接部署独立 Token、Hook、Router。
 - 固定曲线参数。
 - 记录 token 列表。
 - 发出 `TokenCreated` 事件。
@@ -187,7 +186,6 @@ function isSelfDeprecated(uint256 okbCum, CurveParams memory params) internal pu
 
 ```solidity
 address public immutable feeRecipient;
-address public immutable sat1HookDeployer;
 address public immutable uniswapV4PoolManager;
 address public immutable uniswapV4PositionManager;
 address public immutable migrationTarget;
@@ -454,15 +452,14 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 
 ```text
 1. 验证 chainId。
-2. 验证 sat1 Hook Deployer 地址有 code。
-3. 验证 Uniswap v4 地址有 code。
-4. 验证 migration target 地址有 code。
-5. 运行 fork tests。
-6. 部署 Factory。
-7. 验证 Factory 源码。
-8. 创建测试 token。
-9. 小额 buy / sell smoke test。
-10. 保存部署产物。
+2. 验证 Uniswap v4 地址有 code。
+3. 验证 migration target 地址有 code。
+4. 运行 fork tests。
+5. 部署 Factory。
+6. 验证 Factory 源码。
+7. 创建测试 token。
+8. 小额 buy / sell smoke test。
+9. 保存部署产物。
 ```
 
 部署产物：
@@ -475,7 +472,6 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
   "deployer": "0x...",
   "factory": "0x...",
   "feeRecipient": "0x...",
-  "sat1HookDeployer": "0x...",
   "uniswapV4PoolManager": "0x...",
   "uniswapV4PositionManager": "0x...",
   "migrationTarget": "0x...",
@@ -531,9 +527,8 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 商业部署前必须确认：
 
 1. 团队 Safe 多签完整地址。
-2. sat1 Hook Deployer 完整地址。
-3. XLayer Uniswap v4 PoolManager / PositionManager 完整地址。
-4. LP burn/lock 的具体接口。
-5. fee 使用即时转账还是累计 claim。
-6. entropy 是否进入 MVP。
-7. metadata URI 最大长度和校验策略。
+2. XLayer Uniswap v4 PoolManager / PositionManager 完整地址。
+3. LP burn/lock 的具体接口。
+4. fee 使用即时转账还是累计 claim。
+5. entropy 是否进入 MVP。
+6. metadata URI 最大长度和校验策略。

@@ -11,7 +11,6 @@ XLAYER_RPC_URL=
 ANVIL_RPC_URL=http://127.0.0.1:8545
 PRIVATE_KEY=
 TEAM_MULTISIG=
-SAT1_HOOK_DEPLOYER=
 UNISWAP_V4_POOL_MANAGER=
 UNISWAP_V4_POSITION_MANAGER=
 MIGRATION_TARGET=
@@ -141,7 +140,6 @@ XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC
 Fork 测试必须验证：
 
 - `block.chainid` 是预期 XLayer chain id。
-- `SAT1_HOOK_DEPLOYER` 有 code。
 - `UNISWAP_V4_POOL_MANAGER` 有 code。
 - `UNISWAP_V4_POSITION_MANAGER` 有 code。
 - `MIGRATION_TARGET` 有 code。
@@ -201,7 +199,6 @@ commit:
 deployer:
 factory:
 feeRecipient:
-sat1HookDeployer:
 uniswapV4PoolManager:
 uniswapV4PositionManager:
 migrationTarget:

@@ -17,6 +17,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Split `migrationTarget` from `uniswapV4PositionManager` so production migration can be verified independently.
 - TypeScript sell CLI approves only the exact sell amount.
 - README now describes SATPAD instead of Foundry boilerplate.
+- Removed the unused `sat1HookDeployer` constructor dependency from the direct deployment architecture.
 
 ### Known Blockers
 

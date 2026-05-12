@@ -31,23 +31,16 @@ contract LocalDeployFactory is Script {
         address feeRecipient = vm.envOr("TEAM_MULTISIG", vm.addr(deployerKey));
 
         vm.startBroadcast(deployerKey);
-        LocalExternalDependency sat1HookDeployer = new LocalExternalDependency();
         LocalExternalDependency poolManager = new LocalExternalDependency();
         LocalExternalDependency positionManager = new LocalExternalDependency();
         LocalMigrationTarget migrationTarget = new LocalMigrationTarget();
-        factory = new SatpadFactory(
-            feeRecipient,
-            address(sat1HookDeployer),
-            address(poolManager),
-            address(positionManager),
-            address(migrationTarget)
-        );
+        factory =
+            new SatpadFactory(feeRecipient, address(poolManager), address(positionManager), address(migrationTarget));
         vm.stopBroadcast();
 
         console2.log("chainId", block.chainid);
         console2.log("factory", address(factory));
         console2.log("feeRecipient", feeRecipient);
-        console2.log("sat1HookDeployer", address(sat1HookDeployer));
         console2.log("uniswapV4PoolManager", address(poolManager));
         console2.log("uniswapV4PositionManager", address(positionManager));
         console2.log("migrationTarget", address(migrationTarget));
