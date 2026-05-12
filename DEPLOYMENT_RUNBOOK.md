@@ -68,6 +68,7 @@ npm run sell -- --token <token> --tokens <amount> --min-out <quote.netOkbOut>
 ```bash
 npm run simulate:graduation -- --token <token>
 npm run migrate:liquidity -- --token <token>
+npm run claim:fees -- --token <token>
 ```
 
 ## 3. Solidity Script 流程
@@ -104,6 +105,7 @@ npm run script:sell
 ```bash
 npm run script:simulate-graduation
 npm run script:migrate-liquidity
+npm run script:claim-fees
 ```
 
 ## 4. 阶段验证

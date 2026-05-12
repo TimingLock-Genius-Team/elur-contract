@@ -19,6 +19,7 @@ contract SatpadHook is ReentrancyGuard {
 
     CurveParams public curveParams;
     uint256 public okbCum;
+    uint256 public claimableFeeOkb;
     bool public selfDeprecated;
     bool public liquidityMigrated;
 
@@ -46,11 +47,13 @@ contract SatpadHook is ReentrancyGuard {
         uint256 newOkbCum
     );
     event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
+    event FeesClaimed(address indexed recipient, uint256 amount);
     event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
     event LiquidityBurned(address indexed token, address indexed pool, uint256 liquidity);
 
     error OnlyFactory();
     error OnlyRouter();
+    error OnlyFeeRecipient();
     error RouterAlreadySet();
     error ZeroAddress();
     error SlippageExceeded();
@@ -60,6 +63,7 @@ contract SatpadHook is ReentrancyGuard {
     error NotSelfDeprecated();
     error LiquidityAlreadyMigrated();
     error MigrationTargetMissing();
+    error NoClaimableFees();
     error TokenTransferFailed();
 
     constructor(
@@ -98,6 +102,13 @@ contract SatpadHook is ReentrancyGuard {
         _;
     }
 
+    modifier onlyFeeRecipient() {
+        if (msg.sender != feeRecipient) {
+            revert OnlyFeeRecipient();
+        }
+        _;
+    }
+
     function setRouter(address router_) external onlyFactory {
         if (router != address(0)) {
             revert RouterAlreadySet();
@@ -131,6 +142,7 @@ contract SatpadHook is ReentrancyGuard {
         bool deprecatedAfterBuy = Curve.isSelfDeprecated(quote.newOkbCum, curveParams);
 
         okbCum = quote.newOkbCum;
+        claimableFeeOkb += quote.fee;
         lastBuyBlock[payer] = block.number;
         if (deprecatedAfterBuy) {
             selfDeprecated = true;
@@ -141,8 +153,6 @@ contract SatpadHook is ReentrancyGuard {
         if (deprecatedAfterBuy) {
             emit SelfDeprecated(address(token), quote.newOkbCum, quote.newMinted);
         }
-
-        feeRecipient.safeTransfer(quote.fee);
 
         emit Bought(
             address(token),
@@ -176,14 +186,14 @@ contract SatpadHook is ReentrancyGuard {
         if (quote.netOkbOut < minOkbOut) {
             revert SlippageExceeded();
         }
-        if (address(this).balance < quote.grossOkbOut) {
+        if (address(this).balance - claimableFeeOkb < quote.grossOkbOut) {
             revert InsufficientReserve();
         }
 
         okbCum = quote.newOkbCum;
+        claimableFeeOkb += quote.fee;
         token.burn(address(this), tokensIn);
 
-        feeRecipient.safeTransfer(quote.fee);
         recipient.safeTransfer(quote.netOkbOut);
 
         emit Sold(
@@ -221,6 +231,22 @@ contract SatpadHook is ReentrancyGuard {
         return Curve.marginalPrice(okbCum, curveParams);
     }
 
+    function claimFees(address recipient) external nonReentrant onlyFeeRecipient returns (uint256 amount) {
+        if (recipient == address(0)) {
+            revert ZeroAddress();
+        }
+
+        amount = claimableFeeOkb;
+        if (amount == 0) {
+            revert NoClaimableFees();
+        }
+
+        claimableFeeOkb = 0;
+        recipient.safeTransfer(amount);
+
+        emit FeesClaimed(recipient, amount);
+    }
+
     function migrateLiquidity(bytes calldata migrationData)
         external
         nonReentrant
@@ -238,7 +264,7 @@ contract SatpadHook is ReentrancyGuard {
 
         liquidityMigrated = true;
 
-        uint256 okbAmount = address(this).balance;
+        uint256 okbAmount = address(this).balance - claimableFeeOkb;
         uint256 tokenAmount = curveParams.k > token.totalSupply() ? curveParams.k - token.totalSupply() : 0;
         if (tokenAmount > 0) {
             token.mint(address(this), tokenAmount);

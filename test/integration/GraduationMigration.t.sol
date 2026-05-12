@@ -21,17 +21,23 @@ contract GraduationMigrationTest is SatpadTestBase {
             buy(router, token, trader, 10e18);
         }
 
-        uint256 reserve = address(hook).balance;
+        uint256 claimableFees = hook.claimableFeeOkb();
+        uint256 reserve = address(hook).balance - claimableFees;
         uint256 supplyBefore = token.totalSupply();
         (address pool, uint256 liquidity) = hook.migrateLiquidity("migration-data");
 
         assertEq(pool, migrationTarget.pool());
         assertEq(liquidity, migrationTarget.liquidity());
-        assertEq(address(hook).balance, 0);
+        assertEq(address(hook).balance, claimableFees);
         assertEq(migrationTarget.lastOkbAmount(), reserve);
         assertEq(migrationTarget.lastTokenAmount(), 21_000_000e18 - supplyBefore);
         assertEq(token.balanceOf(address(migrationTarget)), 21_000_000e18 - supplyBefore);
         assertTrue(hook.liquidityMigrated());
+
+        uint256 recipientBefore = recipient.balance;
+        vm.prank(feeRecipient);
+        hook.claimFees(recipient);
+        assertEq(recipient.balance - recipientBefore, claimableFees);
     }
 
     function test_RevertWhen_MigrationRunsTwice() public {

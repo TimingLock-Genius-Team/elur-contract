@@ -28,6 +28,7 @@
     "script:sell": "forge script script/Sell.s.sol:Sell --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast --skip-simulation --slow",
     "script:simulate-graduation": "forge script script/SimulateGraduation.s.sol:SimulateGraduation --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "script:migrate-liquidity": "forge script script/MigrateLiquidity.s.sol:MigrateLiquidity --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
+    "script:claim-fees": "forge script script/ClaimFees.s.sol:ClaimFees --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
     "create-token": "tsx ts/cli/create-token.ts",
     "inspect-token": "tsx ts/cli/inspect-token.ts",
@@ -37,7 +38,8 @@
     "sell": "tsx ts/cli/sell.ts",
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
-    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity"
+    "claim:fees": "tsx ts/cli/claim-fees.ts",
+    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
   },
   "repository": {
     "type": "git",

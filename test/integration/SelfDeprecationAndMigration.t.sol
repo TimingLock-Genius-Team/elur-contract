@@ -41,15 +41,16 @@ contract SelfDeprecationAndMigrationTest is SatpadTestBase {
             buy(router, token, trader, 10e18);
         }
 
-        uint256 hookBalance = address(hook).balance;
+        uint256 claimableFees = hook.claimableFeeOkb();
+        uint256 reserve = address(hook).balance - claimableFees;
         (address pool, uint256 liquidity) = hook.migrateLiquidity("satpad-local-migration");
 
         assertEq(pool, migrationTarget.pool());
         assertEq(liquidity, migrationTarget.liquidity());
         assertEq(migrationTarget.lastToken(), address(token));
-        assertEq(migrationTarget.lastOkbAmount(), hookBalance);
+        assertEq(migrationTarget.lastOkbAmount(), reserve);
         assertTrue(hook.liquidityMigrated());
-        assertEq(address(hook).balance, 0);
+        assertEq(address(hook).balance, claimableFees);
 
         vm.expectRevert(SatpadHook.LiquidityAlreadyMigrated.selector);
         hook.migrateLiquidity("");

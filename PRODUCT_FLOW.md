@@ -81,7 +81,7 @@ Trader
       -> okbCum = oldOkbCum + effectiveOkbIn
       -> lastBuyBlock[payer] = block.number
       -> mint tokensOut to recipient
-      -> transfer fee to feeRecipient
+      -> claimableFeeOkb += fee
       -> emit Bought
       -> maybe emit SelfDeprecated
 ```
@@ -114,10 +114,10 @@ Trader
       -> require tokensIn > 0
       -> require lastBuyBlock[seller] != block.number
       -> require netOkbOut >= minOkbOut
-      -> require Hook reserve >= grossOkbOut
+      -> require Hook curve reserve >= grossOkbOut
       -> okbCum = newOkbCum
       -> burn tokensIn
-      -> transfer fee to feeRecipient
+      -> claimableFeeOkb += fee
       -> transfer netOkbOut to recipient
       -> emit Sold
 ```
@@ -185,7 +185,7 @@ Caller
   -> SatpadHook.migrateLiquidity(migrationData)
       -> require selfDeprecated == true
       -> require liquidityMigrated == false
-      -> compute okbAmount = hook.balance
+      -> compute okbAmount = hook.balance - claimableFeeOkb
       -> compute tokenAmount = K - token.totalSupply()
       -> mint tokenAmount to Hook
       -> transfer tokenAmount to migrationTarget
@@ -204,14 +204,15 @@ Caller
 
 ## 8. Fee 流程
 
-当前 MVP 选择即时转账 fee：
+当前实现选择 pull-based fee：
 
 ```text
-buy fee -> feeRecipient immediately
-sell fee -> feeRecipient immediately
+buy fee -> claimableFeeOkb
+sell fee -> claimableFeeOkb
+feeRecipient -> claimFees(recipient)
 ```
 
-优点是会计简单，缺点是 fee recipient 如果拒收 native OKB，会导致 buy / sell revert。生产部署必须使用可接收 native OKB 的 Safe 多签或专用接收合约。
+优点是 buy / sell 不依赖 fee recipient 的 native OKB 接收逻辑，避免团队多签或接收合约异常导致用户交易 revert。claim 只能由 `feeRecipient` 发起，且只能提取 `claimableFeeOkb`，不能提取用户可赎回曲线储备。
 
 ## 9. 第三方集成流程
 

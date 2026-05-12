@@ -60,16 +60,21 @@ contract HookBuyTest is SatpadTestBase {
         assertEq(token.balanceOf(trader), 0);
     }
 
-    function test_RevertWhen_FeeRecipientRejectsNativeOkb() public {
+    function test_BuySucceedsWhenFeeRecipientRejectsNativeOkb() public {
         MockRejectNative rejectNative = new MockRejectNative();
         SatpadFactory rejectingFactory = deployFactory(address(rejectNative));
 
         vm.prank(creator);
-        (address tokenAddr,, address routerAddr) = rejectingFactory.createToken("Reject", "REJ", "ipfs://reject", "");
+        (address tokenAddr, address hookAddr, address routerAddr) =
+            rejectingFactory.createToken("Reject", "REJ", "ipfs://reject", "");
+        SatpadHook hook = SatpadHook(payable(hookAddr));
+        BuyQuote memory quote = hook.quoteBuy(1e18);
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert();
         SatpadRouter(payable(routerAddr)).buy{value: 1e18}(tokenAddr, 0, trader);
+
+        assertEq(hook.okbCum(), quote.effectiveOkbIn);
+        assertEq(hook.claimableFeeOkb(), quote.fee);
     }
 }

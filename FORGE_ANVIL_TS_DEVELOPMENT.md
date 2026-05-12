@@ -197,7 +197,8 @@ npm install --save-dev vitest
     "sell": "tsx ts/cli/sell.ts",
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
-    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity"
+    "claim:fees": "tsx ts/cli/claim-fees.ts",
+    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
   }
 }
 ```
@@ -558,6 +559,5 @@ forge coverage
 1. 团队 Safe 多签完整地址。
 2. XLayer Uniswap v4 PoolManager / PositionManager 地址。
 3. LP burn/lock 的具体接口。
-4. fee 模型：即时转账或累计 claim。
-5. entropy 是否进入 MVP。
-6. metadata URI 最大长度。
+4. entropy 是否进入 MVP。
+5. metadata URI 最大长度。

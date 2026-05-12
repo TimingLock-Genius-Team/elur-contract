@@ -7,6 +7,7 @@ interface ISatpadHook {
     function token() external view returns (address);
     function router() external view returns (address);
     function okbCum() external view returns (uint256);
+    function claimableFeeOkb() external view returns (uint256);
     function selfDeprecated() external view returns (bool);
     function liquidityMigrated() external view returns (bool);
     function getCurveParams() external view returns (CurveParams memory);
@@ -22,5 +23,6 @@ interface ISatpadHook {
     function quoteSell(uint256 tokensIn) external view returns (SellQuote memory);
     function totalMinted() external view returns (uint256);
     function currentPrice() external view returns (uint256);
+    function claimFees(address recipient) external returns (uint256 amount);
     function migrateLiquidity(bytes calldata migrationData) external returns (address pool, uint256 liquidity);
 }

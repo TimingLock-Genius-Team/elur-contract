@@ -297,7 +297,7 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 3. 校验 tokensOut >= minTokensOut。
 4. okbCum = quote.newOkbCum。
 5. lastBuyBlock[payer] = block.number。
-6. fee 转 team multisig 或计入 claimable fee。
+6. `claimableFeeOkb += fee`。
 7. token.mint(recipient, tokensOut)。
 8. 如果达到阈值，selfDeprecated = true。
 9. emit Bought / SelfDeprecated。
@@ -310,10 +310,10 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 2. Router 已把 token 转入或已授权 Hook burn。
 3. Curve.quoteSell(okbCum, tokensIn, params)。
 4. 校验 netOkbOut >= minOkbOut。
-5. 校验 Hook OKB balance 足够支付。
+5. 校验 Hook 曲线储备足够支付。
 6. okbCum = quote.newOkbCum。
 7. token.burn(seller, tokensIn) 或 burn 已转入 token。
-8. fee 转 team multisig 或计入 claimable fee。
+8. `claimableFeeOkb += fee`。
 9. recipient 收到 netOkbOut。
 10. emit Sold。
 ```
@@ -360,34 +360,18 @@ Router 必须从 Factory 读取 token 对应 Hook，避免用户传入任意 Hoo
 
 ## 10. Fee 模型
 
-两种可选实现：
-
-### 即时转账
-
-buy / sell 时直接把 fee 发送给 team multisig。
-
-优点：
-
-- 会计简单。
-- Hook 不需要维护 fee claim 状态。
-
-风险：
-
-- fee recipient fallback 失败会导致交易 revert。
-
-### 累计 Claim
-
 Hook 记录 `claimableFeeOkb`，team multisig 主动 claim。
 
 优点：
 
 - buy / sell 不依赖 fee recipient 接收逻辑。
+- fee 不进入 `okbCum`，也不会被迁移进 LP。
 
 风险：
 
 - 需要额外状态和 claim 权限测试。
 
-MVP 推荐即时转账到 Safe 多签；如果多签接收 OKB 存在兼容问题，再切换累计 claim。
+当前实现采用累计 claim。只有 `feeRecipient` 能调用 `claimFees(recipient)`，且 claim 只能提取 `claimableFeeOkb`。
 
 ## 11. 事件
 
@@ -423,6 +407,8 @@ event Sold(
     uint256 oldOkbCum,
     uint256 newOkbCum
 );
+
+event FeesClaimed(address indexed recipient, uint256 amount);
 
 event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
 event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
@@ -516,7 +502,7 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 - 将 migration target 替换为真实 Uniswap v4 + LP burn/lock 适配器。
 - 补齐 `test/fork/*` 中对真实 XLayer 外部地址和 migration path 的验证。
 - 部署脚本必须在 XLayer 上校验所有外部依赖 code。
-- deployment JSON 必须记录 chain id、commit、factory、fee recipient、sat1、Uniswap、migration target 和 curve params。
+- deployment JSON 必须记录 chain id、commit、factory、fee recipient、Uniswap、migration target 和 curve params。
 - 源码验证命令必须成为 runbook 的一部分。
 - 审计前冻结接口和事件格式。
 
@@ -527,6 +513,5 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 1. 团队 Safe 多签完整地址。
 2. XLayer Uniswap v4 PoolManager / PositionManager 完整地址。
 3. LP burn/lock 的具体接口。
-4. fee 使用即时转账还是累计 claim。
-5. entropy 是否进入 MVP。
-6. metadata URI 最大长度和校验策略。
+4. entropy 是否进入 MVP。
+5. metadata URI 最大长度和校验策略。

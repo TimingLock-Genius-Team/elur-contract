@@ -45,14 +45,14 @@
 攻击面：
 
 - Slippage 设置过宽导致用户收到更少 token。
-- fee recipient 拒收 native OKB 导致交易 revert。
+- fee recipient claim 到拒收 native OKB 的 recipient 导致 claim revert。
 - 恶意 recipient 回调。
 - rounding dust 累积。
 
 防护：
 
 - 用户传入 `minTokensOut`。
-- fee recipient 必须是可接收 native OKB 的地址。
+- fee recipient 必须能主动 claim，claim recipient 必须可接收 native OKB。
 - `buy` 使用 CEI 和 `nonReentrant`。
 - rounding dust 在 unit/fuzz/invariant 中定义上限。
 
@@ -97,7 +97,7 @@ Migration 是当前最大生产风险，因为它依赖外部 Uniswap v4 和 LP 
 
 外部调用包括：
 
-- native OKB 转账到 fee recipient。
+- native OKB fee 累计到 `claimableFeeOkb`，由 fee recipient 主动 claim。
 - native OKB 转账到 sell recipient。
 - ERC-20 mint / burn / transfer。
 - migration target 调用。

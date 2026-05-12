@@ -148,6 +148,9 @@ npm run buy -- --token <address> --okb 1 --min-out <value>
 npm run quote:sell -- --token <address> --tokens <value>
 npm run sell -- --token <address> --tokens <value> --min-out <value>
 npm run inspect-token -- --token <address>
+npm run simulate:graduation -- --token <address>
+npm run migrate:liquidity -- --token <address>
+npm run claim:fees -- --token <address>
 ```
 
 ## 4. Curve 单元测试
@@ -363,22 +366,16 @@ migrateLiquidity(migrationData)
 
 ## 12. Fee 测试
 
-即时转账模型：
-
-- buy fee 立即发送 team multisig。
-- sell fee 立即发送 team multisig。
-- fee transfer failure revert。
-- fee 不进入 `okbCum`。
-- fee 不影响毕业判断。
-
 累计 claim 模型：
 
 - fee 累计到 `claimableFeeOkb`。
 - 只有 team multisig 可 claim。
 - claim 不得提取用户可赎回储备。
 - claim 后 emit event。
+- fee recipient 拒收 native OKB 不得导致 buy / sell revert。
+- 迁移只迁移曲线储备，不迁移未 claim fee。
 
-项目只能选择一种模型进入 MVP，测试必须与实现一致。
+当前实现采用累计 claim，测试必须覆盖 claim 权限、claim 后余额、迁移后 fee 仍可领取。
 
 ## 13. Router Asset 测试
 
@@ -407,7 +404,7 @@ buy
 sell
 triggerGraduation
 migrateLiquidity
-claimFee（如果采用 claim 模型）
+claimFee
 ```
 
 不变量：
@@ -420,7 +417,7 @@ claimFee（如果采用 claim 模型）
 - sell 不因 selfDeprecated 被关闭。
 - same-block sell 永远失败。
 - Router 永远不残留资产。
-- fee recipient 收到的 fee 等于事件累计 fee。
+- `claimableFeeOkb` 等于事件累计 fee。
 - 已迁移 token 不能重复迁移。
 - LP burn/lock 后不可恢复。
 

@@ -48,7 +48,7 @@ contract FactoryIsolationInvariantTest is StdInvariant, SatpadTestBase {
     }
 
     function invariant_EachHookReserveTracksOwnCurve() public view {
-        assertApproxEqAbs(address(hookA).balance, hookA.okbCum(), 10_000, "hook A reserve");
-        assertApproxEqAbs(address(hookB).balance, hookB.okbCum(), 10_000, "hook B reserve");
+        assertApproxEqAbs(address(hookA).balance - hookA.claimableFeeOkb(), hookA.okbCum(), 10_000, "hook A reserve");
+        assertApproxEqAbs(address(hookB).balance - hookB.claimableFeeOkb(), hookB.okbCum(), 10_000, "hook B reserve");
     }
 }

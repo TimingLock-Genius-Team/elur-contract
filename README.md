@@ -122,6 +122,7 @@ Simulate graduation and migration:
 ```bash
 npm run simulate:graduation -- --token <token>
 npm run migrate:liquidity -- --token <token>
+npm run claim:fees -- --token <token>
 ```
 
 Run the full local smoke flow:

@@ -23,7 +23,9 @@ contract CurveStateInvariantTest is StdInvariant, SatpadTestBase {
     }
 
     function invariant_HookReserveTracksOkbCum() public view {
-        assertApproxEqAbs(address(hook).balance, hook.okbCum(), 10_000, "reserve must track okbCum");
+        assertApproxEqAbs(
+            address(hook).balance - hook.claimableFeeOkb(), hook.okbCum(), 10_000, "reserve must track okbCum"
+        );
     }
 
     function invariant_RouterNeverKeepsAssets() public view {

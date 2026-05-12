@@ -21,11 +21,11 @@ contract FeeAccountingInvariantTest is StdInvariant, SatpadTestBase {
         targetContract(address(handler));
     }
 
-    function invariant_FeeRecipientBalanceEqualsCollectedFees() public view {
-        assertEq(feeRecipient.balance, handler.ghostFeeCollected(), "fee recipient balance");
+    function invariant_ClaimableFeesEqualCollectedFees() public view {
+        assertEq(hook.claimableFeeOkb(), handler.ghostFeeCollected(), "claimable fees");
     }
 
     function invariant_FeesNeverEnterCurveReserve() public view {
-        assertApproxEqAbs(address(hook).balance, hook.okbCum(), 10_000, "hook reserve excludes fees");
+        assertApproxEqAbs(address(hook).balance - hook.claimableFeeOkb(), hook.okbCum(), 10_000, "curve reserve");
     }
 }

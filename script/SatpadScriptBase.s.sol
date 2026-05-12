@@ -42,6 +42,7 @@ abstract contract SatpadScriptBase is Script {
         console2.log("metadataURI", info.metadataURI);
         console2.log("socialURI", info.socialURI);
         console2.log("okbCum", hook.okbCum());
+        console2.log("claimableFeeOkb", hook.claimableFeeOkb());
         console2.log("totalMinted", hook.totalMinted());
         console2.log("tokenSupply", ISatpadToken(info.token).totalSupply());
         console2.log("selfDeprecated", hook.selfDeprecated());

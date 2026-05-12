@@ -185,10 +185,12 @@ recipient = team multisig
 - fee recipient 必须在部署或初始化时设置为非零地址。
 - fee 不进入 `okbCum`。
 - fee 不推动毕业进度。
+- fee 累计到 Hook 的 `claimableFeeOkb`。
+- 只有 fee recipient 可以调用 `claimFees(recipient)`。
 - fee recipient 不能提取用户可赎回储备。
 - 事件必须记录 gross、fee、net/effective。
 
-当前实现选择即时转账模型。生产部署必须使用可接收 native OKB 的团队 Safe 多签或专用接收合约，否则 buy / sell 会因 fee 转账失败而整体 revert。
+当前实现选择累计 claim 模型。buy / sell 不会因为 fee recipient 拒收 native OKB 而 revert；fee recipient 只在主动 claim 时需要提供可接收 native OKB 的 recipient。
 
 ## 8. 毕业规格
 
@@ -244,6 +246,7 @@ deployment JSON
 event TokenCreated(address indexed token, address indexed hook, address indexed router, address creator, string metadataURI);
 event Bought(address indexed token, address indexed user, address indexed recipient, uint256 grossOkbIn, uint256 fee, uint256 tokensOut, uint256 oldOkbCum, uint256 newOkbCum);
 event Sold(address indexed token, address indexed user, address indexed recipient, uint256 tokensIn, uint256 grossOkbOut, uint256 fee, uint256 netOkbOut, uint256 oldOkbCum, uint256 newOkbCum);
+event FeesClaimed(address indexed recipient, uint256 amount);
 event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
 event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
 event LiquidityBurned(address indexed token, address indexed pool, uint256 liquidity);
@@ -300,5 +303,4 @@ event LiquidityBurned(address indexed token, address indexed pool, uint256 liqui
 2. XLayer 上 Uniswap v4 PoolManager / PositionManager 地址。
 3. LP burn 或 lock 的具体合约路径。
 4. metadata URI 是否只存 URI，还是部分字段上链。
-5. fee recipient 是否能稳定接收 native OKB。
-6. entropy 启动窗口是否进入 MVP。
+5. entropy 启动窗口是否进入 MVP。

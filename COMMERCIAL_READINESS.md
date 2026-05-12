@@ -11,7 +11,7 @@
 | Factory | 已实现 | 无许可创建 token/hook/router，记录 registry。 |
 | Hook buy/sell | 已实现 | 使用 `okbCum` 单状态、slippage、same-block sell 防护。 |
 | Router | 已实现 | 验证 registry，交易后不保留资产。 |
-| Fee | 已实现 | 即时 native OKB 转账到 `feeRecipient`。 |
+| Fee | 已实现 | native OKB fee 累计到 `claimableFeeOkb`，由 `feeRecipient` 主动 claim。 |
 | Graduation | 已实现 | 达阈值后 buy 关闭，sell 保持开放。 |
 | Migration | 本地适配 | 当前通过 mock/adapter 接口验证流程，真实 Uniswap v4 target 仍待实现和 fork 测试。 |
 | Solidity scripts | 已实现本地流 | 本地 Anvil deploy/create/quote/buy/sell/graduation/migration 可跑。 |
@@ -85,6 +85,7 @@ Fork 测试必须覆盖：
 - native OKB 转账失败会 revert。
 - Slippage 参数由用户控制，不在合约中默认跳过。
 - fee 不进入 `okbCum`。
+- 未 claim fee 不进入 liquidity migration。
 - `okbCum` 是唯一曲线主状态。
 - Factory 不能删除 token 或修改曲线。
 - Creator 不能 mint/burn/暂停/拉黑。

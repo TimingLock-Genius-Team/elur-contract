@@ -8,11 +8,10 @@ import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
 import {SatpadToken} from "../../src/token/SatpadToken.sol";
 
 contract HookBuySellTest is SatpadTestBase {
-    function test_BuyUsesEffectiveOkbForCurveAndTransfersFee() public {
+    function test_BuyUsesEffectiveOkbForCurveAndAccruesFee() public {
         (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
 
         BuyQuote memory quote = hook.quoteBuy(1e18);
-        uint256 feeBefore = feeRecipient.balance;
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
@@ -22,10 +21,10 @@ contract HookBuySellTest is SatpadTestBase {
         assertEq(hook.okbCum(), quote.effectiveOkbIn);
         assertEq(hook.lastBuyBlock(trader), block.number);
         assertEq(token.balanceOf(recipient), quote.tokensOut);
-        assertEq(feeRecipient.balance - feeBefore, quote.fee);
+        assertEq(hook.claimableFeeOkb(), quote.fee);
         assertEq(address(router).balance, 0);
         assertEq(token.balanceOf(address(router)), 0);
-        assertEq(address(hook).balance, quote.effectiveOkbIn);
+        assertEq(address(hook).balance, quote.effectiveOkbIn + quote.fee);
     }
 
     function test_RevertWhen_BuySlippageOrMaxBuyFails() public {
@@ -42,13 +41,13 @@ contract HookBuySellTest is SatpadTestBase {
         router.buy{value: 1e18}(address(token), type(uint256).max, trader);
     }
 
-    function test_SellReducesOkbCumPaysRecipientAndFee() public {
+    function test_SellReducesOkbCumPaysRecipientAndAccruesFee() public {
         (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 2e18);
 
         vm.roll(block.number + 1);
         SellQuote memory quote = hook.quoteSell(tokensOut / 2);
-        uint256 feeBefore = feeRecipient.balance;
+        uint256 claimableBefore = hook.claimableFeeOkb();
         uint256 recipientBefore = recipient.balance;
 
         vm.startPrank(trader);
@@ -59,9 +58,33 @@ contract HookBuySellTest is SatpadTestBase {
         assertEq(okbOut, quote.netOkbOut);
         assertEq(hook.okbCum(), quote.newOkbCum);
         assertEq(recipient.balance - recipientBefore, quote.netOkbOut);
-        assertEq(feeRecipient.balance - feeBefore, quote.fee);
+        assertEq(hook.claimableFeeOkb() - claimableBefore, quote.fee);
         assertEq(token.balanceOf(address(router)), 0);
         assertEq(address(router).balance, 0);
+    }
+
+    function test_FeeRecipientCanClaimAccruedFees() public {
+        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        BuyQuote memory quote = hook.quoteBuy(1e18);
+        buy(router, token, trader, 1e18);
+
+        uint256 recipientBefore = recipient.balance;
+
+        vm.prank(feeRecipient);
+        hook.claimFees(recipient);
+
+        assertEq(recipient.balance - recipientBefore, quote.fee);
+        assertEq(hook.claimableFeeOkb(), 0);
+        assertEq(address(hook).balance, hook.okbCum());
+    }
+
+    function test_RevertWhen_NonFeeRecipientClaimsFees() public {
+        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        buy(router, token, trader, 1e18);
+
+        vm.prank(trader);
+        vm.expectRevert(SatpadHook.OnlyFeeRecipient.selector);
+        hook.claimFees(trader);
     }
 
     function test_SameBlockSellProtectionIsPerUser() public {
