@@ -38,6 +38,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added TypeScript deployment network selection via `DEPLOYMENT_NETWORK` / `--network` and CI-covered Node tests.
 - Added TypeScript RPC client network selection for Anvil and XLayer.
 - Added a TypeScript deployment doctor to validate deployment JSON structure, expected chain id, and deployed code.
+- Made deployment doctor code checks run sequentially for deterministic diagnostics.
 
 ### Known Blockers
 

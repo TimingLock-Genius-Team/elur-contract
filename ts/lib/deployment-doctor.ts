@@ -168,12 +168,12 @@ export async function doctorDeployment(
   const codeReader = options.codeReader;
   if (codeReader) {
     const deploymentWithType = deployment as Partial<Deployment>;
-    const codeChecks: Array<Promise<void>> = [];
+    const codeChecks: Array<() => Promise<void>> = [];
 
     for (const field of contractAddressFields) {
       const address = deploymentWithType[field];
       if (validAddress(address)) {
-        codeChecks.push(checkCode(field, address, codeReader, errors, warnings));
+        codeChecks.push(() => checkCode(field, address, codeReader, errors, warnings));
       }
     }
 
@@ -186,13 +186,15 @@ export async function doctorDeployment(
         for (const field of createdTokenAddressFields) {
           const address = entry[field];
           if (validAddress(address)) {
-            codeChecks.push(checkCode(`createdTokens[${index}].${field}`, address, codeReader, errors, warnings));
+            codeChecks.push(() => checkCode(`createdTokens[${index}].${field}`, address, codeReader, errors, warnings));
           }
         }
       });
     }
 
-    await Promise.all(codeChecks);
+    for (const codeCheck of codeChecks) {
+      await codeCheck();
+    }
   }
 
   return { ok: errors.length === 0, errors, warnings };
