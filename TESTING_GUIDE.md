@@ -258,7 +258,8 @@ Router.buy{value: X}(token, minTokensOut, recipient)
 - `effectiveOkbIn = X - fee`。
 - `okbCum` 增加 `effectiveOkbIn`。
 - token mint 给 recipient。
-- `lastBuyBlock[user] = block.number`。
+- `lastBuyBlock[payer] = block.number`。
+- `lastBuyBlock[recipient] = block.number`。
 - fee 进入团队多签或 claimable fee。
 - emit `Bought`。
 - 达到阈值时 emit `SelfDeprecated`。
@@ -318,6 +319,7 @@ sell() -> success
 必须覆盖：
 
 - 同一用户 buy 后同块 sell revert。
+- buyer 和 recipient 不同时，recipient 同块 sell revert。
 - 不同用户不被错误阻止。
 - 多 token 情况下 lastBuyBlock 不串扰。
 - failed buy 不应写入 lastBuyBlock。

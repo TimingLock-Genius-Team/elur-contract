@@ -67,7 +67,8 @@
 
 防护：
 
-- `lastBuyBlock[user] != block.number`。
+- buy 成功后同时标记 payer 和 token recipient 的 `lastBuyBlock`。
+- sell 要求 `lastBuyBlock[seller] != block.number`，避免买给第三方后由 recipient 同块卖出。
 - 前端和脚本默认精确授权。
 - Hook 在转账前校验储备。
 - native transfer 失败 revert。

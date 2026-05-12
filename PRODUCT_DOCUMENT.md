@@ -142,7 +142,8 @@ tokensOut = newMinted - oldMinted
 
 ```text
 okbCum = newOkbCum
-lastBuyBlock[user] = block.number
+lastBuyBlock[payer] = block.number
+lastBuyBlock[recipient] = block.number
 ```
 
 成功条件：
@@ -176,7 +177,7 @@ okbCum = newOkbCum
 - `tokensIn > 0`。
 - `tokensIn <= userBalance`。
 - `netOkbOut >= minOkbOut`。
-- `lastBuyBlock[user] != block.number`。
+- `lastBuyBlock[seller] != block.number`。
 - Hook 有足够 OKB 支付 `netOkbOut`。
 
 ## 7. 费用规格

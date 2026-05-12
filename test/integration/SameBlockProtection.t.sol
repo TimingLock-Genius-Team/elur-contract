@@ -36,6 +36,22 @@ contract SameBlockProtectionTest is SatpadTestBase {
         vm.stopPrank();
     }
 
+    function test_RecipientCannotSellInSameBlockWhenBuyerIsDifferent() public {
+        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        address buyer = makeAddr("buyer");
+        address tokenRecipient = makeAddr("tokenRecipient");
+
+        vm.deal(buyer, 1e18);
+        vm.prank(buyer);
+        uint256 tokensOut = router.buy{value: 1e18}(address(token), 0, tokenRecipient);
+
+        vm.startPrank(tokenRecipient);
+        token.approve(address(router), tokensOut);
+        vm.expectRevert(SatpadHook.SameBlockSell.selector);
+        router.sell(address(token), tokensOut / 2, 0, tokenRecipient);
+        vm.stopPrank();
+    }
+
     function test_LastBuyBlockDoesNotCrossTokens() public {
         (SatpadToken tokenA,, SatpadRouter routerA) = createToken("Alpha", "ALPHA", creator);
         (SatpadToken tokenB,, SatpadRouter routerB) = createToken("Beta", "BETA", creator);

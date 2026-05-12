@@ -145,6 +145,7 @@ contract SatpadHook is ReentrancyGuard {
         okbCum = quote.newOkbCum;
         claimableFeeOkb += quote.fee;
         lastBuyBlock[payer] = block.number;
+        lastBuyBlock[recipient] = block.number;
         if (deprecatedAfterBuy) {
             selfDeprecated = true;
         }

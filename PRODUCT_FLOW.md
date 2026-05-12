@@ -87,6 +87,7 @@ Trader
       -> require tokensOut >= minTokensOut
       -> okbCum = oldOkbCum + effectiveOkbIn
       -> lastBuyBlock[payer] = block.number
+      -> lastBuyBlock[recipient] = block.number
       -> mint tokensOut to recipient
       -> claimableFeeOkb += fee
       -> emit Bought
@@ -107,7 +108,7 @@ tokensOut = Curve.totalMinted(newOkbCum) - Curve.totalMinted(oldOkbCum)
 - 必须先调用 quote。
 - 必须向用户展示 gross input、fee、effective input、tokens out、预估价格和 slippage。
 - 必须设置非零且合理的 `minTokensOut`。
-- buy 后同一用户同一区块不能 sell。
+- buy 后 payer 和 token recipient 在同一区块都不能 sell。
 
 ## 4. Sell 流程
 
@@ -149,12 +150,15 @@ netOkbOut = grossOkbOut - fee
 
 ## 5. Same-Block 防护流程
 
-同一用户在同一区块 buy 后不能 sell 同一 token：
+同一地址在同一区块 buy 或收到 buy 铸币后不能 sell 同一 token：
 
 ```text
 block N:
-  user buys token A
+  user buys token A to self
   user sells token A -> revert SameBlockSell
+
+  buyer buys token A to recipient
+  recipient sells token A -> revert SameBlockSell
 
 block N + 1:
   user sells token A -> success

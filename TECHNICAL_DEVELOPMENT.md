@@ -298,10 +298,11 @@ function migrateLiquidity(bytes calldata migrationData) external returns (addres
 3. 校验 tokensOut >= minTokensOut。
 4. okbCum = quote.newOkbCum。
 5. lastBuyBlock[payer] = block.number。
-6. `claimableFeeOkb += fee`。
-7. token.mint(recipient, tokensOut)。
-8. 如果达到阈值，selfDeprecated = true。
-9. emit Bought / SelfDeprecated。
+6. lastBuyBlock[recipient] = block.number。
+7. `claimableFeeOkb += fee`。
+8. token.mint(recipient, tokensOut)。
+9. 如果达到阈值，selfDeprecated = true。
+10. emit Bought / SelfDeprecated。
 ```
 
 ### Sell 状态流
