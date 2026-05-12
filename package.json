@@ -1,0 +1,50 @@
+{
+  "name": "uniswap-hook-pool",
+  "version": "1.0.0",
+  "description": "SATPAD contract backend built with Foundry, Anvil, and TypeScript.",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  },
+  "scripts": {
+    "anvil": "anvil --chain-id 31337",
+    "build": "forge build",
+    "test": "forge test",
+    "test:fuzz": "forge test --fuzz-runs 10000",
+    "test:invariant": "forge test --match-path 'test/invariant/*'",
+    "test:fork:xlayer": "forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "slither": "slither .",
+    "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
+    "create-token": "tsx ts/cli/create-token.ts",
+    "inspect-token": "tsx ts/cli/inspect-token.ts",
+    "quote:buy": "tsx ts/cli/quote-buy.ts",
+    "buy": "tsx ts/cli/buy.ts",
+    "quote:sell": "tsx ts/cli/quote-sell.ts",
+    "sell": "tsx ts/cli/sell.ts",
+    "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
+    "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
+    "smoke:anvil": "npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TimingLock-Genius-Team/satpad-contract.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/TimingLock-Genius-Team/satpad-contract/issues"
+  },
+  "homepage": "https://github.com/TimingLock-Genius-Team/satpad-contract#readme",
+  "dependencies": {
+    "dotenv": "^17.4.2",
+    "viem": "^2.48.11"
+  },
+  "devDependencies": {
+    "@types/node": "^25.7.0",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.3"
+  }
+}
