@@ -33,6 +33,24 @@ async function deploy(artifact: string, args: readonly unknown[] = []) {
   return getAddress(receipt.contractAddress);
 }
 
+async function requireCode(label: string, address: `0x${string}`) {
+  const code = await publicRpc.getCode({ address });
+  if (!code || code === "0x") {
+    throw new Error(`${label} has no code at ${address}`);
+  }
+}
+
+async function envOrDeploy(label: string, envName: string, localArtifact: string) {
+  const configured = process.env[envName];
+  if (configured) {
+    const address = getAddress(configured);
+    await requireCode(label, address);
+    return address;
+  }
+
+  return deploy(localArtifact);
+}
+
 const chainId = await publicRpc.getChainId();
 const deployer = getAddress((await wallet.getAddresses())[0]);
 const commit = currentCommit();
@@ -41,14 +59,20 @@ const deployedAt = new Date().toISOString();
 const feeRecipient = getAddress(
   process.env.TEAM_MULTISIG ?? deployer,
 );
-const poolManager = getAddress(
-  process.env.UNISWAP_V4_POOL_MANAGER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
+const poolManager = await envOrDeploy(
+  "UNISWAP_V4_POOL_MANAGER",
+  "UNISWAP_V4_POOL_MANAGER",
+  "LocalExternalDependency.sol/LocalExternalDependency.json",
 );
-const positionManager = getAddress(
-  process.env.UNISWAP_V4_POSITION_MANAGER ?? (await deploy("LocalExternalDependency.sol/LocalExternalDependency.json")),
+const positionManager = await envOrDeploy(
+  "UNISWAP_V4_POSITION_MANAGER",
+  "UNISWAP_V4_POSITION_MANAGER",
+  "LocalExternalDependency.sol/LocalExternalDependency.json",
 );
-const migrationTarget = getAddress(
-  process.env.MIGRATION_TARGET ?? (await deploy("LocalMigrationTarget.sol/LocalMigrationTarget.json")),
+const migrationTarget = await envOrDeploy(
+  "MIGRATION_TARGET",
+  "MIGRATION_TARGET",
+  "LocalMigrationTarget.sol/LocalMigrationTarget.json",
 );
 
 const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [

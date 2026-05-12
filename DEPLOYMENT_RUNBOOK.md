@@ -160,6 +160,12 @@ Fork 测试必须验证：
 4. 确认 `.env` 地址。
 5. 运行完整验证。
 
+TypeScript 部署脚本在环境变量提供外部地址时会检查这些地址是否已有 code：
+
+- `UNISWAP_V4_POOL_MANAGER`
+- `UNISWAP_V4_POSITION_MANAGER`
+- `MIGRATION_TARGET`
+
 部署：
 
 ```bash
