@@ -1,14 +1,15 @@
+import { artifacts } from "../config/artifacts.js";
+import { readDeployment, writeDeployment } from "../config/deployments.js";
 import { abiOf } from "../lib/artifacts.js";
 import { walletClient, publicClient } from "../lib/clients.js";
 import { getArg } from "../lib/args.js";
-import { readDeployment, writeDeployment } from "../lib/deployments.js";
 import { printJson } from "../lib/json.js";
 import { normalizeTokenInfo } from "../lib/contracts.js";
 
 const deployment = readDeployment();
 const wallet = walletClient();
 const publicRpc = publicClient();
-const factoryAbi = abiOf("SatpadFactory.sol/SatpadFactory.json");
+const factoryAbi = abiOf(artifacts.factory);
 
 const name = getArg("name");
 const symbol = getArg("symbol");

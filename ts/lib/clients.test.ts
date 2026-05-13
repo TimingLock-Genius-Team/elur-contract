@@ -1,5 +1,6 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
+import { ANVIL_CHAIN_ID, DEFAULT_ANVIL_RPC_URL, XLAYER_CHAIN_ID } from "../config/chains.js";
 import { chainConfig, rpcUrl } from "./clients.js";
 
 function restoreEnv(name: string, value: string | undefined): void {
@@ -29,8 +30,8 @@ test("rpcUrl defaults to local anvil", () => {
 
   try {
     withArgv(["node", "script"], () => {
-      assert.equal(rpcUrl(), "http://127.0.0.1:8545");
-      assert.equal(chainConfig().id, 31337);
+      assert.equal(rpcUrl(), DEFAULT_ANVIL_RPC_URL);
+      assert.equal(chainConfig().id, ANVIL_CHAIN_ID);
     });
   } finally {
     restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
@@ -49,7 +50,7 @@ test("rpcUrl uses xlayer RPC and chain id for xlayer network", () => {
   try {
     withArgv(["node", "script"], () => {
       assert.equal(rpcUrl(), "https://xlayer.example");
-      assert.equal(chainConfig().id, 196);
+      assert.equal(chainConfig().id, XLAYER_CHAIN_ID);
     });
   } finally {
     restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
@@ -67,7 +68,7 @@ test("--network overrides DEPLOYMENT_NETWORK for RPC selection", () => {
   try {
     withArgv(["node", "script", "--network", "anvil"], () => {
       assert.equal(rpcUrl(), "http://anvil.example");
-      assert.equal(chainConfig().id, 31337);
+      assert.equal(chainConfig().id, ANVIL_CHAIN_ID);
     });
   } finally {
     restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);

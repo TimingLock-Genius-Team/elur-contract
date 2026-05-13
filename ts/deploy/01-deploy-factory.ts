@@ -1,8 +1,10 @@
 import { execSync } from "node:child_process";
 import { getAddress } from "viem";
+import { artifacts } from "../config/artifacts.js";
+import { defaultCurveParams } from "../config/params.js";
+import { writeDeployment } from "../config/deployments.js";
 import { publicClient, walletClient } from "../lib/clients.js";
 import { bytecodeOf, abiOf } from "../lib/artifacts.js";
-import { writeDeployment } from "../lib/deployments.js";
 import { printJson } from "../lib/json.js";
 
 const wallet = walletClient();
@@ -62,20 +64,20 @@ const feeRecipient = getAddress(
 const poolManager = await envOrDeploy(
   "UNISWAP_V4_POOL_MANAGER",
   "UNISWAP_V4_POOL_MANAGER",
-  "LocalExternalDependency.sol/LocalExternalDependency.json",
+  artifacts.localExternalDependency,
 );
 const positionManager = await envOrDeploy(
   "UNISWAP_V4_POSITION_MANAGER",
   "UNISWAP_V4_POSITION_MANAGER",
-  "LocalExternalDependency.sol/LocalExternalDependency.json",
+  artifacts.localExternalDependency,
 );
 const migrationTarget = await envOrDeploy(
   "MIGRATION_TARGET",
   "MIGRATION_TARGET",
-  "LocalMigrationTarget.sol/LocalMigrationTarget.json",
+  artifacts.localMigrationTarget,
 );
 
-const factory = await deploy("SatpadFactory.sol/SatpadFactory.json", [
+const factory = await deploy(artifacts.factory, [
   feeRecipient,
   migrationTarget,
 ]);
@@ -90,13 +92,7 @@ writeDeployment({
   uniswapV4PoolManager: poolManager,
   uniswapV4PositionManager: positionManager,
   migrationTarget,
-  curve: {
-    k: "21000000000000000000000000",
-    s: "100000000000000000000",
-    feeBps: 30,
-    selfDeprecationBps: 9900,
-    maxBuyOkb: "10000000000000000000",
-  },
+  curve: defaultCurveParams,
   createdTokens: [],
 });
 

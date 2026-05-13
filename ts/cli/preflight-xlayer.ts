@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { printJson } from "../lib/json.js";
 import { validateXLayerPreflight } from "../lib/preflight.js";
 

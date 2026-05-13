@@ -55,7 +55,7 @@ test("writeMigrationTargetDeployment records constructor dependencies", () => {
   const originalNetwork = process.env.DEPLOYMENT_NETWORK;
   const originalArgv = process.argv;
   const originalCwd = cwd();
-  const tempDir = mkdtempSync(join(tmpdir(), "satpad-migration-target-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-migration-target-"));
 
   process.env.DEPLOYMENT_NETWORK = "xlayer";
   process.argv = ["node", "script"];
@@ -91,6 +91,17 @@ test("doctorMigrationTargetDeployment reports malformed records", async () => {
   ]);
 });
 
+test("doctorMigrationTargetDeployment rejects deployer as LP recipient", async () => {
+  const result = await doctorMigrationTargetDeployment({
+    ...record,
+    deployer: "0x000000000000000000000000000000000000dead",
+    lpRecipient: "0x000000000000000000000000000000000000dEaD",
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["lpRecipient must not equal deployer"]);
+});
+
 test("doctorMigrationTargetDeployment checks chain id and deployed code", async () => {
   const codeReader: DeploymentCodeReader = {
     getChainId: async () => 31337,
@@ -113,7 +124,7 @@ test("doctor-migration-target CLI validates a recorded target without RPC", () =
   const originalNetwork = process.env.DEPLOYMENT_NETWORK;
   const originalArgv = process.argv;
   const originalCwd = cwd();
-  const tempDir = mkdtempSync(join(tmpdir(), "satpad-migration-target-cli-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-migration-target-cli-"));
   const scriptPath = join(originalCwd, "ts", "cli", "doctor-migration-target.ts");
   const tsxLoaderPath = join(originalCwd, "node_modules", "tsx", "dist", "loader.mjs");
 

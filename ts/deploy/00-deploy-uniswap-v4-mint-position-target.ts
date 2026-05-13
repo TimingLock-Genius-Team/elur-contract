@@ -1,14 +1,15 @@
 import { execSync } from "node:child_process";
 import { getAddress } from "viem";
-import { abiOf, bytecodeOf } from "../lib/artifacts.js";
-import { publicClient, walletClient } from "../lib/clients.js";
+import { artifacts } from "../config/artifacts.js";
 import {
   migrationTargetDeploymentPath,
   writeMigrationTargetDeployment,
-} from "../lib/migration-target-deployment.js";
+} from "../config/migration-target-deployments.js";
+import { abiOf, bytecodeOf } from "../lib/artifacts.js";
+import { publicClient, walletClient } from "../lib/clients.js";
 import { printJson } from "../lib/json.js";
 
-const artifact = "UniswapV4MintPositionTarget.sol/UniswapV4MintPositionTarget.json";
+const artifact = artifacts.uniswapV4MintPositionTarget;
 const wallet = walletClient();
 const publicRpc = publicClient();
 

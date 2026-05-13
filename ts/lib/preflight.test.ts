@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
-import { validateXLayerPreflight } from "./preflight.js";
+import { validateXLayerPreflight, validateXLayerReadinessPreflight } from "./preflight.js";
 
 const validEnv: NodeJS.ProcessEnv = {
   DEPLOYMENT_NETWORK: "xlayer",
@@ -18,6 +18,30 @@ const validEnv: NodeJS.ProcessEnv = {
 
 test("validateXLayerPreflight accepts complete production env", () => {
   assert.deepEqual(validateXLayerPreflight(validEnv), { ok: true, errors: [], warnings: [] });
+});
+
+test("validateXLayerReadinessPreflight accepts read-only gate env without deploy secrets", () => {
+  const {
+    PRIVATE_KEY,
+    GIT_COMMIT,
+    DEPLOYED_AT,
+    ...readinessEnv
+  } = validEnv;
+
+  assert.equal(PRIVATE_KEY, validEnv.PRIVATE_KEY);
+  assert.equal(GIT_COMMIT, validEnv.GIT_COMMIT);
+  assert.equal(DEPLOYED_AT, validEnv.DEPLOYED_AT);
+  assert.deepEqual(validateXLayerReadinessPreflight(readinessEnv), { ok: true, errors: [], warnings: [] });
+});
+
+test("validateXLayerReadinessPreflight rejects non-XLayer chain id overrides", () => {
+  const result = validateXLayerReadinessPreflight({
+    ...validEnv,
+    XLAYER_CHAIN_ID: "31337",
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["XLAYER_CHAIN_ID must be 196 when set"]);
 });
 
 test("validateXLayerPreflight reports missing env and malformed values", () => {
@@ -62,4 +86,28 @@ test("preflight-xlayer CLI emits JSON and exits non-zero on invalid env", () => 
   assert.equal(output.ok, false);
   assert.match(output.errors.join("\n"), /PRIVATE_KEY must be a 32-byte hex string/);
   assert.match(output.errors.join("\n"), /XLAYER_RPC_URL is required/);
+});
+
+test("preflight-xlayer-readiness CLI does not require PRIVATE_KEY or deployment provenance", () => {
+  const result = spawnSync(process.execPath, [
+    "--import",
+    "tsx",
+    "ts/cli/preflight-xlayer-readiness.ts",
+  ], {
+    env: {
+      ...process.env,
+      DEPLOYMENT_NETWORK: "xlayer",
+      LP_RECIPIENT: validEnv.LP_RECIPIENT,
+      MIGRATION_TARGET: validEnv.MIGRATION_TARGET,
+      NODE_OPTIONS: "--no-warnings",
+      TEAM_MULTISIG: validEnv.TEAM_MULTISIG,
+      UNISWAP_V4_POOL_MANAGER: validEnv.UNISWAP_V4_POOL_MANAGER,
+      UNISWAP_V4_POSITION_MANAGER: validEnv.UNISWAP_V4_POSITION_MANAGER,
+      XLAYER_RPC_URL: validEnv.XLAYER_RPC_URL,
+    },
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 0);
+  assert.deepEqual(JSON.parse(result.stdout), { ok: true, errors: [], warnings: [] });
 });

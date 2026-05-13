@@ -1,19 +1,17 @@
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { isAddress } from "viem";
-import { deploymentNetwork } from "./deployments.js";
+import {
+  migrationTargetDeploymentPath,
+  readMigrationTargetDeployment,
+  writeMigrationTargetDeployment,
+  type MigrationTargetDeploymentRecord,
+} from "../config/migration-target-deployments.js";
 import type { DeploymentCodeReader, DeploymentDoctorResult } from "./deployment-doctor.js";
 
-export type MigrationTargetDeploymentRecord = {
-  chainId: number;
-  commit: string;
-  deployedAt: string;
-  deployer: `0x${string}`;
-  migrationTarget: `0x${string}`;
-  transactionHash: `0x${string}`;
-  uniswapV4PoolManager: `0x${string}`;
-  uniswapV4PositionManager: `0x${string}`;
-  lpRecipient: `0x${string}`;
+export {
+  migrationTargetDeploymentPath,
+  readMigrationTargetDeployment,
+  writeMigrationTargetDeployment,
+  type MigrationTargetDeploymentRecord,
 };
 
 export type MigrationTargetDeploymentDoctorOptions = {
@@ -41,6 +39,10 @@ function isNonEmptyString(value: unknown): value is string {
 
 function validAddress(value: unknown): value is `0x${string}` {
   return typeof value === "string" && isAddress(value);
+}
+
+function sameAddress(left: `0x${string}`, right: `0x${string}`): boolean {
+  return left.toLowerCase() === right.toLowerCase();
 }
 
 function requireString(record: Record<string, unknown>, field: string, errors: string[]): void {
@@ -73,23 +75,6 @@ async function checkCode(
   }
 }
 
-export function migrationTargetDeploymentPath(network = deploymentNetwork()): string {
-  return join(process.cwd(), "deployments", network, "uniswap-v4-mint-position-target.json");
-}
-
-export function readMigrationTargetDeployment(network = deploymentNetwork()): MigrationTargetDeploymentRecord {
-  return JSON.parse(readFileSync(migrationTargetDeploymentPath(network), "utf8")) as MigrationTargetDeploymentRecord;
-}
-
-export function writeMigrationTargetDeployment(
-  deployment: MigrationTargetDeploymentRecord,
-  network = deploymentNetwork(),
-): void {
-  const path = migrationTargetDeploymentPath(network);
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, `${JSON.stringify(deployment, null, 2)}\n`);
-}
-
 export async function doctorMigrationTargetDeployment(
   deployment: unknown,
   options: MigrationTargetDeploymentDoctorOptions = {},
@@ -115,6 +100,14 @@ export async function doctorMigrationTargetDeployment(
 
   for (const field of addressFields) {
     requireAddress(deployment, field, errors);
+  }
+
+  if (
+    validAddress(deployment.deployer) &&
+    validAddress(deployment.lpRecipient) &&
+    sameAddress(deployment.lpRecipient, deployment.deployer)
+  ) {
+    errors.push("lpRecipient must not equal deployer");
   }
 
   if (

@@ -87,7 +87,7 @@ test("readDeployment and writeDeployment use the selected network", () => {
   const originalNetwork = process.env.DEPLOYMENT_NETWORK;
   const originalArgv = process.argv;
   const originalCwd = cwd();
-  const tempDir = mkdtempSync(join(tmpdir(), "satpad-deployments-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-deployments-"));
 
   process.env.DEPLOYMENT_NETWORK = "xlayer";
   process.argv = ["node", "script"];

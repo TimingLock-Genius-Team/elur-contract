@@ -1,52 +1,23 @@
 import "dotenv/config";
 import { createPublicClient, createWalletClient, http, publicActions } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { deploymentNetwork } from "./deployments.js";
-
-export const anvil = {
-  id: 31337,
-  name: "Anvil",
-  nativeCurrency: { name: "OKB", symbol: "OKB", decimals: 18 },
-  rpcUrls: { default: { http: [process.env.ANVIL_RPC_URL ?? "http://127.0.0.1:8545"] } },
-} as const;
-
-function requiredEnv(name: string): string {
-  const value = process.env[name];
-  if (!value) {
-    throw new Error(`${name} is required`);
-  }
-  return value;
-}
-
-function xlayerChainId(): number {
-  return Number(process.env.XLAYER_CHAIN_ID ?? "196");
-}
+import { DEFAULT_ANVIL_RPC_URL, chainConfigFor } from "../config/chains.js";
+import { requiredEnv } from "../config/env.js";
+import { deploymentNetwork } from "../config/deployments.js";
 
 export function rpcUrl(network = deploymentNetwork()): string {
   if (network === "anvil") {
-    return process.env.ANVIL_RPC_URL ?? "http://127.0.0.1:8545";
+    return process.env.ANVIL_RPC_URL ?? DEFAULT_ANVIL_RPC_URL;
   }
   if (network === "xlayer") {
-    return requiredEnv("XLAYER_RPC_URL");
+    return requiredEnv(process.env, "XLAYER_RPC_URL");
   }
 
   throw new Error(`Unsupported RPC network ${network}`);
 }
 
 export function chainConfig(network = deploymentNetwork()) {
-  if (network === "anvil") {
-    return anvil;
-  }
-  if (network === "xlayer") {
-    return {
-      id: xlayerChainId(),
-      name: "XLayer",
-      nativeCurrency: { name: "OKB", symbol: "OKB", decimals: 18 },
-      rpcUrls: { default: { http: [rpcUrl(network)] } },
-    } as const;
-  }
-
-  throw new Error(`Unsupported RPC network ${network}`);
+  return chainConfigFor(network, rpcUrl(network));
 }
 
 export function publicClient() {
