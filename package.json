@@ -32,6 +32,7 @@
     "script:migrate-liquidity": "forge script script/MigrateLiquidity.s.sol:MigrateLiquidity --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "script:claim-fees": "forge script script/ClaimFees.s.sol:ClaimFees --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
+    "deploy:migration-target": "tsx ts/deploy/00-deploy-uniswap-v4-mint-position-target.ts",
     "create-token": "tsx ts/cli/create-token.ts",
     "inspect-token": "tsx ts/cli/inspect-token.ts",
     "quote:buy": "tsx ts/cli/quote-buy.ts",
