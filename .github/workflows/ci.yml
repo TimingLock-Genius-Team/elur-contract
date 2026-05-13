@@ -42,11 +42,17 @@ jobs:
       - name: Run invariant tests
         run: forge test --match-path 'test/invariant/*'
 
-      - name: Run guarded fork tests
+      - name: Compile guarded fork tests without XLayer fork
         run: forge test --match-path 'test/fork/*'
 
       - name: Type-check TypeScript
         run: npx tsc --noEmit
+
+      - name: Run TypeScript tests
+        run: npm run test:ts
+
+      - name: Check Solidity coverage threshold
+        run: npm run coverage:95
 
       - name: Install Slither
         run: python3 -m pip install slither-analyzer

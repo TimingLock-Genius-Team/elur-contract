@@ -15,9 +15,7 @@ export function assertLocalSimulationOrAllowed(options: {
     throw new Error(`${options.scriptName} refuses to run outside Anvil without --allow-live`);
   }
 
-  if (options.maxIterations === undefined) {
-    throw new Error(`${options.scriptName} requires --max-buys when --allow-live is set`);
-  }
+  throw new Error(`${options.scriptName} does not support live network execution`);
 }
 
 export function maxIterationsFromArg(value: string | undefined): number | undefined {

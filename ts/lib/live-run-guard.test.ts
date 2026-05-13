@@ -24,27 +24,17 @@ test("assertLocalSimulationOrAllowed rejects live networks unless explicitly all
   );
 });
 
-test("assertLocalSimulationOrAllowed requires an iteration cap for live runs", () => {
+test("assertLocalSimulationOrAllowed rejects live networks even with an override", () => {
   assert.throws(
     () => assertLocalSimulationOrAllowed({
       allowLive: true,
       chainId: XLAYER_CHAIN_ID,
-      maxIterations: undefined,
+      maxIterations: 3,
       network: "xlayer",
       scriptName: "simulate-graduation",
     }),
-    /simulate-graduation requires --max-buys when --allow-live is set/,
+    /simulate-graduation does not support live network execution/,
   );
-});
-
-test("assertLocalSimulationOrAllowed accepts capped live runs", () => {
-  assert.doesNotThrow(() => assertLocalSimulationOrAllowed({
-    allowLive: true,
-    chainId: XLAYER_CHAIN_ID,
-    maxIterations: 3,
-    network: "xlayer",
-    scriptName: "simulate-graduation",
-  }));
 });
 
 test("maxIterationsFromArg parses positive iteration caps", () => {
