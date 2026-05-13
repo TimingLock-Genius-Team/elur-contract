@@ -1,8 +1,8 @@
-# SATPAD 合约后端开发文档：Forge + Anvil + TypeScript
+# Eulr 合约后端开发文档：Forge + Anvil + TypeScript
 
 ## 1. 文档目标
 
-本文档定义 SATPAD 合约后端的工程开发方式：
+本文档定义 Eulr 合约后端的工程开发方式：
 
 ```text
 Contracts: Foundry / Forge
@@ -27,7 +27,7 @@ Protocol: sat1 bonding curve + Factory + per-token Hook/Router
 ## 2. 工程目录
 
 ```text
-satpad-contract/
+eulr-contract/
   foundry.toml
   remappings.txt
   package.json
@@ -36,20 +36,20 @@ satpad-contract/
 
   src/
     factory/
-      SatpadFactory.sol
+      EulrFactory.sol
     token/
-      SatpadToken.sol
+      EulrToken.sol
     curve/
       Curve.sol
       CurveTypes.sol
     hook/
-      SatpadHook.sol
+      EulrHook.sol
     router/
-      SatpadRouter.sol
+      EulrRouter.sol
     interfaces/
-      ISatpadFactory.sol
-      ISatpadHook.sol
-      ISatpadRouter.sol
+      IEulrFactory.sol
+      IEulrHook.sol
+      IEulrRouter.sol
     libraries/
       NativeOkbTransfer.sol
     mocks/
@@ -80,10 +80,14 @@ satpad-contract/
   ts/
     config/
       chains.ts
-      contracts.ts
+      env.ts
       params.ts
+      artifacts.ts
+      deployments.ts
+      migration-target-deployments.ts
     deploy/
       00-check-chain.ts
+      00-deploy-uniswap-v4-mint-position-target.ts
       01-deploy-factory.ts
       02-write-deployment.ts
     cli/
@@ -95,12 +99,19 @@ satpad-contract/
       sell.ts
       simulate-graduation.ts
       migrate-liquidity.ts
+      claim-fees.ts
+      doctor-deployment.ts
+      doctor-migration-target.ts
+      doctor-xlayer-readiness.ts
     lib/
       clients.ts
       units.ts
-      addresses.ts
       artifacts.ts
-      tx.ts
+      contracts.ts
+      deployments.ts
+      migration-target-deployment.ts
+      preflight.ts
+      redaction.ts
 
   deployments/
     anvil/latest.json
@@ -185,12 +196,17 @@ npm install --save-dev vitest
     "test:fuzz": "forge test --fuzz-runs 10000",
     "test:invariant": "forge test --match-path 'test/invariant/*'",
     "test:fork:local": "forge test --match-path 'test/fork/*'",
-    "test:fork:xlayer": "XLAYER_CHAIN_ID=${XLAYER_CHAIN_ID:-196} forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "test:fork:xlayer": "XLAYER_CHAIN_ID=196 forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "coverage": "forge coverage --ir-minimum --exclude-tests --no-match-coverage '^(script|test|src/mocks)/'",
     "slither": "slither src --exclude-informational --exclude-low",
     "ci": "forge fmt --check && forge build && forge test --fuzz-runs 10000 && forge test --match-path 'test/invariant/*' && forge test --match-path 'test/fork/*' && npx tsc --noEmit && npm run test:ts && npm run slither",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
+    "deploy:migration-target": "tsx ts/deploy/00-deploy-uniswap-v4-mint-position-target.ts",
     "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
     "script:deploy-xlayer": "GIT_COMMIT=${GIT_COMMIT:-$(git rev-parse --short HEAD)} DEPLOYED_AT=${DEPLOYED_AT:-$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")} DEPLOYMENT_NETWORK=${DEPLOYMENT_NETWORK:-xlayer} forge script script/DeployFactory.s.sol:DeployFactory --rpc-url $XLAYER_RPC_URL --broadcast --verify",
+    "preflight:xlayer": "tsx ts/cli/preflight-xlayer.ts",
+    "preflight:xlayer:readiness": "tsx ts/cli/preflight-xlayer-readiness.ts",
+    "gate:xlayer": "tsx ts/cli/xlayer-deployment-gate.ts",
     "create-token": "tsx ts/cli/create-token.ts",
     "inspect-token": "tsx ts/cli/inspect-token.ts",
     "quote:buy": "tsx ts/cli/quote-buy.ts",
@@ -201,6 +217,8 @@ npm install --save-dev vitest
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
     "claim:fees": "tsx ts/cli/claim-fees.ts",
     "doctor:deployment": "tsx ts/cli/doctor-deployment.ts",
+    "doctor:migration-target": "tsx ts/cli/doctor-migration-target.ts",
+    "doctor:xlayer-readiness": "tsx ts/cli/doctor-xlayer-readiness.ts",
     "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 --allow-zero-min-out && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 --allow-zero-min-out && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
   }
 }
@@ -219,6 +237,7 @@ DEPLOYED_AT=
 TEAM_MULTISIG=
 UNISWAP_V4_POOL_MANAGER=
 UNISWAP_V4_POSITION_MANAGER=
+LP_RECIPIENT=
 MIGRATION_TARGET=
 ```
 
@@ -229,14 +248,14 @@ MIGRATION_TARGET=
 ```text
 1. Curve tests
 2. Curve implementation
-3. SatpadToken tests
-4. SatpadToken implementation
+3. EulrToken tests
+4. EulrToken implementation
 5. Factory validation tests
-6. SatpadFactory implementation
+6. EulrFactory implementation
 7. Hook buy/sell tests
-8. SatpadHook implementation
+8. EulrHook implementation
 9. Router settlement tests
-10. SatpadRouter implementation
+10. EulrRouter implementation
 11. same-block / selfDeprecated tests
 12. graduation migration tests
 13. invariant tests
@@ -277,7 +296,7 @@ function quoteSell(uint256 okbCum, uint256 tokensIn, CurveParams memory params) 
 - fee 不进入 `newOkbCum`。
 - 所有 rounding 误差写入测试说明。
 
-## 7. `SatpadFactory` 开发要求
+## 7. `EulrFactory` 开发要求
 
 Factory 构造参数：
 
@@ -297,6 +316,8 @@ function createToken(
     string calldata metadataURI,
     string calldata socialURI
 ) external returns (address token, address hook, address router);
+
+function getTokens(uint256 offset, uint256 limit) external view returns (address[] memory tokens);
 ```
 
 开发要求：
@@ -304,12 +325,13 @@ function createToken(
 - Factory 构造时校验 fee recipient 和 migration target 非零。
 - XLayer fork 测试中校验 Uniswap 和 migration target 外部地址 code。
 - 创建成功后写入 registry。
-- emit `TokenCreated`。
+- emit `TokenCreated`，其中 creator 必须 indexed，便于按创建者过滤。
+- `getTokens(offset, limit)` 按创建顺序分页返回 token 地址，服务无索引器的 token 列表页。
 - 不收额外部署费。
 - `metadataURI` 最多 512 bytes，`socialURI` 最多 256 bytes。
 - 不提供删除 token 功能。
 
-## 8. `SatpadHook` 开发要求
+## 8. `EulrHook` 开发要求
 
 关键接口：
 
@@ -328,6 +350,8 @@ function sell(address seller, address recipient, uint256 tokensIn, uint256 minOk
 function migrateLiquidity(bytes calldata migrationData)
     external
     returns (address pool, uint256 liquidity);
+
+function curveState() external view returns (CurveState memory);
 ```
 
 开发要求：
@@ -340,8 +364,9 @@ function migrateLiquidity(bytes calldata migrationData)
 - selfDeprecated 后 buy 永久关闭。
 - sell 不因 selfDeprecated 关闭。
 - migration 只能执行一次。
+- `curveState()` 聚合返回前端详情页核心状态，但不得保存第二套曲线状态。
 
-## 9. `SatpadRouter` 开发要求
+## 9. `EulrRouter` 开发要求
 
 Router 作为用户入口：
 
@@ -524,7 +549,7 @@ npm run smoke:anvil
 ```bash
 XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL
 forge test --gas-report
-forge coverage
+npm run coverage
 ```
 
 ## 15. 安全开发规则

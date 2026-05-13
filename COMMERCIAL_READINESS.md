@@ -1,6 +1,6 @@
-# SATPAD 商业可用清单
+# Eulr 商业可用清单
 
-本文档定义“商业可用”的最低门槛。当前仓库已经具备本地 MVP 和完整本地测试基础，但仍不能宣称已可主网商业部署，原因是外部地址、真实迁移适配器、fork 验证和审计仍未完成。
+本文档定义“商业可用”的最低门槛。当前仓库已经具备本地 MVP、Uniswap v4 mint-position migration target 第一版和完整本地测试基础，但仍不能宣称已可主网商业部署，原因是外部地址、真实 XLayer fork 证明、LP 归宿证明和审计仍未完成。
 
 ## 1. 当前状态
 
@@ -13,9 +13,10 @@
 | Router | 已实现 | 验证 registry，交易后不保留资产。 |
 | Fee | 已实现 | native OKB fee 累计到 `claimableFeeOkb`，由 `feeRecipient` 主动 claim。 |
 | Graduation | 已实现 | 达阈值后 buy 关闭，sell 保持开放。 |
-| Migration | 本地适配 | 当前通过 mock/adapter 接口验证流程，真实 Uniswap v4 target 仍待实现和 fork 测试。 |
+| Migration | 第一版已实现 | 已有 `UniswapV4MintPositionTarget` 和本地 adapter 测试；真实 XLayer PositionManager 行为、PoolId 和 LP 归宿仍必须通过 fork gate 证明。 |
 | Solidity scripts | 已实现本地流 | 本地 Anvil deploy/create/quote/buy/sell/graduation/migration 可跑。 |
 | TypeScript CLI | 已实现本地流 | 用于本地部署、调试和 deployment JSON。 |
+| 前端 PRD 后端支持 | 已实现只读接口 | 合约提供 token 分页读取、详情页聚合状态和 creator-indexed 创建事件；本仓库不实现前端页面。 |
 | CI | 已实现基础门禁 | GitHub Actions 运行格式、构建、Forge 测试、invariant、guarded fork、TS 类型检查和 Slither。 |
 | Fork tests | 待补强 | 需要真实 XLayer RPC 和外部地址。 |
 | 审计 | 未完成 | 主网上线前必须完成外部审计或独立安全 review。 |
@@ -47,6 +48,7 @@
 - 获得 LP / position 权益。
 - 将 LP / position burn 或永久锁定。
 - emit 可索引事件，至少区分 Hook 迁移结果和 adapter LP 归宿证明。
+- 保持 `TokenCreated` 的 creator 可索引，保证 token 列表和创建者页面可由事件或索引器重建。
 - fork 测试证明迁移后团队 EOA 无法取回 LP。
 
 真实 adapter 的验收标准：
@@ -63,8 +65,12 @@
 上线前必须运行：
 
 ```bash
+npm run gate:xlayer
 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 ```
+
+`npm run gate:xlayer` 是非广播门禁，会串行运行 XLayer readiness preflight、migration target doctor、deployment doctor、XLayer readiness consistency doctor 和真实 fork tests。该命令不需要 `PRIVATE_KEY`，但仍要求真实 `XLAYER_RPC_URL`、已确认的 XLayer Uniswap v4 地址、`MIGRATION_TARGET`、`LP_RECIPIENT` 和 deployment JSON；当默认 v4 池参数不适用于生产时，还必须设置对应 `XLAYER_V4_*` migration 参数环境变量。
+门禁固定 `XLAYER_CHAIN_ID=196`，并拒绝其它 chain id 覆盖，避免误配时 fork 测试被跳过。
 
 Fork 测试必须覆盖：
 
@@ -73,7 +79,8 @@ Fork 测试必须覆盖：
 - Factory 部署。
 - Token 创建。
 - 小额 buy/sell。
-- migration target 调用路径。
+- 真实 `UniswapV4MintPositionTarget` migration target 调用路径。
+- 迁移后产生非零 liquidity，LP / position recipient 不是团队 EOA 或 deployer，并符合配置的 burn / lock recipient。
 
 ### P0: 审计与独立复核
 
@@ -128,9 +135,10 @@ slither src --exclude-informational --exclude-low
 主网部署前额外运行：
 
 ```bash
+npm run gate:xlayer
 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 forge test --gas-report
-forge coverage
+npm run coverage
 npm run deploy:anvil
 npm run smoke:anvil
 ```

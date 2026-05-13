@@ -1,8 +1,10 @@
-# SATPAD Contract Backend
+# Eulr Contract Backend
 
-SATPAD is a permissionless token launch protocol for XLayer. Each launched token receives an isolated ERC-20 token, bonding-curve Hook, and Router. The protocol uses the sat1 exponential curve, native OKB settlement, 0.3% fees, graduation at 99% of token supply, and one-time liquidity migration.
+Eulr is a permissionless token launch protocol for XLayer. Each launched token receives an isolated ERC-20 token, bonding-curve Hook, and Router. The protocol uses the sat1 exponential curve, native OKB settlement, 0.3% fees, graduation at 99% of token supply, and one-time liquidity migration.
 
 This repository currently covers the contract backend, local deployment scripts, TypeScript CLI tooling, and tests. It does not include the web app, wallet UI, indexer, charts, portfolio, or operations dashboard.
+
+The backend exposes frontend-friendly read surfaces through `EulrFactory.getTokens(offset, limit)` for token discovery and `EulrHook.curveState()` for token detail state snapshots.
 
 ## Documentation
 
@@ -19,10 +21,10 @@ This repository currently covers the contract backend, local deployment scripts,
 
 The local MVP includes:
 
-- `SatpadFactory`
-- `SatpadToken`
-- `SatpadHook`
-- `SatpadRouter`
+- `EulrFactory`
+- `EulrToken`
+- `EulrHook`
+- `EulrRouter`
 - `Curve`
 - Solidity scripts for local full-flow execution
 - TypeScript CLI scripts for local deployment and smoke testing
@@ -119,12 +121,13 @@ npm run sell -- --token <token> --tokens <amount> --min-out <netOkbOut>
 
 The TypeScript buy/sell CLIs require an explicit non-zero `--min-out`. Local smoke tests may pass `--allow-zero-min-out` for deterministic development flows only.
 
-TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Before production deployment, run `npm run preflight:xlayer` to verify required XLayer env and provenance. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, and `LP_RECIPIENT`, run `npm run deploy:migration-target`, validate it with `npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET` for the Factory deploy.
+TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, and `LP_RECIPIENT`, run `npm run deploy:migration-target`, validate it with `npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET`. After `MIGRATION_TARGET` is set, run `npm run preflight:xlayer` to verify required XLayer env and provenance before the Factory deploy. Before launch, run `npm run gate:xlayer` to cross-check XLayer env, deployment records, on-chain Factory config, and guarded fork migration behavior.
 
 Validate deployment JSON before production smoke:
 
 ```bash
 npm run doctor:deployment -- --network xlayer --rpc-url $XLAYER_RPC_URL
+npm run doctor:xlayer-readiness
 ```
 
 Simulate graduation and migration:

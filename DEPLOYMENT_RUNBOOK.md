@@ -1,4 +1,4 @@
-# SATPAD 部署 Runbook
+# Eulr 部署 Runbook
 
 本文档描述从本地验证到 XLayer 生产部署的操作流程。所有命令都应在仓库根目录执行。
 
@@ -60,6 +60,12 @@ npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo
 ```bash
 npm run inspect-token -- --token <token>
 ```
+
+前端 PRD 相关只读检查：
+
+- token 列表可通过 `EulrFactory.getTokens(offset, limit)` 分页读取。
+- token 详情页核心状态可通过 `EulrHook.curveState()` 一次读取。
+- `TokenCreated` 的 creator 已 indexed，索引器可按创建者重建列表。
 
 报价并买入：
 
@@ -143,6 +149,7 @@ slither src --exclude-informational --exclude-low
 
 ```bash
 npm run doctor:deployment -- --network xlayer --rpc-url "$XLAYER_RPC_URL" --chain-id 196
+npm run doctor:xlayer-readiness
 ```
 
 主网候选前运行更严格版本：
@@ -151,7 +158,7 @@ npm run doctor:deployment -- --network xlayer --rpc-url "$XLAYER_RPC_URL" --chai
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*" --fuzz-runs 1000
 forge test --gas-report
-forge coverage
+npm run coverage
 ```
 
 ## 5. XLayer Fork 验证
@@ -163,6 +170,15 @@ npm run script:verify-xlayer-addresses
 XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 ```
 
+生产部署前应优先运行非广播门禁：
+
+```bash
+npm run gate:xlayer
+```
+
+该命令按顺序执行 `preflight:xlayer:readiness`、`doctor:migration-target`、`doctor:deployment`、`doctor:xlayer-readiness` 和 `test:fork:xlayer`。它只读取环境、deployment JSON 和 fork RPC，不需要 `PRIVATE_KEY`，不会广播部署交易；任一检查失败都会停止并返回失败命令。`doctor:xlayer-readiness` 会交叉校验 Factory deployment JSON、migration-target deployment JSON 和 `TEAM_MULTISIG` / `MIGRATION_TARGET` / `LP_RECIPIENT` / Uniswap v4 环境变量，避免 fork 证明的 target 与记录的生产 Factory 配置脱节。
+为避免误配导致 fork 测试提前 return，`test:fork:xlayer` 固定使用 `XLAYER_CHAIN_ID=196`，readiness preflight 也会拒绝其它 `XLAYER_CHAIN_ID` 覆盖值。
+
 Fork 测试必须验证：
 
 - `block.chainid` 是预期 XLayer chain id。
@@ -172,7 +188,9 @@ Fork 测试必须验证：
 - Factory 可部署。
 - Token 可创建。
 - 小额 buy / sell 成功。
-- 迁移路径可执行或明确 revert 原因。
+- 真实 `UniswapV4MintPositionTarget` 迁移路径可执行，产生非零 liquidity，并把 LP / position 归属到 `LP_RECIPIENT`。
+
+如果生产池参数不使用默认 `3000` fee、`60` tick spacing、全区间 tick 或 `1e18` liquidity，运行 fork migration gate 前必须显式设置 `XLAYER_V4_POOL_FEE`、`XLAYER_V4_TICK_SPACING`、`XLAYER_V4_TICK_LOWER`、`XLAYER_V4_TICK_UPPER`、`XLAYER_V4_MIGRATION_LIQUIDITY`、`XLAYER_V4_HOOKS` 和 `XLAYER_V4_HOOK_DATA` 中需要覆盖的值。
 
 ## 6. XLayer 部署流程
 
@@ -184,17 +202,18 @@ Fork 测试必须验证：
 4. 确认 `.env` 地址。
 5. 运行完整验证。
 
-TypeScript 本地部署脚本和 Forge XLayer 部署脚本都会检查外部地址是否已有 code：
+部署脚本会按阶段检查外部地址是否已有 code。migration target 部署先检查：
 
 - `UNISWAP_V4_POOL_MANAGER`
 - `UNISWAP_V4_POSITION_MANAGER`
+
+Factory 部署前还会检查：
+
 - `MIGRATION_TARGET`
 
 先部署真实 Uniswap v4 migration target：
 
 ```bash
-npm run preflight:xlayer
-
 GIT_COMMIT=$(git rev-parse --short HEAD) \
 DEPLOYED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ") \
 DEPLOYMENT_NETWORK=xlayer \
@@ -223,7 +242,7 @@ npm run script:deploy-xlayer
 部署后：
 
 1. 检查 `deployments/xlayer/latest.json` 中的 chainId、commit、deployer、Factory、Uniswap 地址和 migration target。
-2. 运行 `npm run doctor:deployment -- --network xlayer --rpc-url $XLAYER_RPC_URL`。
+2. 运行 `npm run gate:xlayer`，或至少运行 `npm run doctor:deployment -- --network xlayer --rpc-url $XLAYER_RPC_URL` 和 `npm run test:fork:xlayer`。
 3. 在区块浏览器验证源码。
 4. 创建一个小额测试 token。
 5. 执行小额 buy。

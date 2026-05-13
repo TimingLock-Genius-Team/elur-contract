@@ -1,8 +1,8 @@
-# SATPAD 合约后端测试文档
+# Eulr 合约后端测试文档
 
 ## 1. 测试目标
 
-本文档只覆盖 SATPAD 合约后端测试。当前不包含客户端页面、钱包 UI、图表、Portfolio 或独立索引服务测试。
+本文档只覆盖 Eulr 合约后端测试。当前不包含客户端页面、钱包 UI、图表、Portfolio 或独立索引服务测试。
 
 测试必须证明：
 
@@ -37,7 +37,7 @@ Static analysis: Slither
 test/
   unit/
     Curve.t.sol
-    SatpadToken.t.sol
+    EulrToken.t.sol
     FactoryValidation.t.sol
 
   integration/
@@ -122,7 +122,7 @@ forge test --gas-report
 Coverage：
 
 ```bash
-forge coverage
+npm run coverage
 ```
 
 Static analysis：
@@ -203,10 +203,11 @@ createToken(name, symbol, metadataURI, socialURI)
 - 创建后 Token、Hook、Router 都有 code。
 - token 绑定正确 Hook。
 - router 绑定正确 token / hook。
-- curve params 固定为 SATPAD 参数。
+- curve params 固定为 Eulr 参数。
 - factory 记录 tokenInfo。
 - allTokens 长度递增。
-- emit `TokenCreated`。
+- `getTokens(offset, limit)` 按创建顺序分页返回 token 地址，并在 offset 越界或 limit 为 0 时返回空数组。
+- emit `TokenCreated`，且 creator 必须可索引。
 
 失败验证：
 
@@ -408,14 +409,22 @@ token.balanceOf(address(router)) == 0
 
 关键事件必须使用 `expectEmit` 固定索引字段和 data 字段：
 
-- `TokenCreated` 必须包含 creator、metadataURI 和 socialURI。
+- `TokenCreated` 必须包含 indexed token、indexed hook、indexed creator、router、metadataURI 和 socialURI。
 - `Bought` / `Sold` 必须包含 token、user、recipient 和完整 quote 会计字段。
 - `FeesClaimed` 必须包含 recipient 和 amount。
 - `LiquidityMigrated` 必须包含 migration target 返回的 pool / venue address、迁移金额和 token 数量。
 - `LiquidityMigrationResult` 必须包含 migration target 返回的 pool / venue address 和 liquidity。
 - 真实 adapter 的 LP burn/lock 事件必须包含 LP 归宿证明和 Uniswap v4 `PoolId`；`BaseUniswapV4MigrationTarget.LpCustodyProven` 是当前最小事件形状，后续真实 adapter 需要补齐 PoolId 事件字段。
 
-## 15. Invariant 测试
+## 15. 前端读取接口测试
+
+前端 PRD 所需的只读接口必须有回归测试：
+
+- `EulrFactory.getTokens(offset, limit)` 覆盖首页、尾页、空页和 limit 为 0。
+- `EulrHook.curveState()` 覆盖 buy 后的 `okbCum`、`totalMinted`、`currentPrice`、`claimableFeeOkb`、`selfDeprecated` 和 `liquidityMigrated`。
+- `curveState()` 只能聚合现有状态和 `okbCum` 推导值，不能引入第二套曲线状态。
+
+## 16. Invariant 测试
 
 Handler 随机执行：
 
@@ -442,7 +451,7 @@ claimFee
 - 已迁移 token 不能重复迁移。
 - LP burn/lock 后不可恢复。
 
-## 16. XLayer Fork 测试
+## 17. XLayer Fork 测试
 
 当前 `XLayerAddressFork.t.sol` 已验证：
 
@@ -466,7 +475,7 @@ claimFee
 - 凭记忆硬编码地址。
 - 在测试中提交真实 private key 或 RPC secret。
 
-## 17. TypeScript Smoke 测试
+## 18. TypeScript Smoke 测试
 
 脚本必须覆盖：
 
@@ -498,7 +507,7 @@ Smoke 失败必须退出非零状态码，方便 CI 使用。
 
 TypeScript buy / sell CLI 默认拒绝 `--min-out 0`，Solidity buy / sell scripts 默认拒绝 `MIN_TOKENS_OUT=0` 或 `MIN_OKB_OUT=0`。只有本地 smoke 或调试流程可以显式传入 `--allow-zero-min-out` / `ALLOW_ZERO_MIN_OUT=true`。
 
-## 18. CI 门禁
+## 19. CI 门禁
 
 每个 PR 至少运行：
 
@@ -524,7 +533,7 @@ slither src --exclude-informational --exclude-low
 ```bash
 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL
 forge test --gas-report
-forge coverage
+npm run coverage
 npm run deploy:anvil
 npm run smoke:anvil
 ```
@@ -537,7 +546,7 @@ npm run smoke:anvil
 - 部署脚本输出完整 deployment JSON，包含 `commit`、`deployedAt` 和 `deployer`。
 - 文档与实现参数一致。
 
-## 19. 当前覆盖状态
+## 20. 当前覆盖状态
 
 已覆盖：
 
@@ -564,7 +573,7 @@ npm run smoke:anvil
 - Coverage 留档。
 - 审计后回归测试。
 
-## 20. 上线前清单
+## 21. 上线前清单
 
 - [ ] 团队多签地址确认。
 - [ ] Uniswap v4 地址确认。
@@ -580,7 +589,7 @@ npm run smoke:anvil
 - [ ] Slither 无 high / medium 未处理项。
 - [ ] 合约已验证。
 
-## 21. 失败处理原则
+## 22. 失败处理原则
 
 如果测试失败：
 

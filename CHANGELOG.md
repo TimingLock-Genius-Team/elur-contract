@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to SATPAD contract backend are tracked here.
+All notable changes to Eulr contract backend are tracked here.
 
 ## Unreleased
 
@@ -12,14 +12,23 @@ All notable changes to SATPAD contract backend are tracked here.
 - Root MIT license.
 - CI command and full Anvil smoke command.
 - Verified Ethereum mainnet sat1 `Sat1HookDeployer` reference address in deployment and readiness documentation.
+- Guarded XLayer fork migration gate for the real Uniswap v4 mint-position migration target.
+- `npm run gate:xlayer` to run XLayer preflight, deployment doctors, and fork tests as a non-broadcast readiness gate.
+- Read-only XLayer readiness preflight that avoids requiring `PRIVATE_KEY` for non-broadcast checks.
+- RPC URL redaction for deployment doctor diagnostics and fixed XLayer fork chain-id enforcement in the readiness gate.
+- XLayer readiness consistency doctor that cross-checks Factory deployment records, migration-target records, and environment addresses before fork migration proof; deployment doctor also verifies on-chain Factory immutable config when RPC is available.
+- `npm run coverage` wrapper using `forge coverage --ir-minimum` so coverage remains reproducible when default coverage compilation hits stack-depth limits.
+- Consolidated TypeScript chain/env/param/artifact/deployment record configuration under `ts/config/` while keeping runtime clients and doctors under `ts/lib/`.
+- Eulr backend rename across contracts, scripts, TypeScript artifact references, and documentation.
+- Frontend-friendly reads: `EulrFactory.getTokens(offset, limit)`, `EulrHook.curveState()`, and creator-indexed `TokenCreated`.
 
 ### Changed
 
 - Split `migrationTarget` from `uniswapV4PositionManager` so production migration can be verified independently.
 - TypeScript sell CLI approves only the exact sell amount.
-- README now describes SATPAD instead of Foundry boilerplate.
+- README now describes Eulr instead of Foundry boilerplate.
 - Removed the unused `sat1HookDeployer` constructor dependency from the direct deployment architecture.
-- Removed unused Uniswap PoolManager and PositionManager immutables from `SatpadFactory`; these addresses remain deployment/fork verification inputs.
+- Removed unused Uniswap PoolManager and PositionManager immutables from `EulrFactory`; these addresses remain deployment/fork verification inputs.
 - Replaced instant fee transfers with pull-based fee accounting through `claimableFeeOkb` and `claimFees`.
 - Added Solidity and TypeScript fee-claim scripts and included fee claim in the local smoke flow.
 - Added Factory-side length limits for metadata and social URIs.
@@ -51,6 +60,6 @@ All notable changes to SATPAD contract backend are tracked here.
 ### Known Blockers
 
 - Real XLayer external addresses are not confirmed in repo.
-- Uniswap v4 migration adapter still needs XLayer fork verification and LP burn/lock proof against production PositionManager.
-- XLayer fork migration test requires verified production addresses and RPC.
+- Uniswap v4 migration adapter still needs a passing real XLayer fork gate with verified production addresses and RPC.
+- LP burn/lock proof against production PositionManager requires running `npm run gate:xlayer` with confirmed XLayer env.
 - External audit is not complete.

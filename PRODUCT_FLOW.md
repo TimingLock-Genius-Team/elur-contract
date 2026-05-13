@@ -1,12 +1,12 @@
-# SATPAD 产品流程说明
+# Eulr 产品流程说明
 
-本文档描述 SATPAD 合约后端对第三方客户端、脚本、区块浏览器和运营方暴露的完整链上流程。当前范围只包含合约后端，不包含前端页面、索引服务或运营后台。
+本文档描述 Eulr 合约后端对第三方客户端、脚本、区块浏览器和运营方暴露的完整链上流程。当前范围只包含合约后端，不包含前端页面、索引服务或运营后台。
 
 ## 1. 参与角色
 
 ### 创建者
 
-创建者通过 `SatpadFactory.createToken` 发起新代币。创建者只负责提供：
+创建者通过 `EulrFactory.createToken` 发起新代币。创建者只负责提供：
 
 - `name`
 - `symbol`
@@ -24,7 +24,7 @@
 
 ### 交易用户
 
-交易用户只通过 token 绑定的 `SatpadRouter` 交易：
+交易用户只通过 token 绑定的 `EulrRouter` 交易：
 
 - `buy(token, minTokensOut, recipient)` 使用 native OKB 买入。
 - `sell(token, tokensIn, minOkbOut, recipient)` burn token 换回 native OKB。
@@ -34,7 +34,7 @@
 
 ### 迁移调用者
 
-任何地址都可以在 token 达到毕业阈值后调用 `SatpadHook.migrateLiquidity`。协议不依赖 keeper、cron 或管理员触发。迁移只能执行一次。
+任何地址都可以在 token 达到毕业阈值后调用 `EulrHook.migrateLiquidity`。协议不依赖 keeper、cron 或管理员触发。迁移只能执行一次。
 
 ### 第三方读取者
 
@@ -45,15 +45,16 @@
 - `SelfDeprecated` 识别毕业触发。
 - `LiquidityMigrated` / `LiquidityMigrationResult` 识别 Hook 迁移结果。
 - 真实 migration adapter 的 LP burn/lock 证明事件识别 LP 最终归宿。
+- `getTokens(offset, limit)` 和 `curveState()` 分别支持无索引器分页浏览和 token 详情页聚合读取。
 
 ## 2. 创建 Token 流程
 
 ```text
 Creator
-  -> SatpadFactory.createToken(name, symbol, metadataURI, socialURI)
-      -> deploy SatpadToken
-      -> deploy SatpadHook
-      -> deploy SatpadRouter
+  -> EulrFactory.createToken(name, symbol, metadataURI, socialURI)
+      -> deploy EulrToken
+      -> deploy EulrHook
+      -> deploy EulrRouter
       -> bind token.hook
       -> bind hook.router
       -> write tokenInfo registry
@@ -64,10 +65,10 @@ Creator
 
 - `factory.isToken(token) == true`
 - `factory.getTokenInfo(token)` 返回 token / hook / router / creator / metadata。
-- `SatpadToken(token).hook() == hook`
-- `SatpadHook(hook).router() == router`
-- `SatpadRouter(router).token() == token`
-- `SatpadRouter(router).hook() == hook`
+- `EulrToken(token).hook() == hook`
+- `EulrHook(hook).router() == router`
+- `EulrRouter(router).token() == token`
+- `EulrRouter(router).hook() == hook`
 
 失败条件：
 
@@ -80,7 +81,7 @@ Creator
 
 ```text
 Trader
-  -> SatpadRouter.buy{value: grossOkbIn}(token, minTokensOut, recipient)
+  -> EulrRouter.buy{value: grossOkbIn}(token, minTokensOut, recipient)
       -> Factory registry validates token
       -> Hook quoteBuy(okbCum, grossOkbIn)
       -> require grossOkbIn > 0
@@ -115,8 +116,8 @@ tokensOut = Curve.totalMinted(newOkbCum) - Curve.totalMinted(oldOkbCum)
 
 ```text
 Trader
-  -> SatpadToken.approve(router, tokensIn)
-  -> SatpadRouter.sell(token, tokensIn, minOkbOut, recipient)
+  -> EulrToken.approve(router, tokensIn)
+  -> EulrRouter.sell(token, tokensIn, minOkbOut, recipient)
       -> Factory registry validates token
       -> Router pulls tokens into Hook
       -> Hook quoteSell(okbCum, tokensIn)
@@ -194,7 +195,7 @@ selfDeprecated = true
 
 ```text
 Caller
-  -> SatpadHook.migrateLiquidity(migrationData)
+  -> EulrHook.migrateLiquidity(migrationData)
       -> require selfDeprecated == true
       -> require liquidityMigrated == false
       -> compute okbAmount = hook.balance - claimableFeeOkb
@@ -236,17 +237,19 @@ feeRecipient -> claimFees(recipient)
 第三方无需后端 API 即可集成：
 
 1. 监听 `TokenCreated` 得到 token 列表。
-2. 调 `getTokenInfo(token)` 校验 token / hook / router。
-3. 调 `quoteBuy` / `quoteSell` 展示报价。
-4. 用户通过 Router buy / sell。
-5. 监听 `Bought` / `Sold` 更新交易历史。
-6. 监听 `SelfDeprecated` 更新毕业状态。
-7. 监听 `LiquidityMigrated` / `LiquidityMigrationResult` 更新 Hook 迁移状态。
-8. 监听真实 migration adapter 的 LP burn/lock 证明事件更新 LP 归宿状态。
+2. 无索引器时调 `getTokens(offset, limit)` 分页读取 token 地址。
+3. 调 `getTokenInfo(token)` 校验 token / hook / router。
+4. 调 `EulrHook.curveState()` 读取 token 详情页状态。
+5. 调 `quoteBuy` / `quoteSell` 展示报价。
+6. 用户通过 Router buy / sell。
+7. 监听 `Bought` / `Sold` 更新交易历史。
+8. 监听 `SelfDeprecated` 更新毕业状态。
+9. 监听 `LiquidityMigrated` / `LiquidityMigrationResult` 更新 Hook 迁移状态。
+10. 监听真实 migration adapter 的 LP burn/lock 证明事件更新 LP 归宿状态。
 
 ## 10. 商业可用状态定义
 
-SATPAD 合约后端只有在以下条件全部满足后才能称为商业可用：
+Eulr 合约后端只有在以下条件全部满足后才能称为商业可用：
 
 - 本地 unit / integration / invariant / fuzz 全通过。
 - Slither 无 high / medium 未处理项。
