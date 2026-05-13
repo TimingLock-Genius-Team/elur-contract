@@ -120,6 +120,35 @@ test("doctorMigrationTargetDeployment checks chain id and deployed code", async 
   ]);
 });
 
+test("doctor-migration-target CLI emits JSON when --network is missing a value", () => {
+  const originalCwd = cwd();
+  const scriptPath = join(originalCwd, "ts", "cli", "doctor-migration-target.ts");
+  const tsxLoaderPath = join(originalCwd, "node_modules", "tsx", "dist", "loader.mjs");
+
+  const result = spawnSync(process.execPath, [
+    "--import",
+    tsxLoaderPath,
+    scriptPath,
+    "--network",
+    "--chain-id",
+    "196",
+  ], {
+    env: {
+      ...process.env,
+      NODE_OPTIONS: "--no-warnings",
+    },
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 1);
+  assert.deepEqual(JSON.parse(result.stdout), {
+    ok: false,
+    errors: ["Missing value for --network"],
+    warnings: [],
+  });
+  assert.equal(result.stderr, "");
+});
+
 test("doctor-migration-target CLI validates a recorded target without RPC", () => {
   const originalNetwork = process.env.DEPLOYMENT_NETWORK;
   const originalArgv = process.argv;

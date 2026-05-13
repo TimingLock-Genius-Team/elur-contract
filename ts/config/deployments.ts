@@ -1,5 +1,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { isAddress } from "viem";
+import { optionalArg } from "../lib/args.js";
 
 export type Deployment = {
   chainId: number;
@@ -21,17 +23,98 @@ export type Deployment = {
   createdTokens: Array<{ token: `0x${string}`; hook: `0x${string}`; router: `0x${string}` }>;
 };
 
+const deploymentAddressFields = [
+  "deployer",
+  "factory",
+  "feeRecipient",
+  "uniswapV4PoolManager",
+  "uniswapV4PositionManager",
+  "migrationTarget",
+] as const;
+
+const createdTokenAddressFields = ["token", "hook", "router"] as const;
+
+function assertDeploymentNetwork(network: string): string {
+  if (!/^[a-z0-9][a-z0-9-]*$/i.test(network)) {
+    throw new Error(`Invalid deployment network ${network}`);
+  }
+
+  return network;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function requireAddress(record: Record<string, unknown>, field: string): void {
+  if (typeof record[field] !== "string" || !isAddress(record[field])) {
+    throw new Error(`${field} must be a valid address`);
+  }
+}
+
+function requireString(record: Record<string, unknown>, field: string): void {
+  if (typeof record[field] !== "string" || record[field].length === 0) {
+    throw new Error(`${field} is required`);
+  }
+}
+
+function requireNumber(record: Record<string, unknown>, field: string): void {
+  if (!Number.isInteger(record[field])) {
+    throw new Error(`${field} must be an integer`);
+  }
+}
+
+function requireNumericString(record: Record<string, unknown>, field: string): void {
+  if (typeof record[field] !== "string" || !/^\d+$/.test(record[field])) {
+    throw new Error(`${field} must be a decimal string`);
+  }
+}
+
+function parseDeployment(value: unknown): Deployment {
+  if (!isRecord(value)) {
+    throw new Error("deployment must be an object");
+  }
+  requireNumber(value, "chainId");
+  requireString(value, "commit");
+  requireString(value, "deployedAt");
+  for (const field of deploymentAddressFields) {
+    requireAddress(value, field);
+  }
+  if (!isRecord(value.curve)) {
+    throw new Error("curve must be an object");
+  }
+  requireNumericString(value.curve, "k");
+  requireNumericString(value.curve, "s");
+  requireNumericString(value.curve, "maxBuyOkb");
+  requireNumber(value.curve, "feeBps");
+  requireNumber(value.curve, "selfDeprecationBps");
+  if (!Array.isArray(value.createdTokens)) {
+    throw new Error("createdTokens must be an array");
+  }
+  value.createdTokens.forEach((entry, index) => {
+    if (!isRecord(entry)) {
+      throw new Error(`createdTokens[${index}] must be an object`);
+    }
+    for (const field of createdTokenAddressFields) {
+      if (typeof entry[field] !== "string" || !isAddress(entry[field])) {
+        throw new Error(`createdTokens[${index}].${field} must be a valid address`);
+      }
+    }
+  });
+
+  return value as Deployment;
+}
+
 export function deploymentNetwork(): string {
-  const index = process.argv.indexOf("--network");
-  return index >= 0 && process.argv[index + 1] ? process.argv[index + 1] : process.env.DEPLOYMENT_NETWORK || "anvil";
+  return assertDeploymentNetwork((optionalArg("network") ?? process.env.DEPLOYMENT_NETWORK) || "anvil");
 }
 
 export function deploymentPath(network = deploymentNetwork()): string {
-  return join(process.cwd(), "deployments", network, "latest.json");
+  return join(process.cwd(), "deployments", assertDeploymentNetwork(network), "latest.json");
 }
 
 export function readDeployment(network = deploymentNetwork()): Deployment {
-  return JSON.parse(readFileSync(deploymentPath(network), "utf8")) as Deployment;
+  return parseDeployment(JSON.parse(readFileSync(deploymentPath(network), "utf8")));
 }
 
 export function writeDeployment(deployment: Deployment, network = deploymentNetwork()): void {

@@ -75,3 +75,19 @@ test("doctorXLayerReadinessConsistency rejects mismatched deployment records and
     "LP_RECIPIENT must not equal deployment deployer",
   ]);
 });
+
+test("doctorXLayerReadinessConsistency rejects PositionManager record and env mismatches", () => {
+  const result = doctorXLayerReadinessConsistency({
+    ...deployment,
+    uniswapV4PositionManager: "0x0000000000000000000000000000000000000014",
+  }, migrationTargetDeployment, {
+    ...env,
+    UNISWAP_V4_POSITION_MANAGER: "0x0000000000000000000000000000000000000015",
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "deployment uniswapV4PositionManager 0x0000000000000000000000000000000000000014 does not match migration target deployment uniswapV4PositionManager 0x0000000000000000000000000000000000000005",
+    "UNISWAP_V4_POSITION_MANAGER does not match migration target deployment uniswapV4PositionManager",
+  ]);
+});

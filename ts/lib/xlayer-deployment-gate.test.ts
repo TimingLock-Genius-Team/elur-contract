@@ -22,7 +22,6 @@ test("runXLayerDeploymentGate stops at the first failed command", () => {
       calls.push([command, ...args]);
       return calls.length === 2 ? 1 : 0;
     },
-    env: { ...process.env, XLAYER_RPC_URL: "https://rpc.xlayer.example" },
   });
 
   assert.equal(result.ok, false);
@@ -44,7 +43,6 @@ test("runXLayerDeploymentGate reports success after all commands pass", () => {
       calls.push([command, ...args]);
       return 0;
     },
-    env: { ...process.env, XLAYER_RPC_URL: "https://rpc.xlayer.example" },
   });
 
   assert.deepEqual(result, { ok: true, exitCode: 0 });

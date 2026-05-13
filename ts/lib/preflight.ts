@@ -1,5 +1,5 @@
 import { isAddress } from "viem";
-import { XLAYER_CHAIN_ID } from "../config/chains.js";
+import { XLAYER_CHAIN_ID, rpcUrlFromEnv } from "../config/chains.js";
 import { deploymentProvenanceEnv, xlayerAddressEnv } from "../config/env.js";
 
 export type PreflightResult = {
@@ -22,7 +22,9 @@ function validateXLayerNetworkEnv(env: NodeJS.ProcessEnv, errors: string[]): voi
     errors.push("DEPLOYMENT_NETWORK must be xlayer");
   }
 
-  requireString(env, "XLAYER_RPC_URL", errors);
+  if (!rpcUrlFromEnv("xlayer", env)) {
+    errors.push("XLAYER_RPC_URL is required");
+  }
   if (env.XLAYER_CHAIN_ID && env.XLAYER_CHAIN_ID !== String(XLAYER_CHAIN_ID)) {
     errors.push(`XLAYER_CHAIN_ID must be ${XLAYER_CHAIN_ID} when set`);
   }

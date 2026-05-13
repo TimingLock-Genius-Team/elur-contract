@@ -172,6 +172,34 @@ test("doctor-deployment CLI rejects invalid --chain-id values before running che
   }
 });
 
+test("doctor-deployment CLI emits JSON when --network is missing a value", () => {
+  const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
+  const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
+
+  const result = spawnSync(process.execPath, [
+    "--import",
+    tsxLoaderPath,
+    scriptPath,
+    "--network",
+    "--chain-id",
+    "196",
+  ], {
+    env: {
+      ...process.env,
+      NODE_OPTIONS: "--no-warnings",
+    },
+    encoding: "utf8",
+  });
+
+  assert.equal(result.status, 1);
+  assert.deepEqual(JSON.parse(result.stdout), {
+    ok: false,
+    errors: ["Missing value for --network"],
+    warnings: [],
+  });
+  assert.equal(result.stderr, "");
+});
+
 test("doctor-deployment CLI accepts a valid explicit --chain-id override", () => {
   const originalCwd = cwd();
   const tempDir = mkdtempSync(join(tmpdir(), "eulr-doctor-cli-valid-"));

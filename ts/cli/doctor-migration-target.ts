@@ -7,6 +7,7 @@ import {
   readMigrationTargetDeployment,
 } from "../config/migration-target-deployments.js";
 import type { DeploymentCodeReader } from "../lib/deployment-doctor.js";
+import { optionalArg } from "../lib/args.js";
 import { printJson } from "../lib/json.js";
 import { redactDiagnostics, redactKnownSecrets } from "../lib/redaction.js";
 import {
@@ -18,12 +19,6 @@ const knownNetworkChainIds: Record<string, number> = {
   "forge-local": ANVIL_CHAIN_ID,
   xlayer: XLAYER_CHAIN_ID,
 };
-
-function optionalArg(name: string): string | undefined {
-  const flag = `--${name}`;
-  const index = process.argv.indexOf(flag);
-  return index >= 0 ? process.argv[index + 1] : undefined;
-}
 
 function rpcUrlForNetwork(network: string): string | undefined {
   return optionalArg("rpc-url") ?? rpcUrlFromEnv(network);
@@ -56,12 +51,14 @@ function redactionSecrets(rpcUrl: string | undefined): Array<string | undefined>
 }
 
 async function main(): Promise<void> {
-  const network = deploymentNetwork();
-  const path = migrationTargetDeploymentPath(network);
+  let network: string | undefined;
+  let path: string | undefined;
   let rpcUrl: string | undefined;
   let expectedChainId: number | undefined;
 
   try {
+    network = deploymentNetwork();
+    path = migrationTargetDeploymentPath(network);
     rpcUrl = rpcUrlForNetwork(network);
     expectedChainId = expectedChainIdForNetwork(network);
 
@@ -90,10 +87,10 @@ async function main(): Promise<void> {
       redactionSecrets(rpcUrl),
     );
     printJson({
-      network,
-      path,
-      expectedChainId,
-      rpcChecked: Boolean(rpcUrl),
+      ...(network ? { network } : {}),
+      ...(path ? { path } : {}),
+      ...(expectedChainId !== undefined ? { expectedChainId } : {}),
+      ...(network ? { rpcChecked: Boolean(rpcUrl) } : {}),
       ok: false,
       errors: [message],
       warnings: [],

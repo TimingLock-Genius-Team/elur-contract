@@ -4,7 +4,8 @@ import { abiOf } from "../lib/artifacts.js";
 import { walletClient, publicClient } from "../lib/clients.js";
 import { getArg } from "../lib/args.js";
 import { printJson } from "../lib/json.js";
-import { normalizeTokenInfo } from "../lib/contracts.js";
+import { extractCreatedTokenFromLogs } from "../lib/contracts.js";
+import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 
 const deployment = readDeployment();
 const wallet = walletClient();
@@ -22,27 +23,8 @@ const hash = await wallet.writeContract({
   functionName: "createToken",
   args: [name, symbol, metadataURI, socialURI],
 });
-const receipt = await publicRpc.waitForTransactionReceipt({ hash });
-
-const length = await publicRpc.readContract({
-  address: deployment.factory,
-  abi: factoryAbi,
-  functionName: "allTokensLength",
-});
-const token = await publicRpc.readContract({
-  address: deployment.factory,
-  abi: factoryAbi,
-  functionName: "allTokens",
-  args: [(length as bigint) - 1n],
-});
-const info = await publicRpc.readContract({
-  address: deployment.factory,
-  abi: factoryAbi,
-  functionName: "getTokenInfo",
-  args: [token],
-});
-
-const tokenInfo = normalizeTokenInfo(info);
+const receipt = await waitForSuccessfulTransactionReceipt({ client: publicRpc, hash, label: "createToken" });
+const tokenInfo = extractCreatedTokenFromLogs(receipt.logs, deployment.factory);
 deployment.createdTokens.push({ token: tokenInfo.token, hook: tokenInfo.hook, router: tokenInfo.router });
 writeDeployment(deployment);
 

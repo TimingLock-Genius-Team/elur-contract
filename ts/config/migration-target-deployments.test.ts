@@ -1,11 +1,12 @@
 import { strict as assert } from "node:assert";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chdir, cwd } from "node:process";
 import test from "node:test";
 import {
   migrationTargetDeploymentPath,
+  readMigrationTargetDeployment,
   writeMigrationTargetDeployment,
   type MigrationTargetDeploymentRecord,
 } from "./migration-target-deployments.js";
@@ -39,6 +40,34 @@ test("config migration target deployment IO writes canonical record path", () =>
     assert.equal(migrationTargetDeploymentPath(), path);
     assert.equal(existsSync(path), true);
     assert.deepEqual(JSON.parse(readFileSync(path, "utf8")), record);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("readMigrationTargetDeployment rejects malformed deployment JSON", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-migration-target-invalid-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const path = migrationTargetDeploymentPath();
+    mkdirSync(join(tempDir, "deployments", "xlayer"), { recursive: true });
+    writeFileSync(path, `${JSON.stringify({ ...record, migrationTarget: "not-an-address" })}\n`);
+
+    assert.throws(() => readMigrationTargetDeployment(), /migrationTarget must be a valid address/);
   } finally {
     chdir(originalCwd);
     if (originalNetwork === undefined) {

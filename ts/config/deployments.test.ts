@@ -1,5 +1,5 @@
 import { strict as assert } from "node:assert";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chdir, cwd } from "node:process";
@@ -42,6 +42,34 @@ test("config deployment IO uses selected network path", () => {
     assert.equal(deploymentPath(), join(cwd(), "deployments", "xlayer", "latest.json"));
     assert.equal(existsSync(deploymentPath()), true);
     assert.deepEqual(readDeployment(), deployment);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("readDeployment rejects malformed deployment JSON", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-invalid-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const path = deploymentPath();
+    mkdirSync(join(tempDir, "deployments", "xlayer"), { recursive: true });
+    writeFileSync(path, `${JSON.stringify({ ...deployment, factory: "not-an-address" })}\n`);
+
+    assert.throws(() => readDeployment(), /factory must be a valid address/);
   } finally {
     chdir(originalCwd);
     if (originalNetwork === undefined) {

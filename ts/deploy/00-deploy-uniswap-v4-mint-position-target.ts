@@ -8,6 +8,7 @@ import {
 import { abiOf, bytecodeOf } from "../lib/artifacts.js";
 import { publicClient, walletClient } from "../lib/clients.js";
 import { printJson } from "../lib/json.js";
+import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 
 const artifact = artifacts.uniswapV4MintPositionTarget;
 const wallet = walletClient();
@@ -58,7 +59,7 @@ const hash = await wallet.deployContract({
   bytecode: bytecodeOf(artifact),
   args: [poolManager, positionManager, lpRecipient],
 });
-const receipt = await publicRpc.waitForTransactionReceipt({ hash });
+const receipt = await waitForSuccessfulTransactionReceipt({ client: publicRpc, hash, label: `deploy ${artifact}` });
 if (!receipt.contractAddress) {
   throw new Error(`No contract address for ${artifact}`);
 }

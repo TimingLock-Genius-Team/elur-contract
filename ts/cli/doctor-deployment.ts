@@ -2,6 +2,7 @@ import "dotenv/config";
 import { createPublicClient, http } from "viem";
 import { ANVIL_CHAIN_ID, XLAYER_CHAIN_ID, rpcUrlFromEnv } from "../config/chains.js";
 import { deploymentNetwork, deploymentPath, readDeployment } from "../config/deployments.js";
+import { optionalArg } from "../lib/args.js";
 import { doctorDeployment, type DeploymentCodeReader } from "../lib/deployment-doctor.js";
 import { printJson } from "../lib/json.js";
 import { redactDiagnostics, redactKnownSecrets } from "../lib/redaction.js";
@@ -28,12 +29,6 @@ const knownNetworkChainIds: Record<string, number> = {
   "forge-local": ANVIL_CHAIN_ID,
   xlayer: XLAYER_CHAIN_ID,
 };
-
-function optionalArg(name: string): string | undefined {
-  const flag = `--${name}`;
-  const index = process.argv.indexOf(flag);
-  return index >= 0 ? process.argv[index + 1] : undefined;
-}
 
 function rpcUrlForNetwork(network: string): string | undefined {
   return optionalArg("rpc-url") ?? rpcUrlFromEnv(network);
@@ -70,12 +65,14 @@ function redactionSecrets(rpcUrl: string | undefined): Array<string | undefined>
 }
 
 async function main(): Promise<void> {
-  const network = deploymentNetwork();
-  const path = deploymentPath(network);
+  let network: string | undefined;
+  let path: string | undefined;
   let rpcUrl: string | undefined;
   let expectedChainId: number | undefined;
 
   try {
+    network = deploymentNetwork();
+    path = deploymentPath(network);
     rpcUrl = rpcUrlForNetwork(network);
     expectedChainId = expectedChainIdForNetwork(network);
 
@@ -104,10 +101,10 @@ async function main(): Promise<void> {
       redactionSecrets(rpcUrl),
     );
     printJson({
-      network,
-      path,
-      expectedChainId,
-      rpcChecked: Boolean(rpcUrl),
+      ...(network ? { network } : {}),
+      ...(path ? { path } : {}),
+      ...(expectedChainId !== undefined ? { expectedChainId } : {}),
+      ...(network ? { rpcChecked: Boolean(rpcUrl) } : {}),
       ok: false,
       errors: [message],
       warnings: [],

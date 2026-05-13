@@ -83,6 +83,20 @@ test("deploymentPath prefers --network over DEPLOYMENT_NETWORK", () => {
   }
 });
 
+test("deploymentPath rejects network names that escape the deployments directory", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  delete process.env.DEPLOYMENT_NETWORK;
+  process.argv = ["node", "script", "--network", "../xlayer"];
+
+  try {
+    assert.throws(() => deploymentPath(), /Invalid deployment network/);
+  } finally {
+    restoreDeploymentNetwork(originalNetwork);
+    process.argv = originalArgv;
+  }
+});
+
 test("readDeployment and writeDeployment use the selected network", () => {
   const originalNetwork = process.env.DEPLOYMENT_NETWORK;
   const originalArgv = process.argv;

@@ -3,7 +3,6 @@ import { XLAYER_CHAIN_ID } from "../config/chains.js";
 export type GateCommand = readonly [command: string, ...args: string[]];
 
 export type GateRunOptions = {
-  env?: NodeJS.ProcessEnv;
   run: (command: string, args: string[]) => number | null;
 };
 

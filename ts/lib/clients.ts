@@ -1,16 +1,16 @@
 import "dotenv/config";
 import { createPublicClient, createWalletClient, http, publicActions } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { DEFAULT_ANVIL_RPC_URL, chainConfigFor } from "../config/chains.js";
+import { DEFAULT_ANVIL_RPC_URL, chainConfigFor, rpcUrlFromEnv } from "../config/chains.js";
 import { requiredEnv } from "../config/env.js";
 import { deploymentNetwork } from "../config/deployments.js";
 
 export function rpcUrl(network = deploymentNetwork()): string {
   if (network === "anvil") {
-    return process.env.ANVIL_RPC_URL ?? DEFAULT_ANVIL_RPC_URL;
+    return rpcUrlFromEnv(network) ?? DEFAULT_ANVIL_RPC_URL;
   }
   if (network === "xlayer") {
-    return requiredEnv(process.env, "XLAYER_RPC_URL");
+    return rpcUrlFromEnv(network) ?? requiredEnv(process.env, "XLAYER_RPC_URL");
   }
 
   throw new Error(`Unsupported RPC network ${network}`);

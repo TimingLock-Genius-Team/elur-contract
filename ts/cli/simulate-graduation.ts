@@ -1,10 +1,31 @@
 import { publicClient, walletClient } from "../lib/clients.js";
+import { deploymentNetwork } from "../config/deployments.js";
+import { hasArg, optionalArg } from "../lib/args.js";
 import { hookAbi, resolveTokenInfo, routerAbi } from "../lib/contracts.js";
 import { printJson } from "../lib/json.js";
+import { assertLocalSimulationOrAllowed, maxIterationsFromArg } from "../lib/live-run-guard.js";
+import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 import { parseOkb } from "../lib/units.js";
 
-const wallet = walletClient();
+const network = deploymentNetwork();
+const allowLive = hasArg("allow-live");
+if (!allowLive && network !== "anvil") {
+  throw new Error("simulate-graduation refuses to run outside Anvil without --allow-live");
+}
+
 const client = publicClient();
+const chainId = await client.getChainId();
+const maxBuys = maxIterationsFromArg(optionalArg("max-buys"));
+
+assertLocalSimulationOrAllowed({
+  allowLive,
+  chainId,
+  maxIterations: maxBuys,
+  network,
+  scriptName: "simulate-graduation",
+});
+
+const wallet = walletClient();
 const info = await resolveTokenInfo();
 const buyer = (await wallet.getAddresses())[0];
 
@@ -18,6 +39,9 @@ while (true) {
   if (selfDeprecated) {
     break;
   }
+  if (maxBuys !== undefined && buys >= maxBuys) {
+    throw new Error(`simulate-graduation reached --max-buys ${maxBuys} before selfDeprecated`);
+  }
 
   const hash = await wallet.writeContract({
     address: info.router,
@@ -26,7 +50,7 @@ while (true) {
     args: [info.token, 0n, buyer],
     value: parseOkb("10"),
   });
-  await client.waitForTransactionReceipt({ hash });
+  await waitForSuccessfulTransactionReceipt({ client, hash, label: "buy" });
   buys += 1;
 }
 

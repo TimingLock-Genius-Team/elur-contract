@@ -1,3 +1,4 @@
+import { decodeEventLog, isAddress } from "viem";
 import { abiOf } from "./artifacts.js";
 import { artifacts } from "../config/artifacts.js";
 import { latestToken, readDeployment } from "../config/deployments.js";
@@ -27,20 +28,115 @@ type TokenInfoObject = {
   socialURI: string;
 };
 
-export function normalizeTokenInfo(info: unknown): TokenInfoObject {
-  if (Array.isArray(info)) {
-    const tuple = info as unknown as TokenInfoTuple;
-    return {
-      token: tuple[0],
-      hook: tuple[1],
-      router: tuple[2],
-      creator: tuple[3],
-      metadataURI: tuple[4],
-      socialURI: tuple[5],
-    };
+export const tokenCreatedEventAbi = {
+  type: "event",
+  name: "TokenCreated",
+  inputs: [
+    { name: "token", type: "address", indexed: true },
+    { name: "hook", type: "address", indexed: true },
+    { name: "router", type: "address", indexed: false },
+    { name: "creator", type: "address", indexed: true },
+    { name: "metadataURI", type: "string", indexed: false },
+    { name: "socialURI", type: "string", indexed: false },
+  ],
+} as const;
+
+type EventLog = {
+  address: `0x${string}`;
+  data: `0x${string}`;
+  topics: readonly [] | readonly [`0x${string}`, ...`0x${string}`[]];
+};
+
+function validAddress(value: unknown): value is `0x${string}` {
+  return typeof value === "string" && isAddress(value);
+}
+
+function isTokenInfoObject(value: unknown): value is TokenInfoObject {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
   }
 
-  return info as TokenInfoObject;
+  const record = value as Record<string, unknown>;
+  return (
+    validAddress(record.token) &&
+    validAddress(record.hook) &&
+    validAddress(record.router) &&
+    validAddress(record.creator) &&
+    typeof record.metadataURI === "string" &&
+    typeof record.socialURI === "string"
+  );
+}
+
+function requireTokenInfoObject(value: unknown): TokenInfoObject {
+  if (isTokenInfoObject(value)) {
+    return value;
+  }
+
+  const record = typeof value === "object" && value !== null ? value as Record<string, unknown> : {};
+  for (const field of ["token", "hook", "router", "creator"] as const) {
+    if (!validAddress(record[field])) {
+      throw new Error(`TokenInfo ${field} must be a valid address`);
+    }
+  }
+  for (const field of ["metadataURI", "socialURI"] as const) {
+    if (typeof record[field] !== "string") {
+      throw new Error(`TokenInfo ${field} must be a string`);
+    }
+  }
+
+  throw new Error("TokenInfo must be an object");
+}
+
+export function normalizeTokenInfo(info: unknown): TokenInfoObject {
+  if (Array.isArray(info)) {
+    if (info.length !== 6) {
+      throw new Error("TokenInfo tuple must contain 6 values");
+    }
+
+    return requireTokenInfoObject({
+      token: info[0],
+      hook: info[1],
+      router: info[2],
+      creator: info[3],
+      metadataURI: info[4],
+      socialURI: info[5],
+    });
+  }
+
+  return requireTokenInfoObject(info);
+}
+
+export function extractCreatedTokenFromLogs(logs: readonly EventLog[], factoryAddress?: `0x${string}`): TokenInfoObject {
+  for (const log of logs) {
+    if (factoryAddress && log.address.toLowerCase() !== factoryAddress.toLowerCase()) {
+      continue;
+    }
+
+    try {
+      const decoded = decodeEventLog({
+        abi: [tokenCreatedEventAbi],
+        data: log.data,
+        topics: [...log.topics] as [] | [`0x${string}`, ...`0x${string}`[]],
+      });
+      if (decoded.eventName !== "TokenCreated") {
+        continue;
+      }
+
+      const args = decoded.args as Record<string, unknown>;
+      return normalizeTokenInfo({
+        token: args.token,
+        hook: args.hook,
+        router: args.router,
+        creator: args.creator,
+        metadataURI: args.metadataURI,
+        socialURI: args.socialURI,
+      });
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error("TokenCreated event not found in transaction receipt");
 }
 
 export async function resolveTokenInfo() {

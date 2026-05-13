@@ -34,6 +34,32 @@ test("validateXLayerReadinessPreflight accepts read-only gate env without deploy
   assert.deepEqual(validateXLayerReadinessPreflight(readinessEnv), { ok: true, errors: [], warnings: [] });
 });
 
+test("validateXLayerReadinessPreflight accepts generic RPC_URL fallback", () => {
+  const {
+    XLAYER_RPC_URL,
+    ...readinessEnv
+  } = validEnv;
+
+  assert.equal(XLAYER_RPC_URL, validEnv.XLAYER_RPC_URL);
+  assert.deepEqual(validateXLayerReadinessPreflight({
+    ...readinessEnv,
+    RPC_URL: "https://rpc.generic.example",
+  }), { ok: true, errors: [], warnings: [] });
+});
+
+test("validateXLayerPreflight accepts generic RPC_URL fallback", () => {
+  const {
+    XLAYER_RPC_URL,
+    ...env
+  } = validEnv;
+
+  assert.equal(XLAYER_RPC_URL, validEnv.XLAYER_RPC_URL);
+  assert.deepEqual(validateXLayerPreflight({
+    ...env,
+    RPC_URL: "https://rpc.generic.example",
+  }), { ok: true, errors: [], warnings: [] });
+});
+
 test("validateXLayerReadinessPreflight rejects non-XLayer chain id overrides", () => {
   const result = validateXLayerReadinessPreflight({
     ...validEnv,
@@ -73,10 +99,17 @@ test("preflight-xlayer CLI emits JSON and exits non-zero on invalid env", () => 
     "ts/cli/preflight-xlayer.ts",
   ], {
     env: {
-      ...process.env,
       DEPLOYMENT_NETWORK: "xlayer",
+      DEPLOYED_AT: "",
+      GIT_COMMIT: "",
+      LP_RECIPIENT: "",
+      MIGRATION_TARGET: "",
       NODE_OPTIONS: "--no-warnings",
       PRIVATE_KEY: "bad",
+      TEAM_MULTISIG: "",
+      UNISWAP_V4_POOL_MANAGER: "",
+      UNISWAP_V4_POSITION_MANAGER: "",
+      XLAYER_RPC_URL: "",
     },
     encoding: "utf8",
   });
@@ -84,8 +117,17 @@ test("preflight-xlayer CLI emits JSON and exits non-zero on invalid env", () => 
   assert.equal(result.status, 1);
   const output = JSON.parse(result.stdout);
   assert.equal(output.ok, false);
-  assert.match(output.errors.join("\n"), /PRIVATE_KEY must be a 32-byte hex string/);
-  assert.match(output.errors.join("\n"), /XLAYER_RPC_URL is required/);
+  assert.deepEqual(output.errors, [
+    "XLAYER_RPC_URL is required",
+    "PRIVATE_KEY must be a 32-byte hex string",
+    "GIT_COMMIT is required",
+    "DEPLOYED_AT is required",
+    "TEAM_MULTISIG is required",
+    "UNISWAP_V4_POOL_MANAGER is required",
+    "UNISWAP_V4_POSITION_MANAGER is required",
+    "LP_RECIPIENT is required",
+    "MIGRATION_TARGET is required",
+  ]);
 });
 
 test("preflight-xlayer-readiness CLI does not require PRIVATE_KEY or deployment provenance", () => {

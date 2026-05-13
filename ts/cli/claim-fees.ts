@@ -3,6 +3,7 @@ import { publicClient, walletClient } from "../lib/clients.js";
 import { getArg } from "../lib/args.js";
 import { hookAbi, resolveTokenInfo } from "../lib/contracts.js";
 import { printJson } from "../lib/json.js";
+import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 
 const wallet = walletClient();
 const client = publicClient();
@@ -21,7 +22,7 @@ const hash = await wallet.writeContract({
   functionName: "claimFees",
   args: [recipient],
 });
-const receipt = await client.waitForTransactionReceipt({ hash });
+const receipt = await waitForSuccessfulTransactionReceipt({ client, hash, label: "claimFees" });
 
 const claimableAfter = await client.readContract({
   address: info.hook,
