@@ -1,5 +1,5 @@
 import { isAddress } from "viem";
-import type { Deployment } from "./deployments.js";
+import type { Deployment } from "../config/deployments.js";
 
 export type DeploymentDoctorResult = {
   ok: boolean;
@@ -10,6 +10,10 @@ export type DeploymentDoctorResult = {
 export type DeploymentCodeReader = {
   getChainId?: () => Promise<number>;
   getCode: (args: { address: `0x${string}` }) => Promise<`0x${string}` | undefined | null>;
+  getFactoryConfig?: (args: { address: `0x${string}` }) => Promise<{
+    feeRecipient: `0x${string}`;
+    migrationTarget: `0x${string}`;
+  }>;
 };
 
 export type DeploymentDoctorOptions = {
@@ -66,6 +70,10 @@ function validAddress(value: unknown): value is `0x${string}` {
   return typeof value === "string" && isAddress(value);
 }
 
+function sameAddress(left: `0x${string}`, right: `0x${string}`): boolean {
+  return left.toLowerCase() === right.toLowerCase();
+}
+
 function requireAddressValue(value: unknown, label: string, errors: string[]): void {
   if (!validAddress(value)) {
     errors.push(`${label} must be a valid address`);
@@ -91,6 +99,34 @@ async function checkCode(
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     warnings.push(`Could not check code for ${label} at ${address}: ${message}`);
+  }
+}
+
+async function checkFactoryConfig(
+  deployment: Partial<Deployment>,
+  codeReader: DeploymentCodeReader,
+  errors: string[],
+  warnings: string[],
+): Promise<void> {
+  if (!codeReader.getFactoryConfig || !validAddress(deployment.factory)) {
+    return;
+  }
+
+  try {
+    const config = await codeReader.getFactoryConfig({ address: deployment.factory });
+    if (validAddress(deployment.feeRecipient) && !sameAddress(config.feeRecipient, deployment.feeRecipient)) {
+      errors.push(
+        `Factory feeRecipient ${config.feeRecipient} does not match deployment feeRecipient ${deployment.feeRecipient}`,
+      );
+    }
+    if (validAddress(deployment.migrationTarget) && !sameAddress(config.migrationTarget, deployment.migrationTarget)) {
+      errors.push(
+        `Factory migrationTarget ${config.migrationTarget} does not match deployment migrationTarget ${deployment.migrationTarget}`,
+      );
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`Could not check Factory config at ${deployment.factory}: ${message}`);
   }
 }
 
@@ -195,6 +231,8 @@ export async function doctorDeployment(
     for (const codeCheck of codeChecks) {
       await codeCheck();
     }
+
+    await checkFactoryConfig(deploymentWithType, codeReader, errors, warnings);
   }
 
   return { ok: errors.length === 0, errors, warnings };

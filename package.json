@@ -1,7 +1,7 @@
 {
-  "name": "satpad-contract",
+  "name": "eulr-contract",
   "version": "1.0.0",
-  "description": "SATPAD contract backend built with Foundry, Anvil, and TypeScript.",
+  "description": "Eulr contract backend built with Foundry, Anvil, and TypeScript.",
   "main": "index.js",
   "directories": {
     "lib": "lib",
@@ -15,7 +15,8 @@
     "test:fuzz": "forge test --fuzz-runs 10000",
     "test:invariant": "forge test --match-path 'test/invariant/*'",
     "test:fork:local": "forge test --match-path 'test/fork/*'",
-    "test:fork:xlayer": "XLAYER_CHAIN_ID=${XLAYER_CHAIN_ID:-196} forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "test:fork:xlayer": "XLAYER_CHAIN_ID=196 forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
+    "coverage": "forge coverage --ir-minimum --exclude-tests --no-match-coverage '^(script|test|src/mocks)/'",
     "slither": "slither src --exclude-informational --exclude-low",
     "ci": "forge fmt --check && forge build && forge test --fuzz-runs 10000 && forge test --match-path 'test/invariant/*' && forge test --match-path 'test/fork/*' && npx tsc --noEmit && npm run test:ts && npm run slither",
     "script:check-chain": "forge script script/CheckChain.s.sol:CheckChain --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545}",
@@ -32,6 +33,8 @@
     "script:migrate-liquidity": "forge script script/MigrateLiquidity.s.sol:MigrateLiquidity --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "script:claim-fees": "forge script script/ClaimFees.s.sol:ClaimFees --rpc-url ${ANVIL_RPC_URL:-http://127.0.0.1:8545} --broadcast",
     "preflight:xlayer": "tsx ts/cli/preflight-xlayer.ts",
+    "preflight:xlayer:readiness": "tsx ts/cli/preflight-xlayer-readiness.ts",
+    "gate:xlayer": "tsx ts/cli/xlayer-deployment-gate.ts",
     "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
     "deploy:migration-target": "tsx ts/deploy/00-deploy-uniswap-v4-mint-position-target.ts",
     "create-token": "tsx ts/cli/create-token.ts",
@@ -45,20 +48,21 @@
     "claim:fees": "tsx ts/cli/claim-fees.ts",
     "doctor:deployment": "tsx ts/cli/doctor-deployment.ts",
     "doctor:migration-target": "tsx ts/cli/doctor-migration-target.ts",
+    "doctor:xlayer-readiness": "tsx ts/cli/doctor-xlayer-readiness.ts",
     "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 --allow-zero-min-out && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 --allow-zero-min-out && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TimingLock-Genius-Team/satpad-contract.git"
+    "url": "git+https://github.com/TimingLock-Genius-Team/eulr-contract.git"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "type": "module",
   "bugs": {
-    "url": "https://github.com/TimingLock-Genius-Team/satpad-contract/issues"
+    "url": "https://github.com/TimingLock-Genius-Team/eulr-contract/issues"
   },
-  "homepage": "https://github.com/TimingLock-Genius-Team/satpad-contract#readme",
+  "homepage": "https://github.com/TimingLock-Genius-Team/eulr-contract#readme",
   "dependencies": {
     "dotenv": "^17.4.2",
     "viem": "^2.48.11"

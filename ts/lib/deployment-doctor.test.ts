@@ -6,8 +6,9 @@ import { chdir, cwd } from "node:process";
 import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { defaultCurveParams } from "../config/params.js";
 import { doctorDeployment, type DeploymentCodeReader } from "./deployment-doctor.js";
-import type { Deployment } from "./deployments.js";
+import type { Deployment } from "../config/deployments.js";
 
 const validDeployment: Deployment = {
   chainId: 196,
@@ -19,13 +20,7 @@ const validDeployment: Deployment = {
   uniswapV4PoolManager: "0x0000000000000000000000000000000000000004",
   uniswapV4PositionManager: "0x0000000000000000000000000000000000000005",
   migrationTarget: "0x0000000000000000000000000000000000000006",
-  curve: {
-    k: "21000000000000000000000000",
-    s: "100000000000000000000",
-    feeBps: 30,
-    selfDeprecationBps: 9900,
-    maxBuyOkb: "10000000000000000000",
-  },
+  curve: defaultCurveParams,
   createdTokens: [
     {
       token: "0x0000000000000000000000000000000000000007",
@@ -97,9 +92,44 @@ test("doctorDeployment checks deployed contract code when a reader is available"
   ]);
 });
 
+test("doctorDeployment checks Factory immutable config when a reader is available", async () => {
+  const codeReader: DeploymentCodeReader = {
+    getCode: async () => "0x6000",
+    getFactoryConfig: async () => ({
+      feeRecipient: "0x0000000000000000000000000000000000000011",
+      migrationTarget: "0x0000000000000000000000000000000000000012",
+    }),
+  };
+
+  const result = await doctorDeployment(validDeployment, { codeReader });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    `Factory feeRecipient 0x0000000000000000000000000000000000000011 does not match deployment feeRecipient ${validDeployment.feeRecipient}`,
+    `Factory migrationTarget 0x0000000000000000000000000000000000000012 does not match deployment migrationTarget ${validDeployment.migrationTarget}`,
+  ]);
+});
+
+test("doctorDeployment fails when Factory immutable config cannot be read", async () => {
+  const codeReader: DeploymentCodeReader = {
+    getCode: async () => "0x6000",
+    getFactoryConfig: async () => {
+      throw new Error("missing selector");
+    },
+  };
+
+  const result = await doctorDeployment(validDeployment, { codeReader });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    `Could not check Factory config at ${validDeployment.factory}: missing selector`,
+  ]);
+  assert.deepEqual(result.warnings, []);
+});
+
 test("doctor-deployment CLI rejects invalid --chain-id values before running checks", () => {
   const originalCwd = cwd();
-  const tempDir = mkdtempSync(join(tmpdir(), "satpad-doctor-cli-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-doctor-cli-"));
   const deploymentDir = join(tempDir, "deployments", "anvil");
   const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
   const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
@@ -144,7 +174,7 @@ test("doctor-deployment CLI rejects invalid --chain-id values before running che
 
 test("doctor-deployment CLI accepts a valid explicit --chain-id override", () => {
   const originalCwd = cwd();
-  const tempDir = mkdtempSync(join(tmpdir(), "satpad-doctor-cli-valid-"));
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-doctor-cli-valid-"));
   const deploymentDir = join(tempDir, "deployments", "xlayer");
   const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
   const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
@@ -184,6 +214,50 @@ test("doctor-deployment CLI accepts a valid explicit --chain-id override", () =>
       errors: [],
       warnings: [],
     });
+  } finally {
+    chdir(originalCwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("doctor-deployment CLI redacts RPC URLs from diagnostics", () => {
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-doctor-cli-redact-"));
+  const deploymentDir = join(tempDir, "deployments", "xlayer");
+  const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
+  const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
+  const secretRpcUrl = "http://127.0.0.1:1/super-secret-rpc-key";
+
+  mkdirSync(deploymentDir, { recursive: true });
+  writeFileSync(join(deploymentDir, "latest.json"), `${JSON.stringify(validDeployment, null, 2)}\n`);
+  chdir(tempDir);
+
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import",
+      tsxLoaderPath,
+      scriptPath,
+      "--network",
+      "xlayer",
+      "--rpc-url",
+      secretRpcUrl,
+      "--chain-id",
+      "196",
+    ], {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        DEPLOYMENT_NETWORK: "",
+        NODE_OPTIONS: "--no-warnings",
+        RPC_URL: "",
+        XLAYER_RPC_URL: "",
+      },
+      encoding: "utf8",
+    });
+
+    assert.equal(result.status, 1);
+    assert.doesNotMatch(result.stdout, /super-secret-rpc-key/);
+    assert.match(result.stdout, /\$RPC_URL/);
   } finally {
     chdir(originalCwd);
     rmSync(tempDir, { recursive: true, force: true });

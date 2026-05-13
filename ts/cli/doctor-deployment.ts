@@ -1,12 +1,32 @@
+import "dotenv/config";
 import { createPublicClient, http } from "viem";
+import { ANVIL_CHAIN_ID, XLAYER_CHAIN_ID, rpcUrlFromEnv } from "../config/chains.js";
+import { deploymentNetwork, deploymentPath, readDeployment } from "../config/deployments.js";
 import { doctorDeployment, type DeploymentCodeReader } from "../lib/deployment-doctor.js";
-import { deploymentNetwork, deploymentPath, readDeployment } from "../lib/deployments.js";
 import { printJson } from "../lib/json.js";
+import { redactDiagnostics, redactKnownSecrets } from "../lib/redaction.js";
+
+const factoryAbi = [
+  {
+    inputs: [],
+    name: "feeRecipient",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
+    name: "migrationTarget",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
 
 const knownNetworkChainIds: Record<string, number> = {
-  anvil: 31337,
-  "forge-local": 31337,
-  xlayer: 196,
+  anvil: ANVIL_CHAIN_ID,
+  "forge-local": ANVIL_CHAIN_ID,
+  xlayer: XLAYER_CHAIN_ID,
 };
 
 function optionalArg(name: string): string | undefined {
@@ -15,12 +35,8 @@ function optionalArg(name: string): string | undefined {
   return index >= 0 ? process.argv[index + 1] : undefined;
 }
 
-function envKeyForNetwork(network: string): string {
-  return `${network.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_RPC_URL`;
-}
-
 function rpcUrlForNetwork(network: string): string | undefined {
-  return optionalArg("rpc-url") ?? process.env.RPC_URL ?? process.env[envKeyForNetwork(network)];
+  return optionalArg("rpc-url") ?? rpcUrlFromEnv(network);
 }
 
 function expectedChainIdForNetwork(network: string): number | undefined {
@@ -42,7 +58,15 @@ function codeReaderForRpc(rpcUrl: string): DeploymentCodeReader {
   return {
     getChainId: () => client.getChainId(),
     getCode: ({ address }) => client.getCode({ address }),
+    getFactoryConfig: async ({ address }) => ({
+      feeRecipient: await client.readContract({ address, abi: factoryAbi, functionName: "feeRecipient" }),
+      migrationTarget: await client.readContract({ address, abi: factoryAbi, functionName: "migrationTarget" }),
+    }),
   };
+}
+
+function redactionSecrets(rpcUrl: string | undefined): Array<string | undefined> {
+  return [rpcUrl, process.env.RPC_URL, process.env.XLAYER_RPC_URL, process.env.ANVIL_RPC_URL];
 }
 
 async function main(): Promise<void> {
@@ -55,10 +79,13 @@ async function main(): Promise<void> {
     rpcUrl = rpcUrlForNetwork(network);
     expectedChainId = expectedChainIdForNetwork(network);
 
-    const result = await doctorDeployment(readDeployment(network), {
-      expectedChainId,
-      codeReader: rpcUrl ? codeReaderForRpc(rpcUrl) : undefined,
-    });
+    const result = redactDiagnostics(
+      await doctorDeployment(readDeployment(network), {
+        expectedChainId,
+        codeReader: rpcUrl ? codeReaderForRpc(rpcUrl) : undefined,
+      }),
+      redactionSecrets(rpcUrl),
+    );
 
     printJson({
       network,
@@ -72,7 +99,10 @@ async function main(): Promise<void> {
       process.exitCode = 1;
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = redactKnownSecrets(
+      error instanceof Error ? error.message : String(error),
+      redactionSecrets(rpcUrl),
+    );
     printJson({
       network,
       path,

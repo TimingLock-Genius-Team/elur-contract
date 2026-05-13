@@ -1,17 +1,22 @@
+import "dotenv/config";
 import { createPublicClient, http } from "viem";
-import { deploymentNetwork } from "../lib/deployments.js";
-import type { DeploymentCodeReader } from "../lib/deployment-doctor.js";
-import { printJson } from "../lib/json.js";
+import { ANVIL_CHAIN_ID, XLAYER_CHAIN_ID, rpcUrlFromEnv } from "../config/chains.js";
+import { deploymentNetwork } from "../config/deployments.js";
 import {
-  doctorMigrationTargetDeployment,
   migrationTargetDeploymentPath,
   readMigrationTargetDeployment,
+} from "../config/migration-target-deployments.js";
+import type { DeploymentCodeReader } from "../lib/deployment-doctor.js";
+import { printJson } from "../lib/json.js";
+import { redactDiagnostics, redactKnownSecrets } from "../lib/redaction.js";
+import {
+  doctorMigrationTargetDeployment,
 } from "../lib/migration-target-deployment.js";
 
 const knownNetworkChainIds: Record<string, number> = {
-  anvil: 31337,
-  "forge-local": 31337,
-  xlayer: 196,
+  anvil: ANVIL_CHAIN_ID,
+  "forge-local": ANVIL_CHAIN_ID,
+  xlayer: XLAYER_CHAIN_ID,
 };
 
 function optionalArg(name: string): string | undefined {
@@ -20,12 +25,8 @@ function optionalArg(name: string): string | undefined {
   return index >= 0 ? process.argv[index + 1] : undefined;
 }
 
-function envKeyForNetwork(network: string): string {
-  return `${network.toUpperCase().replace(/[^A-Z0-9]/g, "_")}_RPC_URL`;
-}
-
 function rpcUrlForNetwork(network: string): string | undefined {
-  return optionalArg("rpc-url") ?? process.env.RPC_URL ?? process.env[envKeyForNetwork(network)];
+  return optionalArg("rpc-url") ?? rpcUrlFromEnv(network);
 }
 
 function expectedChainIdForNetwork(network: string): number | undefined {
@@ -50,6 +51,10 @@ function codeReaderForRpc(rpcUrl: string): DeploymentCodeReader {
   };
 }
 
+function redactionSecrets(rpcUrl: string | undefined): Array<string | undefined> {
+  return [rpcUrl, process.env.RPC_URL, process.env.XLAYER_RPC_URL, process.env.ANVIL_RPC_URL];
+}
+
 async function main(): Promise<void> {
   const network = deploymentNetwork();
   const path = migrationTargetDeploymentPath(network);
@@ -60,10 +65,13 @@ async function main(): Promise<void> {
     rpcUrl = rpcUrlForNetwork(network);
     expectedChainId = expectedChainIdForNetwork(network);
 
-    const result = await doctorMigrationTargetDeployment(readMigrationTargetDeployment(network), {
-      expectedChainId,
-      codeReader: rpcUrl ? codeReaderForRpc(rpcUrl) : undefined,
-    });
+    const result = redactDiagnostics(
+      await doctorMigrationTargetDeployment(readMigrationTargetDeployment(network), {
+        expectedChainId,
+        codeReader: rpcUrl ? codeReaderForRpc(rpcUrl) : undefined,
+      }),
+      redactionSecrets(rpcUrl),
+    );
 
     printJson({
       network,
@@ -77,7 +85,10 @@ async function main(): Promise<void> {
       process.exitCode = 1;
     }
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = redactKnownSecrets(
+      error instanceof Error ? error.message : String(error),
+      redactionSecrets(rpcUrl),
+    );
     printJson({
       network,
       path,
