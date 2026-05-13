@@ -199,7 +199,13 @@ DEPLOYMENT_NETWORK=xlayer \
 npm run deploy:migration-target
 ```
 
-该命令使用 `UNISWAP_V4_POOL_MANAGER`、`UNISWAP_V4_POSITION_MANAGER` 和 `LP_RECIPIENT` 作为构造参数，部署 `UniswapV4MintPositionTarget`，检查 PoolManager / PositionManager 和新 target 都有 code，并写入 `deployments/xlayer/uniswap-v4-mint-position-target.json`（包含 `transactionHash` 以便浏览器核验）。确认记录后，把其中的 `migrationTarget` 地址设置为 `MIGRATION_TARGET`，再部署 Factory：
+该命令使用 `UNISWAP_V4_POOL_MANAGER`、`UNISWAP_V4_POSITION_MANAGER` 和 `LP_RECIPIENT` 作为构造参数，部署 `UniswapV4MintPositionTarget`，检查 PoolManager / PositionManager 和新 target 都有 code，并写入 `deployments/xlayer/uniswap-v4-mint-position-target.json`（包含 `transactionHash` 以便浏览器核验）。确认记录后，先运行：
+
+```bash
+npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL
+```
+
+通过后把其中的 `migrationTarget` 地址设置为 `MIGRATION_TARGET`，再部署 Factory：
 
 ```bash
 GIT_COMMIT=$(git rev-parse --short HEAD) \

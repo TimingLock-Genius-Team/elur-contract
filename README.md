@@ -119,7 +119,7 @@ npm run sell -- --token <token> --tokens <amount> --min-out <netOkbOut>
 
 The TypeScript buy/sell CLIs require an explicit non-zero `--min-out`. Local smoke tests may pass `--allow-zero-min-out` for deterministic development flows only.
 
-TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, and `LP_RECIPIENT`, run `npm run deploy:migration-target`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET` for the Factory deploy.
+TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, and `LP_RECIPIENT`, run `npm run deploy:migration-target`, validate it with `npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET` for the Factory deploy.
 
 Validate deployment JSON before production smoke:
 
