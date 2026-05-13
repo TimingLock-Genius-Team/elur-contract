@@ -141,3 +141,51 @@ test("doctor-deployment CLI rejects invalid --chain-id values before running che
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test("doctor-deployment CLI accepts a valid explicit --chain-id override", () => {
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "satpad-doctor-cli-valid-"));
+  const deploymentDir = join(tempDir, "deployments", "xlayer");
+  const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
+  const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
+
+  mkdirSync(deploymentDir, { recursive: true });
+  writeFileSync(join(deploymentDir, "latest.json"), `${JSON.stringify(validDeployment, null, 2)}\n`);
+  chdir(tempDir);
+
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import",
+      tsxLoaderPath,
+      scriptPath,
+      "--network",
+      "xlayer",
+      "--chain-id",
+      "196",
+    ], {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        DEPLOYMENT_NETWORK: "",
+        NODE_OPTIONS: "--no-warnings",
+        RPC_URL: "",
+        XLAYER_RPC_URL: "",
+      },
+      encoding: "utf8",
+    });
+
+    assert.equal(result.status, 0);
+    assert.deepEqual(JSON.parse(result.stdout), {
+      network: "xlayer",
+      path: join(realpathSync(tempDir), "deployments", "xlayer", "latest.json"),
+      expectedChainId: 196,
+      rpcChecked: false,
+      ok: true,
+      errors: [],
+      warnings: [],
+    });
+  } finally {
+    chdir(originalCwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
