@@ -26,6 +26,8 @@ Protocol: sat1 bonding curve + Factory + per-token Hook/Router
 
 ## 2. 工程目录
 
+下面列出当前真实存在的目录结构。如出现 drift，应以仓库根目录的实际文件为准，并把本文档同步更新。
+
 ```text
 eulr-contract/
   foundry.toml
@@ -46,25 +48,42 @@ eulr-contract/
       EulrHook.sol
     router/
       EulrRouter.sol
+    migration/
+      BaseUniswapV4MigrationTarget.sol
+      MigrationData.sol
+      UniswapV4MintPositionTarget.sol
+      UniswapV4PoolKey.sol
     interfaces/
       IEulrFactory.sol
       IEulrHook.sol
       IEulrRouter.sol
+      IEulrToken.sol
+      IMigrationTarget.sol
     libraries/
       NativeOkbTransfer.sol
+      ReentrancyGuard.sol
     mocks/
       LocalExternalDependency.sol
       LocalMigrationTarget.sol
 
   test/
     unit/
+      Curve.t.sol
+      EulrToken.t.sol
+      FactoryValidation.t.sol
+      MigrationData.t.sol
+      UniswapV4PoolKey.t.sol
+      BaseUniswapV4MigrationTarget.t.sol
+      UniswapV4MintPositionTarget.t.sol
     integration/
     invariant/
     fork/
+      XLayerAddressFork.t.sol
     handlers/
 
   script/
     CheckChain.s.sol
+    EulrScriptBase.s.sol
     LocalDeployFactory.s.sol
     DeployFactory.s.sol
     CreateToken.s.sol
@@ -75,6 +94,7 @@ eulr-contract/
     Sell.s.sol
     SimulateGraduation.s.sol
     MigrateLiquidity.s.sol
+    ClaimFees.s.sol
     VerifyXLayerAddresses.s.sol
 
   ts/
@@ -103,23 +123,48 @@ eulr-contract/
       doctor-deployment.ts
       doctor-migration-target.ts
       doctor-xlayer-readiness.ts
+      preflight-xlayer.ts
+      preflight-xlayer-readiness.ts
+      xlayer-deployment-gate.ts
+      smoke-anvil-accounts.ts
+      check-lcov-coverage.ts
     lib/
-      clients.ts
-      units.ts
+      anvil-smoke-accounts.ts
+      args.ts
       artifacts.ts
+      clients.ts
       contracts.ts
+      deployment-doctor.ts
       deployments.ts
+      json.ts
+      lcov-coverage.ts
+      live-run-guard.ts
+      migration-data.ts
       migration-target-deployment.ts
       preflight.ts
       redaction.ts
+      transactions.ts
+      units.ts
+      xlayer-deployment-gate.ts
+      xlayer-readiness-consistency.ts
+      *.test.ts
 
   deployments/
     anvil/latest.json
     xlayer/latest.json
+    xlayer/uniswap-v4-mint-position-target.json
 
+  README.md
+  CHANGELOG.md
   PRODUCT_DOCUMENT.md
+  PRODUCT_FLOW.md
   TECHNICAL_DEVELOPMENT.md
   TESTING_GUIDE.md
+  FORGE_ANVIL_TS_DEVELOPMENT.md
+  COMMERCIAL_READINESS.md
+  DEPLOYMENT_RUNBOOK.md
+  SECURITY_MODEL.md
+  ANVIL_SMOKE_REPORT.md
 ```
 
 ## 3. Foundry 配置
@@ -184,62 +229,24 @@ npm install --save-dev typescript tsx dotenv
 npm install --save-dev vitest
 ```
 
-`package.json` scripts：
+`package.json` scripts 以仓库根目录的 `package.json` 为准。当前主要分组（如果与本文档脱节，以 `package.json` 为唯一来源）：
 
-```json
-{
-  "scripts": {
-    "anvil": "anvil --chain-id 31337",
-    "build": "forge build",
-    "test": "forge test",
-    "test:ts": "node --import tsx --test 'ts/**/*.test.ts'",
-    "test:fuzz": "forge test --fuzz-runs 10000",
-    "test:invariant": "forge test --match-path 'test/invariant/*'",
-    "test:fork:local": "forge test --match-path 'test/fork/*'",
-    "test:fork:xlayer": "XLAYER_CHAIN_ID=196 forge test --match-path 'test/fork/*' --fork-url $XLAYER_RPC_URL",
-    "coverage": "forge coverage --ir-minimum --exclude-tests --no-match-coverage '^(script|test|src/mocks)/'",
-    "slither": "slither src --exclude-informational --exclude-low",
-    "ci": "forge fmt --check && forge build && forge test --fuzz-runs 10000 && forge test --match-path 'test/invariant/*' && forge test --match-path 'test/fork/*' && npx tsc --noEmit && npm run test:ts && npm run slither",
-    "deploy:anvil": "tsx ts/deploy/00-check-chain.ts && tsx ts/deploy/01-deploy-factory.ts && tsx ts/deploy/02-write-deployment.ts",
-    "deploy:migration-target": "tsx ts/deploy/00-deploy-uniswap-v4-mint-position-target.ts",
-    "script:verify-xlayer-addresses": "forge script script/VerifyXLayerAddresses.s.sol:VerifyXLayerAddresses --rpc-url $XLAYER_RPC_URL",
-    "script:deploy-xlayer": "GIT_COMMIT=${GIT_COMMIT:-$(git rev-parse --short HEAD)} DEPLOYED_AT=${DEPLOYED_AT:-$(date -u +\"%Y-%m-%dT%H:%M:%SZ\")} DEPLOYMENT_NETWORK=${DEPLOYMENT_NETWORK:-xlayer} forge script script/DeployFactory.s.sol:DeployFactory --rpc-url $XLAYER_RPC_URL --broadcast --verify",
-    "preflight:xlayer": "tsx ts/cli/preflight-xlayer.ts",
-    "preflight:xlayer:readiness": "tsx ts/cli/preflight-xlayer-readiness.ts",
-    "gate:xlayer": "tsx ts/cli/xlayer-deployment-gate.ts",
-    "create-token": "tsx ts/cli/create-token.ts",
-    "inspect-token": "tsx ts/cli/inspect-token.ts",
-    "quote:buy": "tsx ts/cli/quote-buy.ts",
-    "buy": "tsx ts/cli/buy.ts",
-    "quote:sell": "tsx ts/cli/quote-sell.ts",
-    "sell": "tsx ts/cli/sell.ts",
-    "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
-    "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
-    "claim:fees": "tsx ts/cli/claim-fees.ts",
-    "doctor:deployment": "tsx ts/cli/doctor-deployment.ts",
-    "doctor:migration-target": "tsx ts/cli/doctor-migration-target.ts",
-    "doctor:xlayer-readiness": "tsx ts/cli/doctor-xlayer-readiness.ts",
-    "smoke:anvil": "npm run deploy:anvil && npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo && npm run quote:buy -- --okb 1 && npm run buy -- --okb 1 --min-out 0 --allow-zero-min-out && npm run quote:sell -- --tokens 1 && npm run sell -- --tokens 1 --min-out 0 --allow-zero-min-out && npm run simulate:graduation && npm run migrate:liquidity && npm run claim:fees"
-  }
-}
-```
+- 本地链：`anvil`、`build`、`test`、`test:ts`、`test:fuzz`、`test:invariant`、`test:fork:local`、`test:fork:xlayer`。
+- 覆盖率：`coverage`、`coverage:lcov`、`coverage:95`（基于 lcov 报告校验 line coverage ≥ 95%）。
+- 静态分析与 CI：`slither`、`ci`（包含 fmt/build/fuzz/invariant/fork/tsc/test:ts/coverage:95/slither）。
+- Forge scripts：`script:check-chain`、`script:deploy-local`、`script:deploy-xlayer`、`script:create-token`、`script:inspect-token`、`script:quote-buy`、`script:buy`、`script:quote-sell`、`script:sell`、`script:simulate-graduation`、`script:migrate-liquidity`、`script:claim-fees`、`script:verify-xlayer-addresses`。
+- TypeScript 部署 / 门禁：`deploy:anvil`、`deploy:migration-target`、`preflight:xlayer`、`preflight:xlayer:readiness`、`gate:xlayer`、`doctor:deployment`、`doctor:migration-target`、`doctor:xlayer-readiness`。
+- TypeScript CLI：`create-token`、`inspect-token`、`quote:buy`、`buy`、`quote:sell`、`sell`、`simulate:graduation`、`migrate:liquidity`、`claim:fees`。
+- Smoke：`smoke:anvil`（单 signer 全链路）、`smoke:anvil:accounts`（多 Anvil signer 串行回归）。
 
-`.env.example`：
+`.env.example` 以仓库根目录的 `.env.example` 为准。当前包含三类变量：
 
-```text
-XLAYER_RPC_URL=
-XLAYER_CHAIN_ID=196
-ANVIL_RPC_URL=http://127.0.0.1:8545
-PRIVATE_KEY=
-DEPLOYMENT_NETWORK=xlayer
-GIT_COMMIT=
-DEPLOYED_AT=
-TEAM_MULTISIG=
-UNISWAP_V4_POOL_MANAGER=
-UNISWAP_V4_POSITION_MANAGER=
-LP_RECIPIENT=
-MIGRATION_TARGET=
-```
+- 网络与签名：`XLAYER_RPC_URL`、`XLAYER_CHAIN_ID`、`ANVIL_RPC_URL`、`PRIVATE_KEY`、`DEPLOYMENT_NETWORK`、`GIT_COMMIT`、`DEPLOYED_AT`、`EXPECTED_CHAIN_ID`。
+- 协议外部依赖：`TEAM_MULTISIG`、`UNISWAP_V4_POOL_MANAGER`、`UNISWAP_V4_POSITION_MANAGER`、`LP_RECIPIENT`、`MIGRATION_TARGET`。
+- Uniswap v4 迁移参数：`XLAYER_V4_HOOKS`、`XLAYER_V4_POOL_FEE`、`XLAYER_V4_TICK_SPACING`、`XLAYER_V4_TICK_LOWER`、`XLAYER_V4_TICK_UPPER`、`XLAYER_V4_MIGRATION_LIQUIDITY`、`XLAYER_V4_HOOK_DATA`、`MIGRATION_DEADLINE_SECONDS`。
+- Forge / CLI 调试参数：`FACTORY`、`TOKEN`、`TOKEN_NAME`、`TOKEN_SYMBOL`、`METADATA_URI`、`SOCIAL_URI`、`RECIPIENT`、`OKB_IN`、`TOKENS_IN`、`MIN_TOKENS_OUT`、`MIN_OKB_OUT`、`ALLOW_ZERO_MIN_OUT`、`GRADUATION_BUY_SIZE`。
+
+新增 / 删除环境变量时必须同步更新 `.env.example`、`DEPLOYMENT_RUNBOOK.md` §1 和 `ts/lib/preflight.ts` 中的校验集合。
 
 ## 5. 合约开发顺序
 
@@ -533,21 +540,38 @@ XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC
 
 ## 14. CI 建议
 
+每个 PR 必须运行：
+
+```bash
+npm run ci
+```
+
+`npm run ci` 展开为：
+
 ```bash
 forge fmt --check
 forge build
-forge test
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
+forge test --match-path "test/fork/*"
+npx tsc --noEmit
+npm run test:ts
+npm run coverage:95
 slither src --exclude-informational --exclude-low
+```
+
+补充本地验证：
+
+```bash
 npm run deploy:anvil
 npm run smoke:anvil
 ```
 
-主网部署前：
+主网部署前还需要：
 
 ```bash
-XLAYER_CHAIN_ID=196 forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL
+npm run gate:xlayer
+forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 forge test --gas-report
 npm run coverage
 ```
@@ -591,4 +615,3 @@ npm run coverage
 1. 团队 Safe 多签完整地址。
 2. XLayer Uniswap v4 PoolManager / PositionManager 地址。
 3. LP burn/lock 的具体接口。
-4. entropy 是否进入 MVP。

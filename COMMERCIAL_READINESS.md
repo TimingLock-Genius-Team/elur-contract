@@ -37,7 +37,7 @@
 - 与官方来源或团队签名确认一致。
 - 写入 `.env.example`、部署脚本、fork 测试和 deployment JSON。
 
-已确认的 Ethereum mainnet sat1 参考地址包括 `Sat1HookDeployer` `0xcbE096C140dB48199CC7e481116FD835BC33eDC6`、`Sat1Hook` `0x2a0A30dd78aF7698E6f40212b8B8324fcE2ee888` 和 `Sat1Token` `0x8f66337a0c2A02202fd91Dd596c411CF977c6060`。这些地址只能作为合约工厂复用 sat1 Hook deployer 的参考；商业部署仍必须确认目标链地址和 fork 证明。
+Ethereum mainnet sat1 参考线索集中维护在 `DEPLOYMENT_RUNBOOK.md` §1；它们只是潜在 Hook deployer 复用的参考，不能作为 XLayer 生产部署地址，也不需要在本文档重复列出。
 
 ### P0: 真实迁移适配器
 
@@ -119,16 +119,17 @@ PR / 阶段提交前：
 npm run ci
 ```
 
-等价展开命令：
+等价展开命令（以 `package.json` 中 `ci` script 为准）：
 
 ```bash
 forge fmt --check
 forge build
-forge test
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
 forge test --match-path "test/fork/*"
 npx tsc --noEmit
+npm run test:ts
+npm run coverage:95
 slither src --exclude-informational --exclude-low
 ```
 
@@ -147,6 +148,7 @@ npm run smoke:anvil
 
 每次改代码后必须同步检查：
 
+- `README.md` 是否描述了最新文档入口和常用命令。
 - `PRODUCT_DOCUMENT.md` 是否描述了最新产品规则。
 - `PRODUCT_FLOW.md` 是否描述了最新用户流程。
 - `TECHNICAL_DEVELOPMENT.md` 是否描述了最新架构和接口。
@@ -154,6 +156,8 @@ npm run smoke:anvil
 - `FORGE_ANVIL_TS_DEVELOPMENT.md` 是否描述了最新脚本和命令。
 - `DEPLOYMENT_RUNBOOK.md` 是否描述了最新部署步骤。
 - `SECURITY_MODEL.md` 是否描述了最新信任边界和风险。
+- `CHANGELOG.md` 是否记录了本次变更。
+- `ANVIL_SMOKE_REPORT.md` 是否记录了最近一次本地多 signer smoke 的实际结果（仅当 smoke 复跑且结果有变化时）。
 
 ## 6. 发布阶段
 

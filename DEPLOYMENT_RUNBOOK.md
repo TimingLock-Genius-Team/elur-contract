@@ -4,17 +4,32 @@
 
 ## 1. 环境变量
 
-创建本地 `.env`，不要提交：
+创建本地 `.env`，不要提交。完整变量集合以仓库根目录 `.env.example` 为准，下列为部署相关核心字段：
 
 ```bash
 XLAYER_RPC_URL=
+XLAYER_CHAIN_ID=196
 ANVIL_RPC_URL=http://127.0.0.1:8545
 PRIVATE_KEY=
+DEPLOYMENT_NETWORK=xlayer
+GIT_COMMIT=
+DEPLOYED_AT=
+EXPECTED_CHAIN_ID=
+
 TEAM_MULTISIG=
 UNISWAP_V4_POOL_MANAGER=
 UNISWAP_V4_POSITION_MANAGER=
 LP_RECIPIENT=
 MIGRATION_TARGET=
+
+XLAYER_V4_HOOKS=0x0000000000000000000000000000000000000000
+XLAYER_V4_POOL_FEE=3000
+XLAYER_V4_TICK_SPACING=60
+XLAYER_V4_TICK_LOWER=-887220
+XLAYER_V4_TICK_UPPER=887220
+XLAYER_V4_MIGRATION_LIQUIDITY=1000000000000000000
+XLAYER_V4_HOOK_DATA=
+MIGRATION_DEADLINE_SECONDS=3600
 ```
 
 生产部署前必须确认：
@@ -22,6 +37,8 @@ MIGRATION_TARGET=
 - `PRIVATE_KEY` 属于部署 EOA 或部署专用 signer。
 - `TEAM_MULTISIG` 是可接收 native OKB 的 Safe 或接收合约。
 - `LP_RECIPIENT` 是最终接收或永久锁定 / burn Uniswap v4 position 权益的地址，并且必须与上线 migration data 中的 `lpRecipient` 一致。
+- `UNISWAP_V4_POOL_MANAGER` 和 `UNISWAP_V4_POSITION_MANAGER` 来自 XLayer 官方公布或团队签名确认，并在 fork 上验证有 code。
+- `XLAYER_V4_*` 必须与上线时使用的真实池参数一致；任何与默认值不同的字段（fee、tick spacing、tick range、liquidity、hooks、hook data）都必须显式设置，否则 `npm run gate:xlayer` 会按默认值校验 migration 行为。
 - 所有外部地址来自官方或团队签名来源。
 - `.env` 不进入 git。
 
@@ -135,19 +152,27 @@ npm run script:claim-fees
 每个阶段提交前运行：
 
 ```bash
+npm run ci
+```
+
+`npm run ci` 展开为：
+
+```bash
 forge fmt --check
 forge build
-forge test
+forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
+forge test --match-path "test/fork/*"
 npx tsc --noEmit
 npm run test:ts
-npm run doctor:deployment -- --network anvil
+npm run coverage:95
 slither src --exclude-informational --exclude-low
 ```
 
 部署 JSON 或生产参数变更后，先运行 doctor 检查必填字段、chainId、地址格式和已创建 token 记录。提供 RPC 时会额外检查 chainId 和合约 code：
 
 ```bash
+npm run doctor:deployment -- --network anvil
 npm run doctor:deployment -- --network xlayer --rpc-url "$XLAYER_RPC_URL" --chain-id 196
 npm run doctor:xlayer-readiness
 ```
@@ -159,6 +184,7 @@ forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*" --fuzz-runs 1000
 forge test --gas-report
 npm run coverage
+npm run coverage:95
 ```
 
 ## 5. XLayer Fork 验证
@@ -190,7 +216,7 @@ Fork 测试必须验证：
 - 小额 buy / sell 成功。
 - 真实 `UniswapV4MintPositionTarget` 迁移路径可执行，产生非零 liquidity，并把 LP / position 归属到 `LP_RECIPIENT`。
 
-如果生产池参数不使用默认 `3000` fee、`60` tick spacing、全区间 tick 或 `1e18` liquidity，运行 fork migration gate 前必须显式设置 `XLAYER_V4_POOL_FEE`、`XLAYER_V4_TICK_SPACING`、`XLAYER_V4_TICK_LOWER`、`XLAYER_V4_TICK_UPPER`、`XLAYER_V4_MIGRATION_LIQUIDITY`、`XLAYER_V4_HOOKS` 和 `XLAYER_V4_HOOK_DATA` 中需要覆盖的值。
+运行 fork migration gate 前必须显式设置 `XLAYER_V4_POOL_FEE`、`XLAYER_V4_TICK_SPACING`、`XLAYER_V4_TICK_LOWER`、`XLAYER_V4_TICK_UPPER`、`XLAYER_V4_MIGRATION_LIQUIDITY` 和 `XLAYER_V4_HOOKS`；如果 pool hook 需要非空数据，也必须设置 `XLAYER_V4_HOOK_DATA`。
 
 ## 6. XLayer 部署流程
 
@@ -220,7 +246,7 @@ DEPLOYMENT_NETWORK=xlayer \
 npm run deploy:migration-target
 ```
 
-该命令使用 `UNISWAP_V4_POOL_MANAGER`、`UNISWAP_V4_POSITION_MANAGER` 和 `LP_RECIPIENT` 作为构造参数，部署 `UniswapV4MintPositionTarget`，检查 PoolManager / PositionManager 和新 target 都有 code，并写入 `deployments/xlayer/uniswap-v4-mint-position-target.json`（包含 `transactionHash` 以便浏览器核验）。确认记录后，先运行：
+该命令使用 `UNISWAP_V4_POOL_MANAGER`、`UNISWAP_V4_POSITION_MANAGER`、`LP_RECIPIENT` 和 `XLAYER_V4_*` pool allowlist 参数作为构造参数，部署 `UniswapV4MintPositionTarget`，检查 PoolManager / PositionManager 和新 target 都有 code，并写入 `deployments/xlayer/uniswap-v4-mint-position-target.json`（包含 `transactionHash`、pool allowlist、migration liquidity 和 `hookDataHash` 以便浏览器核验）。确认记录后，先运行：
 
 ```bash
 npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL

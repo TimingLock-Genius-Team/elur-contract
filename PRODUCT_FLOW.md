@@ -193,6 +193,12 @@ selfDeprecated = true
 
 当前实现通过 `migrationTarget` 适配外部迁移逻辑。商业可用版本必须把该 target 固定为经过验证的 Uniswap v4 / LP burn 或 lock 适配器。
 
+`EulrHook` 只透传 `migrationData`，不解析其中的 PoolKey、tick、liquidity、amount max、deadline 或 LP recipient；所有解码与校验都发生在 migration target 中。Hook 自己只负责：
+
+- 计算 `okbAmount = hook.balance - claimableFeeOkb`，确保未 claim fee 不进入 LP。
+- 计算 `tokenAmount = K - token.totalSupply()` 并 mint 到 Hook，再 transfer 给 migration target。
+- 校验 migration target 返回的 pool / liquidity 非零，并在结果无效时回滚状态、Hook OKB 和 target token balance。
+
 ```text
 Caller
   -> EulrHook.migrateLiquidity(migrationData)
@@ -202,7 +208,13 @@ Caller
       -> compute tokenAmount = K - token.totalSupply()
       -> mint tokenAmount to Hook
       -> transfer tokenAmount to migrationTarget
-      -> migrationTarget.migrate{value: okbAmount}(...)
+      -> migrationTarget.migrate{value: okbAmount}(migrationData)
+          -> decode and validate migrationData via BaseUniswapV4MigrationTarget / MigrationData
+          -> compute PoolId via UniswapV4PoolKey.toId
+          -> encode MINT_POSITION / SETTLE_PAIR and call PositionManager.modifyLiquidities
+          -> assert no residual OKB / token at target
+          -> emit LpCustodyProven (and adapter-specific events)
+      -> require non-zero pool and liquidity returned
       -> liquidityMigrated = true
       -> emit LiquidityMigrated
       -> emit LiquidityMigrationResult

@@ -16,6 +16,17 @@ The backend exposes frontend-friendly read surfaces through `EulrFactory.getToke
 - `COMMERCIAL_READINESS.md`: commercial availability gates, blockers, stage definitions, and launch criteria.
 - `DEPLOYMENT_RUNBOOK.md`: local, fork, and XLayer deployment procedures.
 - `SECURITY_MODEL.md`: trust boundaries, invariants, attack surfaces, and pre-launch security checklist.
+- `CHANGELOG.md`: tracked changes grouped by Added / Changed / Fixed / Security and Known Blockers.
+- `ANVIL_SMOKE_REPORT.md`: most recent local Anvil multi-signer smoke results and follow-ups.
+
+Suggested reading paths:
+
+- New developer onboarding: `FORGE_ANVIL_TS_DEVELOPMENT.md` → this README.
+- Product understanding: `PRODUCT_DOCUMENT.md` → `PRODUCT_FLOW.md`.
+- Contract review / audit: `TECHNICAL_DEVELOPMENT.md` → `SECURITY_MODEL.md`.
+- Testing / CI: `TESTING_GUIDE.md` → `COMMERCIAL_READINESS.md` §4.
+- Deployment / operations: `DEPLOYMENT_RUNBOOK.md` → `COMMERCIAL_READINESS.md`.
+- Change tracking: `CHANGELOG.md` → `ANVIL_SMOKE_REPORT.md`.
 
 ## Current Status
 
@@ -77,6 +88,19 @@ Run TypeScript type checking:
 npx tsc --noEmit
 ```
 
+Run TypeScript unit tests:
+
+```bash
+npm run test:ts
+```
+
+Run coverage and the 95% line-coverage gate:
+
+```bash
+npm run coverage
+npm run coverage:95
+```
+
 Run static analysis:
 
 ```bash
@@ -88,6 +112,8 @@ Run the local CI gate:
 ```bash
 npm run ci
 ```
+
+`npm run ci` runs `forge fmt --check`, `forge build`, fuzz / invariant / fork builds, `npx tsc --noEmit`, `npm run test:ts`, `npm run coverage:95`, and Slither in the same order as `.github/workflows/ci.yml`.
 
 ## Local Anvil Flow
 
@@ -121,7 +147,7 @@ npm run sell -- --token <token> --tokens <amount> --min-out <netOkbOut>
 
 The TypeScript buy/sell CLIs require an explicit non-zero `--min-out`. Local smoke tests may pass `--allow-zero-min-out` for deterministic development flows only.
 
-TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, and `LP_RECIPIENT`, run `npm run deploy:migration-target`, validate it with `npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET`. After `MIGRATION_TARGET` is set, run `npm run preflight:xlayer` to verify required XLayer env and provenance before the Factory deploy. Before launch, run `npm run gate:xlayer` to cross-check XLayer env, deployment records, on-chain Factory config, and guarded fork migration behavior.
+TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, `LP_RECIPIENT`, and the `XLAYER_V4_*` pool allowlist values, run `npm run deploy:migration-target`, validate it with `npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET`. After `MIGRATION_TARGET` is set, run `npm run preflight:xlayer` to verify required XLayer env and provenance before the Factory deploy. Before launch, run `npm run gate:xlayer` to cross-check XLayer env, deployment records, on-chain Factory config, and guarded fork migration behavior.
 
 Validate deployment JSON before production smoke:
 
@@ -144,17 +170,22 @@ Run the full local smoke flow:
 PRIVATE_KEY=<anvil-private-key> npm run smoke:anvil
 ```
 
-## Pre-Commit Verification
-
-Before each stage commit:
+Run the multi-signer Anvil smoke regression across default Anvil accounts:
 
 ```bash
-forge fmt --check
-forge build
-forge test
-forge test --match-path "test/invariant/*"
-npx tsc --noEmit
-slither src --exclude-informational --exclude-low
+npm run smoke:anvil:accounts
 ```
+
+`npm run smoke:anvil:accounts` is the canonical replacement for hand-rolled shell loops; see `ANVIL_SMOKE_REPORT.md` for the most recent multi-signer results.
+
+## Pre-Commit Verification
+
+Before each stage commit run the same gate as CI:
+
+```bash
+npm run ci
+```
+
+`npm run ci` expands to `forge fmt --check`, `forge build`, fuzz / invariant / fork tests, `npx tsc --noEmit`, `npm run test:ts`, `npm run coverage:95`, and Slither.
 
 Before production deployment also run XLayer fork tests, gas reporting, coverage, source verification, and audit/review steps described in `COMMERCIAL_READINESS.md`.

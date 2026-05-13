@@ -39,6 +39,10 @@ test/
     Curve.t.sol
     EulrToken.t.sol
     FactoryValidation.t.sol
+    MigrationData.t.sol
+    UniswapV4PoolKey.t.sol
+    BaseUniswapV4MigrationTarget.t.sol
+    UniswapV4MintPositionTarget.t.sol
 
   integration/
     FactoryCreateToken.t.sol
@@ -79,6 +83,8 @@ ts/cli/
   inspect-token.ts
   simulate-graduation.ts
   migrate-liquidity.ts
+  claim-fees.ts
+  smoke-anvil-accounts.ts
 ```
 
 ## 3. 测试命令
@@ -134,23 +140,50 @@ slither src --exclude-informational --exclude-low
 TypeScript smoke：
 
 ```bash
-npm run smoke:anvil
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run smoke:anvil
 ```
+
+`smoke:anvil` 会广播本地 Anvil 交易，必须显式提供本地测试私钥。只允许使用 Anvil 公开测试账户或专用测试 signer，禁止使用生产私钥。
+
+多 Anvil signer 轮询 smoke：
+
+```bash
+for entry in \
+  "0:0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266:0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" \
+  "1:0x70997970C51812dc3A010C7d01b50e0d17dc79C8:0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" \
+  "2:0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC:0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+do
+  account_index="${entry%%:*}"
+  rest="${entry#*:}"
+  account_address="${rest%%:*}"
+  private_key="${rest#*:}"
+  echo "=== smoke:anvil account ${account_index} ${account_address} ==="
+  PRIVATE_KEY="${private_key}" DEPLOYMENT_NETWORK=anvil ANVIL_RPC_URL=http://127.0.0.1:8545 npm run smoke:anvil
+done
+```
+
+每轮 `smoke:anvil` 都会重新部署本地 Factory、创建新 token，并覆盖 `deployments/anvil/latest.json`。多 signer smoke 用来验证 TypeScript CLI 不依赖固定 deployer，且不同 Anvil 测试账户都能完成创建、交易、毕业、迁移和 fee claim。默认至少跑 account 0、1、2；需要更完整覆盖时，把 Anvil 默认 account 3-19 继续追加到 `for entry in ...`。
 
 或逐步执行：
 
 ```bash
-npm run deploy:anvil
-npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo
-npm run quote:buy -- --token <address> --okb 1
-npm run buy -- --token <address> --okb 1 --min-out <value>
-npm run quote:sell -- --token <address> --tokens <value>
-npm run sell -- --token <address> --tokens <value> --min-out <value>
-npm run inspect-token -- --token <address>
-npm run simulate:graduation -- --token <address>
-npm run migrate:liquidity -- --token <address>
-npm run claim:fees -- --token <address>
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run deploy:anvil
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo
+DEPLOYMENT_NETWORK=anvil npm run quote:buy -- --token <address> --okb 1
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run buy -- --token <address> --okb 1 --min-out <value>
+DEPLOYMENT_NETWORK=anvil npm run quote:sell -- --token <address> --tokens <value>
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run sell -- --token <address> --tokens <value> --min-out <value>
+DEPLOYMENT_NETWORK=anvil npm run inspect-token -- --token <address>
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run simulate:graduation -- --token <address>
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run migrate:liquidity -- --token <address>
+PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run claim:fees -- --token <address>
 ```
+
+最近本地 Anvil smoke 记录：
+
+- 2026-05-13：使用 Anvil 本地测试 signer 并设置 `DEPLOYMENT_NETWORK=anvil` 后，完整 `smoke:anvil` 通过，覆盖 deploy factory、create token、quote buy、buy、quote sell、sell、simulate graduation、migrate liquidity 和 claim fees。
+- 2026-05-13：使用 Anvil account 0、1、2 正确私钥串行执行多 signer `smoke:anvil`，最终退出码为 `0`。完整日志报告见 `ANVIL_SMOKE_REPORT.md`。
+- 通过样本的关键状态：`chainId = 31337`，`buy` 后 `okbCum = 997000000000000000`，`simulate graduation` 后 `selfDeprecated = true`，`migrate liquidity` 后 `liquidityMigrated = true`，`claim fees` 后 `claimableAfter = 0`。
 
 ## 4. Curve 单元测试
 
@@ -515,23 +548,27 @@ TypeScript buy / sell CLI 默认拒绝 `--min-out 0`，Solidity buy / sell scrip
 npm run ci
 ```
 
-CI 展开命令：
+CI 展开命令（以 `package.json` 中 `ci` script 为准）：
 
 ```bash
 forge fmt --check
 forge build
-forge test
 forge test --fuzz-runs 10000
 forge test --match-path "test/invariant/*"
 forge test --match-path "test/fork/*"
 npx tsc --noEmit
+npm run test:ts
+npm run coverage:95
 slither src --exclude-informational --exclude-low
 ```
+
+`coverage:95` 基于 `forge coverage --report lcov` 校验 line coverage 不低于 95%，对应 CLI 为 `ts/cli/check-lcov-coverage.ts`。
 
 主网部署前额外运行：
 
 ```bash
-forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL
+npm run gate:xlayer
+forge test --match-path "test/fork/*" --fork-url $XLAYER_RPC_URL -vvv
 forge test --gas-report
 npm run coverage
 npm run deploy:anvil
@@ -563,14 +600,18 @@ npm run smoke:anvil
 - Router asset invariant。
 - Factory isolation invariant。
 - Graduation invariant。
+- `MigrationData` 解码与校验：currency ordering、fee、tick spacing/range、liquidity、amount max、deadline、burn/lock recipient。
+- `UniswapV4PoolKey` PoolId 编码与边界。
+- `BaseUniswapV4MigrationTarget` 适配器外壳：依赖 code、输入校验、LP 归宿证明事件、残留资产拒绝。
+- `UniswapV4MintPositionTarget` 第一版：v4 `MINT_POSITION` / `SETTLE_PAIR` 编码、OKB/token max、残留 OKB/token 拒绝。
+- LCOV 覆盖率门禁（`coverage:95`，line ≥ 95%）。
 
 仍需补齐：
 
-- 真实 XLayer fork tests。
+- 真实 XLayer fork tests（依赖真实 `XLAYER_RPC_URL` 和已确认外部地址）。
 - Uniswap v4 PoolManager / PositionManager 真实地址校验。
-- 真实 migration target 和 LP burn/lock fork 测试。
+- 真实 PositionManager 行为下的 `UniswapV4MintPositionTarget` migration 和 LP burn/lock fork 证明。
 - Gas snapshot 留档。
-- Coverage 留档。
 - 审计后回归测试。
 
 ## 21. 上线前清单

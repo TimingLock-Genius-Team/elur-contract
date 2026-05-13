@@ -151,13 +151,16 @@ Bonding curve 交易存在价格递增和滑点风险。合约提供最小输出
 - 对 sell 展示净输出。
 - 鼓励使用私有 RPC 或 MEV-aware 路由。
 
-## 9. 静态分析策略
+## 9. 静态分析与覆盖率策略
 
 每次提交前运行：
 
 ```bash
 slither src --exclude-informational --exclude-low
+npm run coverage:95
 ```
+
+`coverage:95` 校验 Solidity line coverage 不低于 95%（基于 `forge coverage --report lcov` 输出，由 `ts/cli/check-lcov-coverage.ts` 检查）。当前 branch coverage 不在硬门禁内，但单独的高风险分支（Hook 异常、Router reentrancy、migration target rollback）必须单独覆盖。
 
 不可忽略：
 
@@ -182,6 +185,7 @@ slither src --exclude-informational --exclude-low
 - [ ] Fuzz tests 使用 10,000 runs。
 - [ ] Invariant tests 使用 CI 参数。
 - [ ] Gas report 已保存。
-- [ ] Coverage report 已保存。
+- [ ] Coverage report 已保存（`npm run coverage` 输出）。
+- [ ] `npm run coverage:95` 通过。
 - [ ] 独立安全 review 完成。
 - [ ] 审计完成或明确标记为未审计。

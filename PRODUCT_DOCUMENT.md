@@ -315,4 +315,3 @@ event LiquidityMigrationResult(address indexed token, address indexed pool, uint
 1. 团队多签完整地址。
 2. XLayer 上 Uniswap v4 PoolManager / PositionManager 地址。
 3. LP burn 或 lock 的具体合约路径。
-4. entropy 启动窗口是否进入 MVP。
