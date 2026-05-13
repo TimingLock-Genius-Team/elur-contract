@@ -8,6 +8,7 @@ import {
 import { abiOf, bytecodeOf } from "../lib/artifacts.js";
 import { publicClient, walletClient } from "../lib/clients.js";
 import { printJson } from "../lib/json.js";
+import { migrationPoolConfigFromEnv } from "../lib/migration-data.js";
 import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 
 const artifact = artifacts.uniswapV4MintPositionTarget;
@@ -45,6 +46,7 @@ async function requireCode(label: string, address: `0x${string}`): Promise<void>
 const poolManager = requiredAddressEnv("UNISWAP_V4_POOL_MANAGER");
 const positionManager = requiredAddressEnv("UNISWAP_V4_POSITION_MANAGER");
 const lpRecipient = requiredAddressEnv("LP_RECIPIENT");
+const migrationPool = migrationPoolConfigFromEnv(process.env, { requireExplicit: true });
 
 await requireCode("UNISWAP_V4_POOL_MANAGER", poolManager);
 await requireCode("UNISWAP_V4_POSITION_MANAGER", positionManager);
@@ -57,7 +59,17 @@ const deployedAt = process.env.DEPLOYED_AT ?? new Date().toISOString();
 const hash = await wallet.deployContract({
   abi: abiOf(artifact),
   bytecode: bytecodeOf(artifact),
-  args: [poolManager, positionManager, lpRecipient],
+  args: [
+    poolManager,
+    positionManager,
+    lpRecipient,
+    migrationPool.hooks,
+    migrationPool.poolFee,
+    migrationPool.tickSpacing,
+    migrationPool.tickLower,
+    migrationPool.tickUpper,
+    migrationPool.hookDataHash,
+  ],
 });
 const receipt = await waitForSuccessfulTransactionReceipt({ client: publicRpc, hash, label: `deploy ${artifact}` });
 if (!receipt.contractAddress) {
@@ -77,6 +89,7 @@ const deployment = {
   uniswapV4PoolManager: poolManager,
   uniswapV4PositionManager: positionManager,
   lpRecipient,
+  migrationPool,
 };
 
 writeMigrationTargetDeployment(deployment);

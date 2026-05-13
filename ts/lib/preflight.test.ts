@@ -14,6 +14,12 @@ const validEnv: NodeJS.ProcessEnv = {
   UNISWAP_V4_POSITION_MANAGER: "0x0000000000000000000000000000000000000003",
   LP_RECIPIENT: "0x000000000000000000000000000000000000dEaD",
   MIGRATION_TARGET: "0x0000000000000000000000000000000000000004",
+  XLAYER_V4_HOOKS: "0x0000000000000000000000000000000000000000",
+  XLAYER_V4_POOL_FEE: "3000",
+  XLAYER_V4_TICK_SPACING: "60",
+  XLAYER_V4_TICK_LOWER: "-887220",
+  XLAYER_V4_TICK_UPPER: "887220",
+  XLAYER_V4_MIGRATION_LIQUIDITY: "1000000000000000000",
 };
 
 test("validateXLayerPreflight accepts complete production env", () => {
@@ -68,6 +74,37 @@ test("validateXLayerReadinessPreflight rejects non-XLayer chain id overrides", (
 
   assert.equal(result.ok, false);
   assert.deepEqual(result.errors, ["XLAYER_CHAIN_ID must be 196 when set"]);
+});
+
+test("validateXLayerReadinessPreflight requires explicit migration pool env", () => {
+  const {
+    XLAYER_V4_HOOKS,
+    XLAYER_V4_POOL_FEE,
+    XLAYER_V4_TICK_SPACING,
+    XLAYER_V4_TICK_LOWER,
+    XLAYER_V4_TICK_UPPER,
+    XLAYER_V4_MIGRATION_LIQUIDITY,
+    ...env
+  } = validEnv;
+
+  assert.equal(XLAYER_V4_HOOKS, validEnv.XLAYER_V4_HOOKS);
+  assert.equal(XLAYER_V4_POOL_FEE, validEnv.XLAYER_V4_POOL_FEE);
+  assert.equal(XLAYER_V4_TICK_SPACING, validEnv.XLAYER_V4_TICK_SPACING);
+  assert.equal(XLAYER_V4_TICK_LOWER, validEnv.XLAYER_V4_TICK_LOWER);
+  assert.equal(XLAYER_V4_TICK_UPPER, validEnv.XLAYER_V4_TICK_UPPER);
+  assert.equal(XLAYER_V4_MIGRATION_LIQUIDITY, validEnv.XLAYER_V4_MIGRATION_LIQUIDITY);
+
+  const result = validateXLayerReadinessPreflight(env);
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "XLAYER_V4_HOOKS is required",
+    "XLAYER_V4_POOL_FEE is required",
+    "XLAYER_V4_TICK_SPACING is required",
+    "XLAYER_V4_TICK_LOWER is required",
+    "XLAYER_V4_TICK_UPPER is required",
+    "XLAYER_V4_MIGRATION_LIQUIDITY is required",
+  ]);
 });
 
 test("validateXLayerPreflight reports missing env and malformed values", () => {
@@ -127,6 +164,12 @@ test("preflight-xlayer CLI emits JSON and exits non-zero on invalid env", () => 
     "UNISWAP_V4_POSITION_MANAGER is required",
     "LP_RECIPIENT is required",
     "MIGRATION_TARGET is required",
+    "XLAYER_V4_HOOKS is required",
+    "XLAYER_V4_POOL_FEE is required",
+    "XLAYER_V4_TICK_SPACING is required",
+    "XLAYER_V4_TICK_LOWER is required",
+    "XLAYER_V4_TICK_UPPER is required",
+    "XLAYER_V4_MIGRATION_LIQUIDITY is required",
   ]);
 });
 
@@ -145,6 +188,12 @@ test("preflight-xlayer-readiness CLI does not require PRIVATE_KEY or deployment 
       TEAM_MULTISIG: validEnv.TEAM_MULTISIG,
       UNISWAP_V4_POOL_MANAGER: validEnv.UNISWAP_V4_POOL_MANAGER,
       UNISWAP_V4_POSITION_MANAGER: validEnv.UNISWAP_V4_POSITION_MANAGER,
+      XLAYER_V4_HOOKS: validEnv.XLAYER_V4_HOOKS,
+      XLAYER_V4_POOL_FEE: validEnv.XLAYER_V4_POOL_FEE,
+      XLAYER_V4_TICK_SPACING: validEnv.XLAYER_V4_TICK_SPACING,
+      XLAYER_V4_TICK_LOWER: validEnv.XLAYER_V4_TICK_LOWER,
+      XLAYER_V4_TICK_UPPER: validEnv.XLAYER_V4_TICK_UPPER,
+      XLAYER_V4_MIGRATION_LIQUIDITY: validEnv.XLAYER_V4_MIGRATION_LIQUIDITY,
       XLAYER_RPC_URL: validEnv.XLAYER_RPC_URL,
     },
     encoding: "utf8",

@@ -32,6 +32,15 @@ const record: MigrationTargetDeploymentRecord = {
   uniswapV4PoolManager: "0x0000000000000000000000000000000000000003",
   uniswapV4PositionManager: "0x0000000000000000000000000000000000000004",
   lpRecipient: "0x000000000000000000000000000000000000dEaD",
+  migrationPool: {
+    hooks: "0x0000000000000000000000000000000000000000",
+    poolFee: 3000,
+    tickSpacing: 60,
+    tickLower: -887220,
+    tickUpper: 887220,
+    migrationLiquidity: "1000000000000000000",
+    hookDataHash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+  },
 };
 
 test("migrationTargetDeploymentPath uses DEPLOYMENT_NETWORK", () => {
@@ -100,6 +109,19 @@ test("doctorMigrationTargetDeployment rejects deployer as LP recipient", async (
 
   assert.equal(result.ok, false);
   assert.deepEqual(result.errors, ["lpRecipient must not equal deployer"]);
+});
+
+test("doctorMigrationTargetDeployment rejects impossible migration pool config", async () => {
+  const result = await doctorMigrationTargetDeployment({
+    ...record,
+    migrationPool: {
+      ...record.migrationPool,
+      migrationLiquidity: (1n << 128n).toString(),
+    },
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, ["migrationPool.migrationLiquidity must fit uint128"]);
 });
 
 test("doctorMigrationTargetDeployment checks chain id and deployed code", async () => {

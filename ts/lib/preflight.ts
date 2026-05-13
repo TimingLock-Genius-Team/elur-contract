@@ -1,6 +1,7 @@
 import { isAddress } from "viem";
 import { XLAYER_CHAIN_ID, rpcUrlFromEnv } from "../config/chains.js";
-import { deploymentProvenanceEnv, xlayerAddressEnv } from "../config/env.js";
+import { deploymentProvenanceEnv, xlayerAddressEnv, xlayerMigrationPoolEnv } from "../config/env.js";
+import { migrationPoolConfigFromEnv } from "./migration-data.js";
 
 export type PreflightResult = {
   ok: boolean;
@@ -39,12 +40,29 @@ function validateXLayerAddressEnv(env: NodeJS.ProcessEnv, errors: string[]): voi
   }
 }
 
+function validateXLayerMigrationPoolEnv(env: NodeJS.ProcessEnv, errors: string[]): void {
+  const missingBefore = errors.length;
+  for (const name of xlayerMigrationPoolEnv) {
+    requireString(env, name, errors);
+  }
+  if (errors.length !== missingBefore) {
+    return;
+  }
+
+  try {
+    migrationPoolConfigFromEnv(env, { requireExplicit: true });
+  } catch (error) {
+    errors.push(error instanceof Error ? error.message : String(error));
+  }
+}
+
 export function validateXLayerReadinessPreflight(env: NodeJS.ProcessEnv = process.env): PreflightResult {
   const errors: string[] = [];
   const warnings: string[] = [];
 
   validateXLayerNetworkEnv(env, errors);
   validateXLayerAddressEnv(env, errors);
+  validateXLayerMigrationPoolEnv(env, errors);
 
   return { ok: errors.length === 0, errors, warnings };
 }
@@ -64,6 +82,7 @@ export function validateXLayerPreflight(env: NodeJS.ProcessEnv = process.env): P
     errors.push("DEPLOYED_AT must be a valid timestamp");
   }
   validateXLayerAddressEnv(env, errors);
+  validateXLayerMigrationPoolEnv(env, errors);
 
   return { ok: errors.length === 0, errors, warnings };
 }

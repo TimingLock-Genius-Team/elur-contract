@@ -6,6 +6,7 @@ import {
   type MigrationTargetDeploymentRecord,
 } from "../config/migration-target-deployments.js";
 import type { DeploymentCodeReader, DeploymentDoctorResult } from "./deployment-doctor.js";
+import { validateMigrationPoolConfig } from "./migration-data.js";
 
 export {
   migrationTargetDeploymentPath,
@@ -28,6 +29,7 @@ const addressFields = [
 ] as const;
 
 const codeAddressFields = ["migrationTarget", "uniswapV4PoolManager", "uniswapV4PositionManager"] as const;
+const UINT128_MAX = (1n << 128n) - 1n;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -39,6 +41,18 @@ function isNonEmptyString(value: unknown): value is string {
 
 function validAddress(value: unknown): value is `0x${string}` {
   return typeof value === "string" && isAddress(value);
+}
+
+function validBytes32(value: unknown): value is `0x${string}` {
+  return typeof value === "string" && /^0x[0-9a-fA-F]{64}$/.test(value);
+}
+
+function validPositiveDecimalString(value: unknown): value is string {
+  return typeof value === "string" && /^[1-9]\d*$/.test(value);
+}
+
+function validUint128String(value: unknown): value is string {
+  return validPositiveDecimalString(value) && BigInt(value) <= UINT128_MAX;
 }
 
 function sameAddress(left: `0x${string}`, right: `0x${string}`): boolean {
@@ -54,6 +68,12 @@ function requireString(record: Record<string, unknown>, field: string, errors: s
 function requireAddress(record: Record<string, unknown>, field: string, errors: string[]): void {
   if (!validAddress(record[field])) {
     errors.push(`${field} must be a valid address`);
+  }
+}
+
+function requireInteger(record: Record<string, unknown>, field: string, errors: string[]): void {
+  if (!Number.isInteger(record[field])) {
+    errors.push(`${field} must be an integer`);
   }
 }
 
@@ -100,6 +120,46 @@ export async function doctorMigrationTargetDeployment(
 
   for (const field of addressFields) {
     requireAddress(deployment, field, errors);
+  }
+  if (!isRecord(deployment.migrationPool)) {
+    errors.push("migrationPool must be an object");
+  } else {
+    requireAddress(deployment.migrationPool, "hooks", errors);
+    requireInteger(deployment.migrationPool, "poolFee", errors);
+    requireInteger(deployment.migrationPool, "tickSpacing", errors);
+    requireInteger(deployment.migrationPool, "tickLower", errors);
+    requireInteger(deployment.migrationPool, "tickUpper", errors);
+    if (!validPositiveDecimalString(deployment.migrationPool.migrationLiquidity)) {
+      errors.push("migrationPool.migrationLiquidity must be a positive decimal string");
+    } else if (!validUint128String(deployment.migrationPool.migrationLiquidity)) {
+      errors.push("migrationPool.migrationLiquidity must fit uint128");
+    }
+    if (!validBytes32(deployment.migrationPool.hookDataHash)) {
+      errors.push("migrationPool.hookDataHash must be a 32-byte hex string");
+    }
+    if (
+      validAddress(deployment.migrationPool.hooks) &&
+      Number.isInteger(deployment.migrationPool.poolFee) &&
+      Number.isInteger(deployment.migrationPool.tickSpacing) &&
+      Number.isInteger(deployment.migrationPool.tickLower) &&
+      Number.isInteger(deployment.migrationPool.tickUpper) &&
+      validUint128String(deployment.migrationPool.migrationLiquidity) &&
+      validBytes32(deployment.migrationPool.hookDataHash)
+    ) {
+      try {
+        validateMigrationPoolConfig({
+          hooks: deployment.migrationPool.hooks,
+          poolFee: deployment.migrationPool.poolFee as number,
+          tickSpacing: deployment.migrationPool.tickSpacing as number,
+          tickLower: deployment.migrationPool.tickLower as number,
+          tickUpper: deployment.migrationPool.tickUpper as number,
+          migrationLiquidity: deployment.migrationPool.migrationLiquidity,
+          hookDataHash: deployment.migrationPool.hookDataHash,
+        });
+      } catch (error) {
+        errors.push(error instanceof Error ? error.message : String(error));
+      }
+    }
   }
 
   if (

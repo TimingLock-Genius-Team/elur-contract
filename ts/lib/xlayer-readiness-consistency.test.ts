@@ -29,6 +29,15 @@ const migrationTargetDeployment: MigrationTargetDeploymentRecord = {
   uniswapV4PoolManager: deployment.uniswapV4PoolManager,
   uniswapV4PositionManager: deployment.uniswapV4PositionManager,
   lpRecipient: "0x000000000000000000000000000000000000dEaD",
+  migrationPool: {
+    hooks: "0x0000000000000000000000000000000000000000",
+    poolFee: 3000,
+    tickSpacing: 60,
+    tickLower: -887220,
+    tickUpper: 887220,
+    migrationLiquidity: "1000000000000000000",
+    hookDataHash: "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470",
+  },
 };
 
 const env: NodeJS.ProcessEnv = {
@@ -38,6 +47,12 @@ const env: NodeJS.ProcessEnv = {
   TEAM_MULTISIG: deployment.feeRecipient,
   UNISWAP_V4_POOL_MANAGER: deployment.uniswapV4PoolManager,
   UNISWAP_V4_POSITION_MANAGER: deployment.uniswapV4PositionManager,
+  XLAYER_V4_HOOKS: migrationTargetDeployment.migrationPool.hooks,
+  XLAYER_V4_POOL_FEE: String(migrationTargetDeployment.migrationPool.poolFee),
+  XLAYER_V4_TICK_SPACING: String(migrationTargetDeployment.migrationPool.tickSpacing),
+  XLAYER_V4_TICK_LOWER: String(migrationTargetDeployment.migrationPool.tickLower),
+  XLAYER_V4_TICK_UPPER: String(migrationTargetDeployment.migrationPool.tickUpper),
+  XLAYER_V4_MIGRATION_LIQUIDITY: migrationTargetDeployment.migrationPool.migrationLiquidity,
   XLAYER_RPC_URL: "https://rpc.xlayer.example",
 };
 
@@ -47,6 +62,36 @@ test("doctorXLayerReadinessConsistency accepts matching deployment records and e
     errors: [],
     warnings: [],
   });
+});
+
+test("doctorXLayerReadinessConsistency rejects migration pool parameter mismatches", () => {
+  const result = doctorXLayerReadinessConsistency(deployment, {
+    ...migrationTargetDeployment,
+    migrationPool: {
+      ...migrationTargetDeployment.migrationPool,
+      poolFee: 500,
+      migrationLiquidity: "2000000000000000000",
+      hookDataHash: "0x0000000000000000000000000000000000000000000000000000000000000000",
+    },
+  }, {
+    ...env,
+    XLAYER_V4_HOOKS: "0x0000000000000000000000000000000000000016",
+    XLAYER_V4_TICK_SPACING: "10",
+    XLAYER_V4_TICK_LOWER: "-100",
+    XLAYER_V4_TICK_UPPER: "100",
+    XLAYER_V4_MIGRATION_LIQUIDITY: "3000000000000000000",
+  });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "XLAYER_V4_HOOKS does not match migration target deployment migrationPool.hooks",
+    "XLAYER_V4_POOL_FEE does not match migration target deployment migrationPool.poolFee",
+    "XLAYER_V4_TICK_SPACING does not match migration target deployment migrationPool.tickSpacing",
+    "XLAYER_V4_TICK_LOWER does not match migration target deployment migrationPool.tickLower",
+    "XLAYER_V4_TICK_UPPER does not match migration target deployment migrationPool.tickUpper",
+    "XLAYER_V4_MIGRATION_LIQUIDITY does not match migration target deployment migrationPool.migrationLiquidity",
+    "XLAYER_V4_HOOK_DATA does not match migration target deployment migrationPool.hookDataHash",
+  ]);
 });
 
 test("doctorXLayerReadinessConsistency rejects mismatched deployment records and env", () => {

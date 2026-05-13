@@ -6,6 +6,15 @@ export const xlayerAddressEnv = [
   "MIGRATION_TARGET",
 ] as const;
 
+export const xlayerMigrationPoolEnv = [
+  "XLAYER_V4_HOOKS",
+  "XLAYER_V4_POOL_FEE",
+  "XLAYER_V4_TICK_SPACING",
+  "XLAYER_V4_TICK_LOWER",
+  "XLAYER_V4_TICK_UPPER",
+  "XLAYER_V4_MIGRATION_LIQUIDITY",
+] as const;
+
 export const deploymentProvenanceEnv = ["GIT_COMMIT", "DEPLOYED_AT"] as const;
 
 export function requiredEnv(env: NodeJS.ProcessEnv, name: string): string {
