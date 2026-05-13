@@ -1,22 +1,22 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadFactory} from "../../src/factory/SatpadFactory.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrFactory} from "../../src/factory/EulrFactory.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract GraduationMigrationTest is SatpadTestBase {
+contract GraduationMigrationTest is EulrTestBase {
     function test_RevertWhen_MigrateBeforeGraduation() public {
-        (, SatpadHook hook,) = createDemoToken();
+        (, EulrHook hook,) = createDemoToken();
 
-        vm.expectRevert(SatpadHook.NotSelfDeprecated.selector);
+        vm.expectRevert(EulrHook.NotSelfDeprecated.selector);
         hook.migrateLiquidity("");
     }
 
     function test_MigrationMovesAllReserveAndMintsLiquidityTokensToTarget() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         for (uint256 i = 0; i < 47; i++) {
             vm.roll(i + 2);
             buy(router, token, trader, 10e18);
@@ -42,7 +42,7 @@ contract GraduationMigrationTest is SatpadTestBase {
     }
 
     function test_RevertWhen_MigrationRunsTwice() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         for (uint256 i = 0; i < 47; i++) {
             vm.roll(i + 2);
             buy(router, token, trader, 10e18);
@@ -50,47 +50,47 @@ contract GraduationMigrationTest is SatpadTestBase {
 
         hook.migrateLiquidity("");
 
-        vm.expectRevert(SatpadHook.LiquidityAlreadyMigrated.selector);
+        vm.expectRevert(EulrHook.LiquidityAlreadyMigrated.selector);
         hook.migrateLiquidity("");
     }
 
     function test_RevertWhen_MigrationTargetReturnsInvalidResult() public {
         MockBadMigrationTarget zeroPoolTarget = new MockBadMigrationTarget(address(0), 1e18);
-        (SatpadToken zeroPoolToken, SatpadHook zeroPoolHook,) =
-            _createGraduatedToken(new SatpadFactory(feeRecipient, address(zeroPoolTarget)));
+        (EulrToken zeroPoolToken, EulrHook zeroPoolHook,) =
+            _createGraduatedToken(new EulrFactory(feeRecipient, address(zeroPoolTarget)));
         uint256 zeroPoolHookBalance = address(zeroPoolHook).balance;
         uint256 zeroPoolTargetTokenBalance = zeroPoolToken.balanceOf(address(zeroPoolTarget));
 
-        vm.expectRevert(SatpadHook.InvalidMigrationResult.selector);
+        vm.expectRevert(EulrHook.InvalidMigrationResult.selector);
         zeroPoolHook.migrateLiquidity("");
         assertFalse(zeroPoolHook.liquidityMigrated());
         assertEq(address(zeroPoolHook).balance, zeroPoolHookBalance);
         assertEq(zeroPoolToken.balanceOf(address(zeroPoolTarget)), zeroPoolTargetTokenBalance);
 
         MockBadMigrationTarget zeroLiquidityTarget = new MockBadMigrationTarget(address(0xBEEF), 0);
-        (SatpadToken zeroLiquidityToken, SatpadHook zeroLiquidityHook,) =
-            _createGraduatedToken(new SatpadFactory(feeRecipient, address(zeroLiquidityTarget)));
+        (EulrToken zeroLiquidityToken, EulrHook zeroLiquidityHook,) =
+            _createGraduatedToken(new EulrFactory(feeRecipient, address(zeroLiquidityTarget)));
         uint256 zeroLiquidityHookBalance = address(zeroLiquidityHook).balance;
         uint256 zeroLiquidityTargetTokenBalance = zeroLiquidityToken.balanceOf(address(zeroLiquidityTarget));
 
-        vm.expectRevert(SatpadHook.InvalidMigrationResult.selector);
+        vm.expectRevert(EulrHook.InvalidMigrationResult.selector);
         zeroLiquidityHook.migrateLiquidity("");
         assertFalse(zeroLiquidityHook.liquidityMigrated());
         assertEq(address(zeroLiquidityHook).balance, zeroLiquidityHookBalance);
         assertEq(zeroLiquidityToken.balanceOf(address(zeroLiquidityTarget)), zeroLiquidityTargetTokenBalance);
     }
 
-    function _createGraduatedToken(SatpadFactory factory_)
+    function _createGraduatedToken(EulrFactory factory_)
         internal
-        returns (SatpadToken token, SatpadHook hook, SatpadRouter router)
+        returns (EulrToken token, EulrHook hook, EulrRouter router)
     {
         vm.prank(creator);
         (address tokenAddr, address hookAddr, address routerAddr) =
             factory_.createToken("Migration", "MIG", "ipfs://migration", "");
 
-        token = SatpadToken(tokenAddr);
-        hook = SatpadHook(payable(hookAddr));
-        router = SatpadRouter(payable(routerAddr));
+        token = EulrToken(tokenAddr);
+        hook = EulrHook(payable(hookAddr));
+        router = EulrRouter(payable(routerAddr));
 
         for (uint256 i = 0; i < 47; i++) {
             vm.roll(i + 2);

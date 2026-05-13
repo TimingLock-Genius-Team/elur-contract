@@ -1,12 +1,13 @@
 import { abiOf } from "./artifacts.js";
-import { latestToken, readDeployment } from "./deployments.js";
+import { artifacts } from "../config/artifacts.js";
+import { latestToken, readDeployment } from "../config/deployments.js";
 import { getArg } from "./args.js";
 import { publicClient } from "./clients.js";
 
-export const factoryAbi = abiOf("SatpadFactory.sol/SatpadFactory.json");
-export const hookAbi = abiOf("SatpadHook.sol/SatpadHook.json");
-export const routerAbi = abiOf("SatpadRouter.sol/SatpadRouter.json");
-export const tokenAbi = abiOf("SatpadToken.sol/SatpadToken.json");
+export const factoryAbi = abiOf(artifacts.factory);
+export const hookAbi = abiOf("EulrHook.sol/EulrHook.json");
+export const routerAbi = abiOf("EulrRouter.sol/EulrRouter.json");
+export const tokenAbi = abiOf("EulrToken.sol/EulrToken.json");
 
 export type TokenInfoTuple = readonly [
   `0x${string}`,

@@ -1,36 +1,36 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {CurveParams} from "../../src/curve/CurveTypes.sol";
-import {ISatpadFactory} from "../../src/interfaces/ISatpadFactory.sol";
-import {SatpadFactory} from "../../src/factory/SatpadFactory.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {IEulrFactory} from "../../src/interfaces/IEulrFactory.sol";
+import {EulrFactory} from "../../src/factory/EulrFactory.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract FactoryValidationTest is SatpadTestBase {
+contract FactoryValidationTest is EulrTestBase {
     function test_RevertWhen_ExternalDependencyHasNoCode() public {
-        vm.expectRevert(abi.encodeWithSelector(SatpadFactory.MissingExternalCode.selector, address(0x5678)));
-        new SatpadFactory(feeRecipient, address(0x5678));
+        vm.expectRevert(abi.encodeWithSelector(EulrFactory.MissingExternalCode.selector, address(0x5678)));
+        new EulrFactory(feeRecipient, address(0x5678));
     }
 
     function test_RevertWhen_NameOrSymbolInvalid() public {
-        vm.expectRevert(SatpadFactory.EmptyName.selector);
+        vm.expectRevert(EulrFactory.EmptyName.selector);
         factory.createToken("", "DEMO", "ipfs://demo", "");
 
-        vm.expectRevert(SatpadFactory.EmptySymbol.selector);
+        vm.expectRevert(EulrFactory.EmptySymbol.selector);
         factory.createToken("Demo", "", "ipfs://demo", "");
 
-        vm.expectRevert(SatpadFactory.SymbolTooLong.selector);
+        vm.expectRevert(EulrFactory.SymbolTooLong.selector);
         factory.createToken("Demo", "TOO-LONG!", "ipfs://demo", "");
     }
 
     function test_RevertWhen_MetadataOrSocialUriTooLong() public {
-        vm.expectRevert(SatpadFactory.MetadataURITooLong.selector);
+        vm.expectRevert(EulrFactory.MetadataURITooLong.selector);
         factory.createToken("Demo", "DEMO", _stringOfLength(513), "");
 
-        vm.expectRevert(SatpadFactory.SocialURITooLong.selector);
+        vm.expectRevert(EulrFactory.SocialURITooLong.selector);
         factory.createToken("Demo", "DEMO", "ipfs://demo", _stringOfLength(257));
     }
 
@@ -39,9 +39,9 @@ contract FactoryValidationTest is SatpadTestBase {
         (address tokenAddr, address hookAddr, address routerAddr) =
             factory.createToken("Demo", "DEMO", "ipfs://demo", "https://demo.example");
 
-        SatpadToken token = SatpadToken(tokenAddr);
-        SatpadHook hook = SatpadHook(payable(hookAddr));
-        SatpadRouter router = SatpadRouter(payable(routerAddr));
+        EulrToken token = EulrToken(tokenAddr);
+        EulrHook hook = EulrHook(payable(hookAddr));
+        EulrRouter router = EulrRouter(payable(routerAddr));
 
         assertGt(tokenAddr.code.length, 0);
         assertGt(hookAddr.code.length, 0);
@@ -55,7 +55,7 @@ contract FactoryValidationTest is SatpadTestBase {
         assertEq(factory.allTokensLength(), 1);
         assertTrue(factory.isToken(tokenAddr));
 
-        ISatpadFactory.TokenInfo memory info = factory.getTokenInfo(tokenAddr);
+        IEulrFactory.TokenInfo memory info = factory.getTokenInfo(tokenAddr);
         assertEq(info.creator, creator);
         assertEq(info.metadataURI, "ipfs://demo");
         assertEq(info.socialURI, "https://demo.example");
@@ -66,6 +66,24 @@ contract FactoryValidationTest is SatpadTestBase {
         assertEq(params.feeBps, 30);
         assertEq(params.selfDeprecationBps, 9900);
         assertEq(params.maxBuyOkb, 10e18);
+    }
+
+    function test_GetTokensReturnsPaginatedCreatedTokenAddresses() public {
+        (EulrToken tokenA,,) = createToken("Alpha", "ALPHA", creator);
+        (EulrToken tokenB,,) = createToken("Beta", "BETA", trader);
+        (EulrToken tokenC,,) = createToken("Gamma", "GAMMA", recipient);
+
+        address[] memory firstPage = factory.getTokens(0, 2);
+        assertEq(firstPage.length, 2);
+        assertEq(firstPage[0], address(tokenA));
+        assertEq(firstPage[1], address(tokenB));
+
+        address[] memory secondPage = factory.getTokens(2, 2);
+        assertEq(secondPage.length, 1);
+        assertEq(secondPage[0], address(tokenC));
+
+        address[] memory emptyPage = factory.getTokens(3, 2);
+        assertEq(emptyPage.length, 0);
     }
 
     function _stringOfLength(uint256 length) internal pure returns (string memory) {

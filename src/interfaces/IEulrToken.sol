@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface ISatpadToken {
+interface IEulrToken {
     function hook() external view returns (address);
     function balanceOf(address account) external view returns (uint256);
     function totalSupply() external view returns (uint256);

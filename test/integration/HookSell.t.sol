@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {SellQuote} from "../../src/curve/CurveTypes.sol";
 import {Curve} from "../../src/curve/Curve.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract HookSellTest is SatpadTestBase {
+contract HookSellTest is EulrTestBase {
     function test_SellBurnsTokensAndPaysNetOkb() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 2e18);
 
         vm.roll(block.number + 1);
@@ -29,7 +29,7 @@ contract HookSellTest is SatpadTestBase {
     }
 
     function test_RevertWhen_SellAmountIsZeroOrExceedsCurveMinted() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         buy(router, token, trader, 1e18);
         vm.roll(block.number + 1);
 
@@ -45,36 +45,36 @@ contract HookSellTest is SatpadTestBase {
     }
 
     function test_RevertWhen_SellAllowanceOrBalanceMissing() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
         vm.roll(block.number + 1);
 
         vm.prank(trader);
-        vm.expectRevert(SatpadToken.InsufficientAllowance.selector);
+        vm.expectRevert(EulrToken.InsufficientAllowance.selector);
         router.sell(address(token), tokensOut / 2, 0, trader);
 
         address empty = makeAddr("empty");
         vm.prank(empty);
-        vm.expectRevert(SatpadToken.InsufficientAllowance.selector);
+        vm.expectRevert(EulrToken.InsufficientAllowance.selector);
         router.sell(address(token), 1, 0, empty);
     }
 
     function test_RevertWhen_SellSlippageTooHighOrReserveMissing() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
         vm.roll(block.number + 1);
 
         vm.startPrank(trader);
         token.approve(address(router), tokensOut);
-        vm.expectRevert(SatpadHook.SlippageExceeded.selector);
+        vm.expectRevert(EulrHook.SlippageExceeded.selector);
         router.sell(address(token), tokensOut / 2, type(uint256).max, trader);
         vm.stopPrank();
     }
 
     function test_RevertWhen_DirectHookSellCallerIsNotRouter() public {
-        (, SatpadHook hook,) = createDemoToken();
+        (, EulrHook hook,) = createDemoToken();
 
-        vm.expectRevert(SatpadHook.OnlyRouter.selector);
+        vm.expectRevert(EulrHook.OnlyRouter.selector);
         hook.sell(trader, trader, 1e18, 0);
     }
 }

@@ -3,7 +3,7 @@ pragma solidity ^0.8.26;
 
 import {BuyQuote, SellQuote} from "../curve/CurveTypes.sol";
 
-interface ISatpadRouter {
+interface IEulrRouter {
     function buy(address token, uint256 minTokensOut, address recipient) external payable returns (uint256 tokensOut);
     function sell(address token, uint256 tokensIn, uint256 minOkbOut, address recipient)
         external

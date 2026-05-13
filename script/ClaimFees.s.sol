@@ -2,14 +2,14 @@
 pragma solidity ^0.8.26;
 
 import {console2} from "forge-std/Script.sol";
-import {ISatpadFactory} from "../src/interfaces/ISatpadFactory.sol";
-import {ISatpadHook} from "../src/interfaces/ISatpadHook.sol";
-import {SatpadScriptBase} from "./SatpadScriptBase.s.sol";
+import {IEulrFactory} from "../src/interfaces/IEulrFactory.sol";
+import {IEulrHook} from "../src/interfaces/IEulrHook.sol";
+import {EulrScriptBase} from "./EulrScriptBase.s.sol";
 
-contract ClaimFees is SatpadScriptBase {
+contract ClaimFees is EulrScriptBase {
     function run() external returns (uint256 amount) {
-        ISatpadFactory.TokenInfo memory info = _tokenInfo();
-        ISatpadHook hook = ISatpadHook(info.hook);
+        IEulrFactory.TokenInfo memory info = _tokenInfo();
+        IEulrHook hook = IEulrHook(info.hook);
         address recipient = _recipient();
 
         uint256 beforeClaim = hook.claimableFeeOkb();

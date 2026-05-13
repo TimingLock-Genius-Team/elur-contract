@@ -2,21 +2,21 @@
 pragma solidity ^0.8.26;
 
 import {console2} from "forge-std/Script.sol";
-import {ISatpadFactory} from "../src/interfaces/ISatpadFactory.sol";
-import {ISatpadHook} from "../src/interfaces/ISatpadHook.sol";
-import {ISatpadRouter} from "../src/interfaces/ISatpadRouter.sol";
-import {SatpadScriptBase} from "./SatpadScriptBase.s.sol";
+import {IEulrFactory} from "../src/interfaces/IEulrFactory.sol";
+import {IEulrHook} from "../src/interfaces/IEulrHook.sol";
+import {IEulrRouter} from "../src/interfaces/IEulrRouter.sol";
+import {EulrScriptBase} from "./EulrScriptBase.s.sol";
 
-contract SimulateGraduation is SatpadScriptBase {
+contract SimulateGraduation is EulrScriptBase {
     function run() external returns (uint256 buys) {
-        ISatpadFactory.TokenInfo memory info = _tokenInfo();
-        ISatpadHook hook = ISatpadHook(info.hook);
+        IEulrFactory.TokenInfo memory info = _tokenInfo();
+        IEulrHook hook = IEulrHook(info.hook);
         address recipient = _recipient();
         uint256 buySize = vm.envOr("GRADUATION_BUY_SIZE", uint256(10 ether));
 
         vm.startBroadcast(_privateKey());
         while (!hook.selfDeprecated()) {
-            ISatpadRouter(info.router).buy{value: buySize}(info.token, 0, recipient);
+            IEulrRouter(info.router).buy{value: buySize}(info.token, 0, recipient);
             buys++;
         }
         vm.stopBroadcast();

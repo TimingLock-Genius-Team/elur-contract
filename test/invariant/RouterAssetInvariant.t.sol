@@ -2,16 +2,16 @@
 pragma solidity ^0.8.26;
 
 import {StdInvariant} from "forge-std/StdInvariant.sol";
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 import {UserHandler} from "../handlers/UserHandler.sol";
 
-contract RouterAssetInvariantTest is StdInvariant, SatpadTestBase {
-    SatpadToken internal token;
-    SatpadHook internal hook;
-    SatpadRouter internal router;
+contract RouterAssetInvariantTest is StdInvariant, EulrTestBase {
+    EulrToken internal token;
+    EulrHook internal hook;
+    EulrRouter internal router;
     UserHandler internal handler;
 
     function setUp() public override {

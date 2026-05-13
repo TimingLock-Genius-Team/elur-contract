@@ -1,16 +1,16 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract SelfDeprecationTest is SatpadTestBase {
+contract SelfDeprecationTest is EulrTestBase {
     event SelfDeprecated(address indexed token, uint256 okbCum, uint256 minted);
 
     function test_BuyBeforeThresholdDoesNotDeprecate() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         buy(router, token, trader, 10e18);
 
@@ -18,7 +18,7 @@ contract SelfDeprecationTest is SatpadTestBase {
     }
 
     function test_ThresholdBuySetsSelfDeprecatedAndEmitsEvent() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         for (uint256 i = 0; i < 46; i++) {
             vm.roll(i + 2);
@@ -34,7 +34,7 @@ contract SelfDeprecationTest is SatpadTestBase {
     }
 
     function test_BuyStaysClosedAfterSelfDeprecatedButSellWorks() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         uint256 bought;
         for (uint256 i = 0; i < 47; i++) {
             vm.roll(i + 2);
@@ -45,7 +45,7 @@ contract SelfDeprecationTest is SatpadTestBase {
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadHook.SelfDeprecatedBuyClosed.selector);
+        vm.expectRevert(EulrHook.SelfDeprecatedBuyClosed.selector);
         router.buy{value: 1e18}(address(token), 0, trader);
 
         vm.roll(100);

@@ -7,7 +7,7 @@ import {MigrationData} from "../../src/migration/MigrationData.sol";
 import {UniswapV4MintPositionTarget} from "../../src/migration/UniswapV4MintPositionTarget.sol";
 import {UniswapV4PoolKey} from "../../src/migration/UniswapV4PoolKey.sol";
 
-contract MockSatpadErc20 {
+contract MockEulrErc20 {
     mapping(address account => uint256 balance) public balanceOf;
     mapping(address owner => mapping(address spender => uint256 allowance)) public allowance;
 
@@ -73,21 +73,21 @@ contract MockUniswapV4PositionManager {
 
         if (pullToken) {
             require(
-                MockSatpadErc20(key.currency1).transferFrom(msg.sender, address(this), amount1Max), "token pull failed"
+                MockEulrErc20(key.currency1).transferFrom(msg.sender, address(this), amount1Max), "token pull failed"
             );
         }
     }
 }
 
 contract UniswapV4MintPositionTargetTest is Test {
-    MockSatpadErc20 internal token;
+    MockEulrErc20 internal token;
     MockUniswapV4PositionManager internal positionManager;
     address internal poolManager;
     address internal lpRecipient = MigrationData.BURN_ADDRESS;
     UniswapV4MintPositionTarget internal target;
 
     function setUp() public {
-        token = new MockSatpadErc20();
+        token = new MockEulrErc20();
         positionManager = new MockUniswapV4PositionManager();
         poolManager = address(new MockUniswapV4PositionManager());
         target = new UniswapV4MintPositionTarget(poolManager, address(positionManager), lpRecipient);

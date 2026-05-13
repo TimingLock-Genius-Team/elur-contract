@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract SameBlockProtectionTest is SatpadTestBase {
+contract SameBlockProtectionTest is EulrTestBase {
     function test_SameUserCannotSellInBuyBlockButCanSellNextBlock() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
 
         vm.startPrank(trader);
         token.approve(address(router), tokensOut);
-        vm.expectRevert(SatpadHook.SameBlockSell.selector);
+        vm.expectRevert(EulrHook.SameBlockSell.selector);
         router.sell(address(token), tokensOut / 2, 0, trader);
         vm.stopPrank();
 
@@ -23,7 +23,7 @@ contract SameBlockProtectionTest is SatpadTestBase {
     }
 
     function test_DifferentUserIsNotBlockedByBuyersBlock() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         address seller = makeAddr("seller");
 
         uint256 sellerTokens = buy(router, token, seller, 1e18);
@@ -37,7 +37,7 @@ contract SameBlockProtectionTest is SatpadTestBase {
     }
 
     function test_RecipientCannotSellInSameBlockWhenBuyerIsDifferent() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         address buyer = makeAddr("buyer");
         address tokenRecipient = makeAddr("tokenRecipient");
 
@@ -47,14 +47,14 @@ contract SameBlockProtectionTest is SatpadTestBase {
 
         vm.startPrank(tokenRecipient);
         token.approve(address(router), tokensOut);
-        vm.expectRevert(SatpadHook.SameBlockSell.selector);
+        vm.expectRevert(EulrHook.SameBlockSell.selector);
         router.sell(address(token), tokensOut / 2, 0, tokenRecipient);
         vm.stopPrank();
     }
 
     function test_LastBuyBlockDoesNotCrossTokens() public {
-        (SatpadToken tokenA,, SatpadRouter routerA) = createToken("Alpha", "ALPHA", creator);
-        (SatpadToken tokenB,, SatpadRouter routerB) = createToken("Beta", "BETA", creator);
+        (EulrToken tokenA,, EulrRouter routerA) = createToken("Alpha", "ALPHA", creator);
+        (EulrToken tokenB,, EulrRouter routerB) = createToken("Beta", "BETA", creator);
 
         uint256 tokenBAmount = buy(routerB, tokenB, trader, 1e18);
         vm.roll(block.number + 1);
@@ -67,7 +67,7 @@ contract SameBlockProtectionTest is SatpadTestBase {
     }
 
     function test_FailedBuyDoesNotBlockSell() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
         vm.roll(block.number + 1);
 

@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract SelfDeprecationAndMigrationTest is SatpadTestBase {
+contract SelfDeprecationAndMigrationTest is EulrTestBase {
     function test_BuyClosesPermanentlyAfterSelfDeprecationButSellStaysOpen() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         uint256 totalBought;
         for (uint256 i = 0; i < 47; i++) {
@@ -20,7 +20,7 @@ contract SelfDeprecationAndMigrationTest is SatpadTestBase {
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadHook.SelfDeprecatedBuyClosed.selector);
+        vm.expectRevert(EulrHook.SelfDeprecatedBuyClosed.selector);
         router.buy{value: 1e18}(address(token), 0, trader);
 
         vm.roll(100);
@@ -31,9 +31,9 @@ contract SelfDeprecationAndMigrationTest is SatpadTestBase {
     }
 
     function test_MigrationRequiresGraduationAndCanOnlyRunOnce() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
-        vm.expectRevert(SatpadHook.NotSelfDeprecated.selector);
+        vm.expectRevert(EulrHook.NotSelfDeprecated.selector);
         hook.migrateLiquidity("");
 
         for (uint256 i = 0; i < 47; i++) {
@@ -43,7 +43,7 @@ contract SelfDeprecationAndMigrationTest is SatpadTestBase {
 
         uint256 claimableFees = hook.claimableFeeOkb();
         uint256 reserve = address(hook).balance - claimableFees;
-        (address pool, uint256 liquidity) = hook.migrateLiquidity("satpad-local-migration");
+        (address pool, uint256 liquidity) = hook.migrateLiquidity("eulr-local-migration");
 
         assertEq(pool, migrationTarget.pool());
         assertEq(liquidity, migrationTarget.liquidity());
@@ -52,7 +52,7 @@ contract SelfDeprecationAndMigrationTest is SatpadTestBase {
         assertTrue(hook.liquidityMigrated());
         assertEq(address(hook).balance, claimableFees);
 
-        vm.expectRevert(SatpadHook.LiquidityAlreadyMigrated.selector);
+        vm.expectRevert(EulrHook.LiquidityAlreadyMigrated.selector);
         hook.migrateLiquidity("");
     }
 }

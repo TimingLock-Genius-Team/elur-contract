@@ -3,13 +3,13 @@ pragma solidity ^0.8.26;
 
 import {console2} from "forge-std/Script.sol";
 import {BuyQuote} from "../src/curve/CurveTypes.sol";
-import {ISatpadHook} from "../src/interfaces/ISatpadHook.sol";
-import {SatpadScriptBase} from "./SatpadScriptBase.s.sol";
+import {IEulrHook} from "../src/interfaces/IEulrHook.sol";
+import {EulrScriptBase} from "./EulrScriptBase.s.sol";
 
-contract QuoteBuy is SatpadScriptBase {
+contract QuoteBuy is EulrScriptBase {
     function run() external view returns (BuyQuote memory quote) {
         uint256 okbIn = vm.envUint("OKB_IN");
-        quote = ISatpadHook(_tokenInfo().hook).quoteBuy(okbIn);
+        quote = IEulrHook(_tokenInfo().hook).quoteBuy(okbIn);
 
         console2.log("chainId", block.chainid);
         console2.log("grossOkbIn", quote.grossOkbIn);

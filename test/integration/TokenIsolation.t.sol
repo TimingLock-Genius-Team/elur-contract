@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract TokenIsolationTest is SatpadTestBase {
+contract TokenIsolationTest is EulrTestBase {
     function test_EachTokenHasIndependentCurveStateAndBalances() public {
-        (SatpadToken tokenA, SatpadHook hookA, SatpadRouter routerA) = createToken("Alpha", "ALPHA", creator);
-        (SatpadToken tokenB, SatpadHook hookB, SatpadRouter routerB) = createToken("Beta", "BETA", creator);
+        (EulrToken tokenA, EulrHook hookA, EulrRouter routerA) = createToken("Alpha", "ALPHA", creator);
+        (EulrToken tokenB, EulrHook hookB, EulrRouter routerB) = createToken("Beta", "BETA", creator);
 
         uint256 outA = buy(routerA, tokenA, trader, 1e18);
         uint256 outB = buy(routerB, tokenB, trader, 2e18);
@@ -22,12 +22,12 @@ contract TokenIsolationTest is SatpadTestBase {
     }
 
     function test_RouterCannotOperateOnAnotherRegisteredToken() public {
-        (SatpadToken tokenA,, SatpadRouter routerA) = createToken("Alpha", "ALPHA", creator);
-        (SatpadToken tokenB,,) = createToken("Beta", "BETA", creator);
+        (EulrToken tokenA,, EulrRouter routerA) = createToken("Alpha", "ALPHA", creator);
+        (EulrToken tokenB,,) = createToken("Beta", "BETA", creator);
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadRouter.InvalidToken.selector);
+        vm.expectRevert(EulrRouter.InvalidToken.selector);
         routerA.buy{value: 1e18}(address(tokenB), 0, trader);
 
         vm.deal(trader, 1e18);
@@ -36,14 +36,14 @@ contract TokenIsolationTest is SatpadTestBase {
     }
 
     function test_OtherHookCannotMintOrBurnToken() public {
-        (SatpadToken tokenA,,) = createToken("Alpha", "ALPHA", creator);
-        (, SatpadHook hookB,) = createToken("Beta", "BETA", creator);
+        (EulrToken tokenA,,) = createToken("Alpha", "ALPHA", creator);
+        (, EulrHook hookB,) = createToken("Beta", "BETA", creator);
 
-        vm.expectRevert(SatpadToken.OnlyHook.selector);
+        vm.expectRevert(EulrToken.OnlyHook.selector);
         vm.prank(address(hookB));
         tokenA.mint(trader, 1e18);
 
-        vm.expectRevert(SatpadToken.OnlyHook.selector);
+        vm.expectRevert(EulrToken.OnlyHook.selector);
         vm.prank(address(hookB));
         tokenA.burn(trader, 1e18);
     }

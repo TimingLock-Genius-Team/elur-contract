@@ -2,22 +2,22 @@
 pragma solidity ^0.8.26;
 
 import {BuyQuote, SellQuote} from "../curve/CurveTypes.sol";
-import {ISatpadFactory} from "../interfaces/ISatpadFactory.sol";
-import {ISatpadRouter} from "../interfaces/ISatpadRouter.sol";
-import {SatpadHook} from "../hook/SatpadHook.sol";
-import {SatpadToken} from "../token/SatpadToken.sol";
+import {IEulrFactory} from "../interfaces/IEulrFactory.sol";
+import {IEulrRouter} from "../interfaces/IEulrRouter.sol";
+import {EulrHook} from "../hook/EulrHook.sol";
+import {EulrToken} from "../token/EulrToken.sol";
 import {ReentrancyGuard} from "../libraries/ReentrancyGuard.sol";
 
-contract SatpadRouter is ISatpadRouter, ReentrancyGuard {
-    ISatpadFactory public immutable factory;
-    SatpadToken public immutable token;
-    SatpadHook public immutable hook;
+contract EulrRouter is IEulrRouter, ReentrancyGuard {
+    IEulrFactory public immutable factory;
+    EulrToken public immutable token;
+    EulrHook public immutable hook;
 
     error InvalidToken();
     error ZeroAddress();
     error TokenTransferFailed();
 
-    constructor(ISatpadFactory factory_, SatpadToken token_, SatpadHook hook_) {
+    constructor(IEulrFactory factory_, EulrToken token_, EulrHook hook_) {
         if (address(factory_) == address(0) || address(token_) == address(0) || address(hook_) == address(0)) {
             revert ZeroAddress();
         }

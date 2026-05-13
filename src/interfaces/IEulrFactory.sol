@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-interface ISatpadFactory {
+interface IEulrFactory {
     struct TokenInfo {
         address token;
         address hook;
@@ -19,6 +19,7 @@ interface ISatpadFactory {
     ) external returns (address token, address hook, address router);
 
     function allTokensLength() external view returns (uint256);
+    function getTokens(uint256 offset, uint256 limit) external view returns (address[] memory tokens);
     function getTokenInfo(address token) external view returns (TokenInfo memory);
     function isToken(address token) external view returns (bool);
 }

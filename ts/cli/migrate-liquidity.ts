@@ -7,7 +7,7 @@ import { printJson } from "../lib/json.js";
 const wallet = walletClient();
 const client = publicClient();
 const info = await resolveTokenInfo();
-const migrationData = stringToHex(getArg("data", "satpad-ts-migration"));
+const migrationData = stringToHex(getArg("data", "eulr-ts-migration"));
 
 const hash = await wallet.writeContract({
   address: info.hook,

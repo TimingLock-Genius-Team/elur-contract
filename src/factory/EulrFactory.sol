@@ -3,12 +3,12 @@ pragma solidity ^0.8.26;
 
 import {Curve} from "../curve/Curve.sol";
 import {CurveParams} from "../curve/CurveTypes.sol";
-import {ISatpadFactory} from "../interfaces/ISatpadFactory.sol";
-import {SatpadHook} from "../hook/SatpadHook.sol";
-import {SatpadRouter} from "../router/SatpadRouter.sol";
-import {SatpadToken} from "../token/SatpadToken.sol";
+import {IEulrFactory} from "../interfaces/IEulrFactory.sol";
+import {EulrHook} from "../hook/EulrHook.sol";
+import {EulrRouter} from "../router/EulrRouter.sol";
+import {EulrToken} from "../token/EulrToken.sol";
 
-contract SatpadFactory is ISatpadFactory {
+contract EulrFactory is IEulrFactory {
     uint256 public constant MAX_NAME_BYTES = 32;
     uint256 public constant MAX_SYMBOL_BYTES = 8;
     uint256 public constant MAX_METADATA_URI_BYTES = 512;
@@ -24,8 +24,8 @@ contract SatpadFactory is ISatpadFactory {
     event TokenCreated(
         address indexed token,
         address indexed hook,
-        address indexed router,
-        address creator,
+        address router,
+        address indexed creator,
         string metadataURI,
         string socialURI
     );
@@ -61,9 +61,9 @@ contract SatpadFactory is ISatpadFactory {
         _validateTokenMetadata(name, symbol, metadataURI, socialURI);
 
         CurveParams memory params = Curve.defaultParams();
-        SatpadToken tokenContract = new SatpadToken(name, symbol, address(this));
-        SatpadHook hookContract = new SatpadHook(tokenContract, feeRecipient, address(this), migrationTarget, params);
-        SatpadRouter routerContract = new SatpadRouter(ISatpadFactory(address(this)), tokenContract, hookContract);
+        EulrToken tokenContract = new EulrToken(name, symbol, address(this));
+        EulrHook hookContract = new EulrHook(tokenContract, feeRecipient, address(this), migrationTarget, params);
+        EulrRouter routerContract = new EulrRouter(IEulrFactory(address(this)), tokenContract, hookContract);
 
         tokenContract.setHook(address(hookContract));
         hookContract.setRouter(address(routerContract));
@@ -88,6 +88,21 @@ contract SatpadFactory is ISatpadFactory {
 
     function allTokensLength() external view returns (uint256) {
         return allTokens.length;
+    }
+
+    function getTokens(uint256 offset, uint256 limit) external view returns (address[] memory tokens) {
+        uint256 tokenCount = allTokens.length;
+        if (offset >= tokenCount || limit == 0) {
+            return new address[](0);
+        }
+
+        uint256 remaining = tokenCount - offset;
+        uint256 pageSize = limit < remaining ? limit : remaining;
+
+        tokens = new address[](pageSize);
+        for (uint256 i = 0; i < tokens.length; i++) {
+            tokens[i] = allTokens[offset + i];
+        }
     }
 
     function getTokenInfo(address token) external view returns (TokenInfo memory) {

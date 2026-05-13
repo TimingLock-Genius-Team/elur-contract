@@ -2,15 +2,15 @@
 pragma solidity ^0.8.26;
 
 import {console2} from "forge-std/Script.sol";
-import {ISatpadFactory} from "../src/interfaces/ISatpadFactory.sol";
-import {ISatpadHook} from "../src/interfaces/ISatpadHook.sol";
-import {ISatpadRouter} from "../src/interfaces/ISatpadRouter.sol";
-import {ISatpadToken} from "../src/interfaces/ISatpadToken.sol";
-import {SatpadScriptBase} from "./SatpadScriptBase.s.sol";
+import {IEulrFactory} from "../src/interfaces/IEulrFactory.sol";
+import {IEulrHook} from "../src/interfaces/IEulrHook.sol";
+import {IEulrRouter} from "../src/interfaces/IEulrRouter.sol";
+import {IEulrToken} from "../src/interfaces/IEulrToken.sol";
+import {EulrScriptBase} from "./EulrScriptBase.s.sol";
 
-contract Sell is SatpadScriptBase {
+contract Sell is EulrScriptBase {
     function run() external returns (uint256 okbOut) {
-        ISatpadFactory.TokenInfo memory info = _tokenInfo();
+        IEulrFactory.TokenInfo memory info = _tokenInfo();
         uint256 tokensIn = vm.envUint("TOKENS_IN");
         uint256 minOkbOut = _requiredMinOut("MIN_OKB_OUT");
         address recipient = _recipient();
@@ -20,11 +20,11 @@ contract Sell is SatpadScriptBase {
         vm.roll(block.number + 1);
 
         vm.startBroadcast(_privateKey());
-        ISatpadToken(info.token).approve(info.router, tokensIn);
-        okbOut = ISatpadRouter(info.router).sell(info.token, tokensIn, minOkbOut, recipient);
+        IEulrToken(info.token).approve(info.router, tokensIn);
+        okbOut = IEulrRouter(info.router).sell(info.token, tokensIn, minOkbOut, recipient);
         vm.stopBroadcast();
 
-        ISatpadHook hook = ISatpadHook(info.hook);
+        IEulrHook hook = IEulrHook(info.hook);
         console2.log("chainId", block.chainid);
         console2.log("token", info.token);
         console2.log("recipient", recipient);

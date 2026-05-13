@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {ISatpadFactory} from "../../src/interfaces/ISatpadFactory.sol";
-import {SatpadFactory} from "../../src/factory/SatpadFactory.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {IEulrFactory} from "../../src/interfaces/IEulrFactory.sol";
+import {EulrFactory} from "../../src/factory/EulrFactory.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract FactoryCreateTokenTest is SatpadTestBase {
+contract FactoryCreateTokenTest is EulrTestBase {
     event TokenCreated(
         address indexed token,
         address indexed hook,
-        address indexed router,
-        address creator,
+        address router,
+        address indexed creator,
         string metadataURI,
         string socialURI
     );
@@ -25,7 +25,7 @@ contract FactoryCreateTokenTest is SatpadTestBase {
         (address token, address hook, address router) =
             factory.createToken("Alpha", "ALPHA", "ipfs://alpha", "https://alpha.example");
 
-        ISatpadFactory.TokenInfo memory info = factory.getTokenInfo(token);
+        IEulrFactory.TokenInfo memory info = factory.getTokenInfo(token);
         assertEq(info.creator, alice);
         assertEq(info.token, token);
         assertEq(info.hook, hook);
@@ -35,8 +35,8 @@ contract FactoryCreateTokenTest is SatpadTestBase {
     }
 
     function test_AllTokensLengthAndRegistryIncreaseForEachCreate() public {
-        (SatpadToken tokenA, SatpadHook hookA, SatpadRouter routerA) = createToken("Alpha", "ALPHA", creator);
-        (SatpadToken tokenB, SatpadHook hookB, SatpadRouter routerB) = createToken("Beta", "BETA", makeAddr("bob"));
+        (EulrToken tokenA, EulrHook hookA, EulrRouter routerA) = createToken("Alpha", "ALPHA", creator);
+        (EulrToken tokenB, EulrHook hookB, EulrRouter routerB) = createToken("Beta", "BETA", makeAddr("bob"));
 
         assertEq(factory.allTokensLength(), 2);
         assertTrue(factory.isToken(address(tokenA)));
@@ -46,15 +46,15 @@ contract FactoryCreateTokenTest is SatpadTestBase {
     }
 
     function test_RevertWhen_GetTokenInfoForUnknownToken() public {
-        vm.expectRevert(SatpadFactory.UnknownToken.selector);
+        vm.expectRevert(EulrFactory.UnknownToken.selector);
         factory.getTokenInfo(makeAddr("unknown-token"));
     }
 
     function test_ConstructorRejectsZeroAddresses() public {
-        vm.expectRevert(SatpadFactory.ZeroAddress.selector);
-        new SatpadFactory(address(0), address(migrationTarget));
+        vm.expectRevert(EulrFactory.ZeroAddress.selector);
+        new EulrFactory(address(0), address(migrationTarget));
 
-        vm.expectRevert(SatpadFactory.ZeroAddress.selector);
-        new SatpadFactory(feeRecipient, address(0));
+        vm.expectRevert(EulrFactory.ZeroAddress.selector);
+        new EulrFactory(feeRecipient, address(0));
     }
 }

@@ -3,19 +3,19 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {BuyQuote, SellQuote} from "../../src/curve/CurveTypes.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
 contract UserHandler is Test {
-    SatpadToken public token;
-    SatpadHook public hook;
-    SatpadRouter public router;
+    EulrToken public token;
+    EulrHook public hook;
+    EulrRouter public router;
 
     address[] public users;
     uint256 public ghostFeeCollected;
 
-    constructor(SatpadToken token_, SatpadHook hook_, SatpadRouter router_) {
+    constructor(EulrToken token_, EulrHook hook_, EulrRouter router_) {
         token = token_;
         hook = hook_;
         router = router_;

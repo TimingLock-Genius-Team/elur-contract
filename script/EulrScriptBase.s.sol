@@ -2,12 +2,12 @@
 pragma solidity ^0.8.26;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {ISatpadFactory} from "../src/interfaces/ISatpadFactory.sol";
-import {ISatpadHook} from "../src/interfaces/ISatpadHook.sol";
-import {ISatpadRouter} from "../src/interfaces/ISatpadRouter.sol";
-import {ISatpadToken} from "../src/interfaces/ISatpadToken.sol";
+import {IEulrFactory} from "../src/interfaces/IEulrFactory.sol";
+import {IEulrHook} from "../src/interfaces/IEulrHook.sol";
+import {IEulrRouter} from "../src/interfaces/IEulrRouter.sol";
+import {IEulrToken} from "../src/interfaces/IEulrToken.sol";
 
-abstract contract SatpadScriptBase is Script {
+abstract contract EulrScriptBase is Script {
     error UnsafeZeroMinOut(string envName);
 
     function _privateKey() internal view returns (uint256) {
@@ -18,15 +18,15 @@ abstract contract SatpadScriptBase is Script {
         return vm.addr(_privateKey());
     }
 
-    function _factory() internal view returns (ISatpadFactory) {
-        return ISatpadFactory(vm.envAddress("FACTORY"));
+    function _factory() internal view returns (IEulrFactory) {
+        return IEulrFactory(vm.envAddress("FACTORY"));
     }
 
     function _token() internal view returns (address) {
         return vm.envAddress("TOKEN");
     }
 
-    function _tokenInfo() internal view returns (ISatpadFactory.TokenInfo memory info) {
+    function _tokenInfo() internal view returns (IEulrFactory.TokenInfo memory info) {
         info = _factory().getTokenInfo(_token());
     }
 
@@ -41,8 +41,8 @@ abstract contract SatpadScriptBase is Script {
         }
     }
 
-    function _logTokenInfo(ISatpadFactory.TokenInfo memory info) internal view {
-        ISatpadHook hook = ISatpadHook(info.hook);
+    function _logTokenInfo(IEulrFactory.TokenInfo memory info) internal view {
+        IEulrHook hook = IEulrHook(info.hook);
         console2.log("chainId", block.chainid);
         console2.log("token", info.token);
         console2.log("hook", info.hook);
@@ -53,7 +53,7 @@ abstract contract SatpadScriptBase is Script {
         console2.log("okbCum", hook.okbCum());
         console2.log("claimableFeeOkb", hook.claimableFeeOkb());
         console2.log("totalMinted", hook.totalMinted());
-        console2.log("tokenSupply", ISatpadToken(info.token).totalSupply());
+        console2.log("tokenSupply", IEulrToken(info.token).totalSupply());
         console2.log("selfDeprecated", hook.selfDeprecated());
         console2.log("liquidityMigrated", hook.liquidityMigrated());
     }

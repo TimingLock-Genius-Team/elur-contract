@@ -32,7 +32,7 @@ contract MigrationDataTest is Test {
     function test_DecodeAndValidateAcceptsProductionMigrationData() public {
         MigrationData.Params memory params = MigrationData.Params({
             currency0: address(0),
-            currency1: makeAddr("satpad-token"),
+            currency1: makeAddr("eulr-token"),
             hooks: address(0),
             poolFee: 3000,
             tickSpacing: 60,
@@ -147,7 +147,7 @@ contract MigrationDataTest is Test {
     function _validParams() internal returns (MigrationData.Params memory params) {
         params = MigrationData.Params({
             currency0: address(0),
-            currency1: makeAddr("satpad-token"),
+            currency1: makeAddr("eulr-token"),
             hooks: address(0),
             poolFee: 3000,
             tickSpacing: 60,

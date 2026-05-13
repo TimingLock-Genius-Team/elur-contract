@@ -1,18 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
+import {Vm} from "forge-std/Vm.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {BuyQuote, SellQuote} from "../../src/curve/CurveTypes.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract EventEmissionTest is SatpadTestBase {
+contract EventEmissionTest is EulrTestBase {
     event TokenCreated(
         address indexed token,
         address indexed hook,
-        address indexed router,
-        address creator,
+        address router,
+        address indexed creator,
         string metadataURI,
         string socialURI
     );
@@ -41,16 +42,20 @@ contract EventEmissionTest is SatpadTestBase {
     event LiquidityMigrated(address indexed token, address indexed pool, uint256 okbAmount, uint256 tokenAmount);
     event LiquidityMigrationResult(address indexed token, address indexed pool, uint256 liquidity);
 
-    function test_CreateTokenEmitsMetadataAndSocialUri() public {
-        vm.expectEmit(false, false, false, true, address(factory));
-        emit TokenCreated(address(0), address(0), address(0), creator, "ipfs://event", "https://event.example");
-
+    function test_CreateTokenEmitsIndexedCreatorMetadataAndSocialUri() public {
+        vm.recordLogs();
         vm.prank(creator);
         factory.createToken("Event", "EVT", "ipfs://event", "https://event.example");
+
+        Vm.Log[] memory entries = vm.getRecordedLogs();
+        assertEq(entries.length, 1);
+        assertEq(entries[0].emitter, address(factory));
+        assertEq(entries[0].topics[0], TokenCreated.selector);
+        assertEq(entries[0].topics[3], bytes32(uint256(uint160(creator))));
     }
 
     function test_BuySellAndFeeClaimEmitExpectedEvents() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         BuyQuote memory buyQuote = hook.quoteBuy(1e18);
 
         vm.deal(trader, 1e18);
@@ -97,7 +102,7 @@ contract EventEmissionTest is SatpadTestBase {
     }
 
     function test_MigrationEmitsPoolAndLiquidityEvents() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         for (uint256 i = 0; i < 47; i++) {
             vm.roll(i + 2);
             buy(router, token, trader, 10e18);

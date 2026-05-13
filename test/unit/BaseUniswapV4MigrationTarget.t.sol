@@ -59,7 +59,7 @@ contract ResidualOkbMigrationTargetHarness is BaseUniswapV4MigrationTarget {
 }
 
 contract BaseUniswapV4MigrationTargetTest is Test {
-    address internal token = makeAddr("satpad-token");
+    address internal token = makeAddr("eulr-token");
     address internal lpRecipient = MigrationData.BURN_ADDRESS;
     MockExternalContract internal poolManager;
     MockExternalContract internal positionManager;

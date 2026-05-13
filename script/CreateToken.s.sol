@@ -2,10 +2,10 @@
 pragma solidity ^0.8.26;
 
 import {console2} from "forge-std/Script.sol";
-import {ISatpadFactory} from "../src/interfaces/ISatpadFactory.sol";
-import {SatpadScriptBase} from "./SatpadScriptBase.s.sol";
+import {IEulrFactory} from "../src/interfaces/IEulrFactory.sol";
+import {EulrScriptBase} from "./EulrScriptBase.s.sol";
 
-contract CreateToken is SatpadScriptBase {
+contract CreateToken is EulrScriptBase {
     function run() external returns (address token, address hook, address router) {
         string memory name = vm.envString("TOKEN_NAME");
         string memory symbol = vm.envString("TOKEN_SYMBOL");
@@ -21,7 +21,7 @@ contract CreateToken is SatpadScriptBase {
         console2.log("hook", hook);
         console2.log("router", router);
 
-        ISatpadFactory.TokenInfo memory info = _factory().getTokenInfo(token);
+        IEulrFactory.TokenInfo memory info = _factory().getTokenInfo(token);
         _logTokenInfo(info);
     }
 }

@@ -5,7 +5,7 @@ import {Script, console2} from "forge-std/Script.sol";
 import {stdJson} from "forge-std/StdJson.sol";
 import {Curve} from "../src/curve/Curve.sol";
 import {CurveParams} from "../src/curve/CurveTypes.sol";
-import {SatpadFactory} from "../src/factory/SatpadFactory.sol";
+import {EulrFactory} from "../src/factory/EulrFactory.sol";
 
 contract DeployFactory is Script {
     using stdJson for string;
@@ -21,7 +21,7 @@ contract DeployFactory is Script {
         address migrationTarget;
     }
 
-    function run() external returns (SatpadFactory factory) {
+    function run() external returns (EulrFactory factory) {
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address deployer = vm.addr(deployerKey);
         address feeRecipient = vm.envAddress("TEAM_MULTISIG");
@@ -34,7 +34,7 @@ contract DeployFactory is Script {
         _requireCode("MIGRATION_TARGET", migrationTarget);
 
         vm.startBroadcast(deployerKey);
-        factory = new SatpadFactory(feeRecipient, migrationTarget);
+        factory = new EulrFactory(feeRecipient, migrationTarget);
         vm.stopBroadcast();
 
         _writeDeploymentJson(

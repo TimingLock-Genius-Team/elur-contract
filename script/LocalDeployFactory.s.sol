@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {Script, console2} from "forge-std/Script.sol";
-import {SatpadFactory} from "../src/factory/SatpadFactory.sol";
+import {EulrFactory} from "../src/factory/EulrFactory.sol";
 
 contract LocalExternalDependency {
     receive() external payable {}
@@ -26,13 +26,13 @@ contract LocalMigrationTarget {
 }
 
 contract LocalDeployFactory is Script {
-    function run() external returns (SatpadFactory factory) {
+    function run() external returns (EulrFactory factory) {
         uint256 deployerKey = vm.envUint("PRIVATE_KEY");
         address feeRecipient = vm.envOr("TEAM_MULTISIG", vm.addr(deployerKey));
 
         vm.startBroadcast(deployerKey);
         LocalMigrationTarget migrationTarget = new LocalMigrationTarget();
-        factory = new SatpadFactory(feeRecipient, address(migrationTarget));
+        factory = new EulrFactory(feeRecipient, address(migrationTarget));
         vm.stopBroadcast();
 
         console2.log("chainId", block.chainid);

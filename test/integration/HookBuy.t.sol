@@ -1,18 +1,18 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {BuyQuote} from "../../src/curve/CurveTypes.sol";
-import {SatpadFactory} from "../../src/factory/SatpadFactory.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrFactory} from "../../src/factory/EulrFactory.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 import {MockRejectNative} from "../mocks/MockRejectNative.sol";
 import {Curve} from "../../src/curve/Curve.sol";
 
-contract HookBuyTest is SatpadTestBase {
+contract HookBuyTest is EulrTestBase {
     function test_BuyMintsToRecipientAndStoresPayerBlock() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         BuyQuote memory quote = hook.quoteBuy(1e18);
 
         vm.deal(trader, 1e18);
@@ -26,7 +26,7 @@ contract HookBuyTest is SatpadTestBase {
     }
 
     function test_RevertWhen_BuyValueIsZeroOrTooLarge() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
 
         vm.prank(trader);
         vm.expectRevert(Curve.GrossOkbInZero.selector);
@@ -39,20 +39,20 @@ contract HookBuyTest is SatpadTestBase {
     }
 
     function test_RevertWhen_DirectHookBuyCallerIsNotRouter() public {
-        (, SatpadHook hook,) = createDemoToken();
+        (, EulrHook hook,) = createDemoToken();
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadHook.OnlyRouter.selector);
+        vm.expectRevert(EulrHook.OnlyRouter.selector);
         hook.buy{value: 1e18}(trader, trader, 0);
     }
 
     function test_RevertedBuyDoesNotWriteLastBuyBlock() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadHook.SlippageExceeded.selector);
+        vm.expectRevert(EulrHook.SlippageExceeded.selector);
         router.buy{value: 1e18}(address(token), type(uint256).max, trader);
 
         assertEq(hook.lastBuyBlock(trader), 0);
@@ -62,17 +62,17 @@ contract HookBuyTest is SatpadTestBase {
 
     function test_BuySucceedsWhenFeeRecipientRejectsNativeOkb() public {
         MockRejectNative rejectNative = new MockRejectNative();
-        SatpadFactory rejectingFactory = deployFactory(address(rejectNative));
+        EulrFactory rejectingFactory = deployFactory(address(rejectNative));
 
         vm.prank(creator);
         (address tokenAddr, address hookAddr, address routerAddr) =
             rejectingFactory.createToken("Reject", "REJ", "ipfs://reject", "");
-        SatpadHook hook = SatpadHook(payable(hookAddr));
+        EulrHook hook = EulrHook(payable(hookAddr));
         BuyQuote memory quote = hook.quoteBuy(1e18);
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        SatpadRouter(payable(routerAddr)).buy{value: 1e18}(tokenAddr, 0, trader);
+        EulrRouter(payable(routerAddr)).buy{value: 1e18}(tokenAddr, 0, trader);
 
         assertEq(hook.okbCum(), quote.effectiveOkbIn);
         assertEq(hook.claimableFeeOkb(), quote.fee);

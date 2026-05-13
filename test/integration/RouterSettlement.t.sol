@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {BuyQuote, SellQuote} from "../../src/curve/CurveTypes.sol";
-import {SatpadHook} from "../../src/hook/SatpadHook.sol";
-import {SatpadRouter} from "../../src/router/SatpadRouter.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrHook} from "../../src/hook/EulrHook.sol";
+import {EulrRouter} from "../../src/router/EulrRouter.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract RouterSettlementTest is SatpadTestBase {
+contract RouterSettlementTest is EulrTestBase {
     function test_RouterQuoteMatchesHookQuote() public {
-        (SatpadToken token, SatpadHook hook, SatpadRouter router) = createDemoToken();
+        (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         BuyQuote memory hookBuy = hook.quoteBuy(1e18);
         BuyQuote memory routerBuy = router.quoteBuy(address(token), 1e18);
@@ -24,24 +24,24 @@ contract RouterSettlementTest is SatpadTestBase {
     }
 
     function test_RevertWhen_BuyOrSellRecipientIsZero() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadRouter.ZeroAddress.selector);
+        vm.expectRevert(EulrRouter.ZeroAddress.selector);
         router.buy{value: 1e18}(address(token), 0, address(0));
 
         vm.roll(block.number + 1);
         vm.startPrank(trader);
         token.approve(address(router), tokensOut);
-        vm.expectRevert(SatpadRouter.ZeroAddress.selector);
+        vm.expectRevert(EulrRouter.ZeroAddress.selector);
         router.sell(address(token), tokensOut / 2, 0, address(0));
         vm.stopPrank();
     }
 
     function test_RouterNeverRetainsAssetsAfterSuccessfulBuyOrSell() public {
-        (SatpadToken token,, SatpadRouter router) = createDemoToken();
+        (EulrToken token,, EulrRouter router) = createDemoToken();
         uint256 tokensOut = buy(router, token, trader, 1e18);
 
         assertEq(address(router).balance, 0);
@@ -58,11 +58,11 @@ contract RouterSettlementTest is SatpadTestBase {
     }
 
     function test_RevertWhen_RouterReceivesNativeOkbDirectly() public {
-        (,, SatpadRouter router) = createDemoToken();
+        (,, EulrRouter router) = createDemoToken();
 
         vm.deal(trader, 1e18);
         vm.prank(trader);
-        vm.expectRevert(SatpadRouter.InvalidToken.selector);
+        vm.expectRevert(EulrRouter.InvalidToken.selector);
         payable(address(router)).transfer(1);
     }
 }

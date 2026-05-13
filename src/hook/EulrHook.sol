@@ -3,15 +3,16 @@ pragma solidity ^0.8.26;
 
 import {BuyQuote, CurveParams, SellQuote} from "../curve/CurveTypes.sol";
 import {Curve} from "../curve/Curve.sol";
+import {IEulrHook} from "../interfaces/IEulrHook.sol";
 import {IMigrationTarget} from "../interfaces/IMigrationTarget.sol";
-import {SatpadToken} from "../token/SatpadToken.sol";
+import {EulrToken} from "../token/EulrToken.sol";
 import {NativeOkbTransfer} from "../libraries/NativeOkbTransfer.sol";
 import {ReentrancyGuard} from "../libraries/ReentrancyGuard.sol";
 
-contract SatpadHook is ReentrancyGuard {
+contract EulrHook is IEulrHook, ReentrancyGuard {
     using NativeOkbTransfer for address;
 
-    SatpadToken public immutable token;
+    EulrToken public immutable token;
     address public router;
     address public immutable feeRecipient;
     address public immutable factory;
@@ -68,7 +69,7 @@ contract SatpadHook is ReentrancyGuard {
     error TokenTransferFailed();
 
     constructor(
-        SatpadToken token_,
+        EulrToken token_,
         address feeRecipient_,
         address factory_,
         address migrationTarget_,
@@ -231,6 +232,17 @@ contract SatpadHook is ReentrancyGuard {
 
     function currentPrice() external view returns (uint256) {
         return Curve.marginalPrice(okbCum, curveParams);
+    }
+
+    function curveState() external view returns (CurveState memory state) {
+        state = CurveState({
+            okbCum: okbCum,
+            totalMinted: Curve.totalMinted(okbCum, curveParams),
+            currentPrice: Curve.marginalPrice(okbCum, curveParams),
+            claimableFeeOkb: claimableFeeOkb,
+            selfDeprecated: selfDeprecated,
+            liquidityMigrated: liquidityMigrated
+        });
     }
 
     function claimFees(address recipient) external nonReentrant onlyFeeRecipient returns (uint256 amount) {

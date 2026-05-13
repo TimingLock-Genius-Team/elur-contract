@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {SatpadTestBase} from "../helpers/SatpadTestBase.sol";
-import {SatpadToken} from "../../src/token/SatpadToken.sol";
+import {EulrTestBase} from "../helpers/EulrTestBase.sol";
+import {EulrToken} from "../../src/token/EulrToken.sol";
 
-contract SatpadTokenTest is SatpadTestBase {
+contract EulrTokenTest is EulrTestBase {
     function test_OnlyHookCanMintAndBurn() public {
-        (SatpadToken token,,) = createDemoToken();
+        (EulrToken token,,) = createDemoToken();
 
-        vm.expectRevert(SatpadToken.OnlyHook.selector);
+        vm.expectRevert(EulrToken.OnlyHook.selector);
         token.mint(trader, 1e18);
 
         address hook = token.hook();
@@ -16,7 +16,7 @@ contract SatpadTokenTest is SatpadTestBase {
         token.mint(trader, 1e18);
         assertEq(token.balanceOf(trader), 1e18);
 
-        vm.expectRevert(SatpadToken.OnlyHook.selector);
+        vm.expectRevert(EulrToken.OnlyHook.selector);
         token.burn(trader, 1e18);
 
         vm.prank(hook);
@@ -25,7 +25,7 @@ contract SatpadTokenTest is SatpadTestBase {
     }
 
     function test_TransfersHaveNoTax() public {
-        (SatpadToken token,,) = createDemoToken();
+        (EulrToken token,,) = createDemoToken();
 
         vm.prank(token.hook());
         token.mint(trader, 10e18);
