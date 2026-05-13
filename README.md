@@ -18,6 +18,7 @@ The backend exposes frontend-friendly read surfaces through `EulrFactory.getToke
 - `SECURITY_MODEL.md`: trust boundaries, invariants, attack surfaces, and pre-launch security checklist.
 - `CHANGELOG.md`: tracked changes grouped by Added / Changed / Fixed / Security and Known Blockers.
 - `ANVIL_SMOKE_REPORT.md`: most recent local Anvil multi-signer smoke results and follow-ups.
+- `FRONTEND_INTEGRATION.md`: frontend integration guide mapping the `Eulr Prototype.html` PRD to ABIs, reads, writes, events, and off-chain data needs.
 
 Suggested reading paths:
 
@@ -27,6 +28,7 @@ Suggested reading paths:
 - Testing / CI: `TESTING_GUIDE.md` → `COMMERCIAL_READINESS.md` §4.
 - Deployment / operations: `DEPLOYMENT_RUNBOOK.md` → `COMMERCIAL_READINESS.md`.
 - Change tracking: `CHANGELOG.md` → `ANVIL_SMOKE_REPORT.md`.
+- Frontend integration: `FRONTEND_INTEGRATION.md` → `frontend/abi/`.
 
 ## Current Status
 
@@ -177,6 +179,23 @@ npm run smoke:anvil:accounts
 ```
 
 `npm run smoke:anvil:accounts` is the canonical replacement for hand-rolled shell loops; see `ANVIL_SMOKE_REPORT.md` for the most recent multi-signer results.
+
+## Frontend Integration
+
+Generate the frontend ABI bundle from the latest Foundry artifacts and deployment records:
+
+```bash
+npm run export:abis
+```
+
+This writes `frontend/abi/`:
+
+- `EulrFactory.json`, `EulrHook.json`, `EulrRouter.json`, `EulrToken.json`, `UniswapV4MintPositionTarget.json` — raw ABIs for runtime use (viem, ethers, REST gateways).
+- `index.ts` — same ABIs inlined as `as const satisfies Abi` so viem / wagmi infer call argument and return types.
+- `addresses.json` / `addresses.ts` — per-network snapshot of factory address, migration target, fee recipient, and curve parameters from `deployments/<network>/latest.json`.
+- `README.md` — bundle table of contents.
+
+See `FRONTEND_INTEGRATION.md` for the page-by-page mapping from the `Eulr Prototype.html` PRD to contract calls, slippage handling, event subscription, error mapping, and off-chain data expectations.
 
 ## Pre-Commit Verification
 

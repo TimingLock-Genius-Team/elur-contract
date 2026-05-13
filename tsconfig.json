@@ -9,5 +9,5 @@
     "skipLibCheck": true,
     "types": ["node"]
   },
-  "include": ["ts/**/*.ts"]
+  "include": ["ts/**/*.ts", "frontend/abi/**/*.ts"]
 }

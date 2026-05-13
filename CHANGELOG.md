@@ -6,6 +6,9 @@ All notable changes to Eulr contract backend are tracked here. Format loosely fo
 
 ### Added
 
+- Frontend integration guide (`FRONTEND_INTEGRATION.md`) mapping the `Eulr Prototype.html` PRD to ABIs, read/write patterns, event subscriptions, error handling, and off-chain enrichment.
+- Frontend ABI bundle generator (`npm run export:abis` → `ts/cli/export-frontend-abi.ts`) that emits cleaned ABIs, a typed `index.ts` for viem/wagmi, and a deployment-address snapshot under `frontend/abi/`.
+- TypeScript test (`ts/cli/export-frontend-abi.test.ts`) that asserts the committed `frontend/abi/*.json` ABIs stay in sync with Foundry artifacts and that the address snapshot is internally consistent.
 - Product flow, commercial readiness, deployment runbook, and security model documentation.
 - Root MIT license.
 - Eulr backend rename across contracts, scripts, TypeScript artifact references, and documentation.

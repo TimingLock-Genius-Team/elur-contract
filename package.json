@@ -49,6 +49,7 @@
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
     "claim:fees": "tsx ts/cli/claim-fees.ts",
     "smoke:anvil:accounts": "npm run build && tsx ts/cli/smoke-anvil-accounts.ts",
+    "export:abis": "npm run build && tsx ts/cli/export-frontend-abi.ts",
     "doctor:deployment": "tsx ts/cli/doctor-deployment.ts",
     "doctor:migration-target": "tsx ts/cli/doctor-migration-target.ts",
     "doctor:xlayer-readiness": "tsx ts/cli/doctor-xlayer-readiness.ts",
