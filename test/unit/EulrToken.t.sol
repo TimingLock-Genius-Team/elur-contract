@@ -5,6 +5,28 @@ import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
 
 contract EulrTokenTest is EulrTestBase {
+    function test_RevertWhen_ConstructorFactoryIsZero() public {
+        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        new EulrToken("Demo", "DEMO", address(0));
+    }
+
+    function test_SetHookValidatesFactoryZeroAddressAndOneTimeBinding() public {
+        EulrToken token = new EulrToken("Demo", "DEMO", address(this));
+
+        vm.prank(trader);
+        vm.expectRevert(EulrToken.OnlyFactory.selector);
+        token.setHook(address(0xBEEF));
+
+        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        token.setHook(address(0));
+
+        token.setHook(address(this));
+        assertEq(token.hook(), address(this));
+
+        vm.expectRevert(EulrToken.HookAlreadySet.selector);
+        token.setHook(address(0xBEEF));
+    }
+
     function test_OnlyHookCanMintAndBurn() public {
         (EulrToken token,,) = createDemoToken();
 
@@ -36,5 +58,26 @@ contract EulrTokenTest is EulrTestBase {
         assertEq(token.balanceOf(trader), 6e18);
         assertEq(token.balanceOf(recipient), 4e18);
         assertEq(token.totalSupply(), 10e18);
+    }
+
+    function test_RevertWhen_ApproveMintBurnOrTransferInputsAreInvalid() public {
+        EulrToken token = new EulrToken("Demo", "DEMO", address(this));
+        token.setHook(address(this));
+
+        vm.prank(trader);
+        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        token.approve(address(0), 1e18);
+
+        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        token.mint(address(0), 1e18);
+
+        token.mint(trader, 1e18);
+
+        vm.prank(trader);
+        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        token.transfer(address(0), 1);
+
+        vm.expectRevert(EulrToken.InsufficientBalance.selector);
+        token.burn(trader, 2e18);
     }
 }

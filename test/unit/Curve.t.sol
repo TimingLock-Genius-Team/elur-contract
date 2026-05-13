@@ -39,6 +39,14 @@ contract CurveTest is Test {
         curve.okbAtMinted(params.k);
     }
 
+    function test_RevertWhen_ParamsAreInvalid() public {
+        CurveParams memory invalid = params;
+        invalid.k = 0;
+
+        vm.expectRevert(Curve.InvalidCurveParams.selector);
+        curve.validateParams(invalid);
+    }
+
     function test_QuoteBuyKeepsFeeOutOfOkbCum() public view {
         BuyQuote memory quote = curve.quoteBuy(100e18, 10e18);
 
@@ -55,6 +63,11 @@ contract CurveTest is Test {
         assertLt(sellQuote.newOkbCum, buyQuote.newOkbCum);
         assertGt(sellQuote.grossOkbOut, sellQuote.netOkbOut);
         assertEq(sellQuote.fee, (sellQuote.grossOkbOut * params.feeBps) / 10_000);
+    }
+
+    function test_RevertWhen_QuoteSellExceedsMinted() public {
+        vm.expectRevert(Curve.MintedOutOfRange.selector);
+        curve.quoteSell(0, 1);
     }
 
     function testFuzz_TotalMintedAndPriceAreMonotonic(uint256 a, uint256 b) public view {

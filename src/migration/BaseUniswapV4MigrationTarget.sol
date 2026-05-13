@@ -2,10 +2,11 @@
 pragma solidity ^0.8.26;
 
 import {IMigrationTarget} from "../interfaces/IMigrationTarget.sol";
+import {ReentrancyGuard} from "../libraries/ReentrancyGuard.sol";
 import {MigrationData} from "./MigrationData.sol";
 
 // slither-disable-next-line locked-ether
-abstract contract BaseUniswapV4MigrationTarget is IMigrationTarget {
+abstract contract BaseUniswapV4MigrationTarget is IMigrationTarget, ReentrancyGuard {
     address public immutable poolManager;
     address public immutable positionManager;
     address public immutable lpRecipient;
@@ -49,10 +50,11 @@ abstract contract BaseUniswapV4MigrationTarget is IMigrationTarget {
         if (params.currency0 != address(0) || params.currency1 != token) revert InvalidPoolCurrencies();
         if (okbAmount > params.amount0Max || tokenAmount > params.amount1Max) revert AmountMaxExceeded();
 
+        uint256 nativeBalanceBefore = address(this).balance - msg.value;
         uint256 positionId;
         (pool, positionId, liquidity) = _migrateValidated(token, okbAmount, tokenAmount, params);
         if (pool == address(0) || liquidity == 0) revert InvalidMigrationResult();
-        if (address(this).balance != 0) revert ResidualOkb();
+        if (address(this).balance > nativeBalanceBefore) revert ResidualOkb();
 
         emit LpCustodyProven(token, pool, positionId, liquidity, lpRecipient);
     }

@@ -9,6 +9,10 @@ contract CurveHarness {
         return Curve.defaultParams();
     }
 
+    function validateParams(CurveParams memory params) external pure {
+        Curve.validateParams(params);
+    }
+
     function marginalPrice(uint256 okbCum) external pure returns (uint256) {
         return Curve.marginalPrice(okbCum, Curve.defaultParams());
     }

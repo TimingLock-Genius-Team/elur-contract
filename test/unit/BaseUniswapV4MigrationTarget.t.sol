@@ -98,6 +98,17 @@ contract BaseUniswapV4MigrationTargetTest is Test {
         assertEq(target.lastTokenAmount(), 1_000e18);
     }
 
+    function test_MigrateIgnoresPreExistingNativeDust() public {
+        MigrationData.Params memory params = _validParams();
+        vm.deal(address(target), 1 wei);
+
+        (address pool, uint256 liquidity) = target.migrate{value: 10e18}(token, 10e18, 1_000e18, abi.encode(params));
+
+        assertEq(pool, address(0xBEEF));
+        assertEq(liquidity, 1e18);
+        assertEq(address(target).balance, 1 wei);
+    }
+
     function test_MigrateAllowsConfiguredLockRecipient() public {
         address lockRecipient = address(new MockExternalContract());
         MigrationTargetHarness lockTarget =

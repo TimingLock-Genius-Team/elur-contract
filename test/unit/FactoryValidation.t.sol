@@ -22,6 +22,9 @@ contract FactoryValidationTest is EulrTestBase {
         vm.expectRevert(EulrFactory.EmptySymbol.selector);
         factory.createToken("Demo", "", "ipfs://demo", "");
 
+        vm.expectRevert(EulrFactory.NameTooLong.selector);
+        factory.createToken(_stringOfLength(65), "DEMO", "ipfs://demo", "");
+
         vm.expectRevert(EulrFactory.SymbolTooLong.selector);
         factory.createToken("Demo", "TOO-LONG!", "ipfs://demo", "");
     }
@@ -66,6 +69,13 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.feeBps, 30);
         assertEq(params.selfDeprecationBps, 9900);
         assertEq(params.maxBuyOkb, 10e18);
+
+        CurveParams memory factoryParams = factory.curveParams();
+        assertEq(factoryParams.k, params.k);
+        assertEq(factoryParams.s, params.s);
+        assertEq(factoryParams.feeBps, params.feeBps);
+        assertEq(factoryParams.selfDeprecationBps, params.selfDeprecationBps);
+        assertEq(factoryParams.maxBuyOkb, params.maxBuyOkb);
     }
 
     function test_GetTokensReturnsPaginatedCreatedTokenAddresses() public {

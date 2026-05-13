@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {BaseUniswapV4MigrationTarget} from "../../src/migration/BaseUniswapV4MigrationTarget.sol";
+import {ReentrancyGuard} from "../../src/libraries/ReentrancyGuard.sol";
 import {MigrationData} from "../../src/migration/MigrationData.sol";
 import {UniswapV4MintPositionTarget} from "../../src/migration/UniswapV4MintPositionTarget.sol";
 import {UniswapV4PoolKey} from "../../src/migration/UniswapV4PoolKey.sol";
@@ -43,11 +44,16 @@ contract MockUniswapV4PositionManager {
     uint256 public nextId = 77;
     uint128 public mintedLiquidity = 1e18;
     bool public pullToken = true;
+    bool public reenterMigration;
 
     receive() external payable {}
 
     function setPullToken(bool pullToken_) external {
         pullToken = pullToken_;
+    }
+
+    function setReenterMigration(bool reenterMigration_) external {
+        reenterMigration = reenterMigration_;
     }
 
     function nextTokenId() external view returns (uint256) {
@@ -59,6 +65,10 @@ contract MockUniswapV4PositionManager {
         return mintedLiquidity;
     }
 
+    function lastParamsLength() external view returns (uint256) {
+        return lastParams.length;
+    }
+
     function modifyLiquidities(bytes calldata unlockData, uint256 deadline) external payable {
         lastUnlockData = unlockData;
         lastDeadline = deadline;
@@ -68,8 +78,38 @@ contract MockUniswapV4PositionManager {
         lastActions = actions;
         lastParams = params;
 
-        (UniswapV4PoolKey.Key memory key,,,,, uint128 amount1Max,,) =
-            abi.decode(params[0], (UniswapV4PoolKey.Key, int24, int24, uint256, uint128, uint128, address, bytes));
+        (
+            UniswapV4PoolKey.Key memory key,
+            int24 tickLower,
+            int24 tickUpper,
+            uint256 liquidity,
+            uint128 amount0Max,
+            uint128 amount1Max,
+            address recipient,
+            bytes memory hookData
+        ) = abi.decode(params[0], (UniswapV4PoolKey.Key, int24, int24, uint256, uint128, uint128, address, bytes));
+
+        if (reenterMigration) {
+            reenterMigration = false;
+            MigrationData.Params memory migrationParams = MigrationData.Params({
+                currency0: key.currency0,
+                currency1: key.currency1,
+                hooks: key.hooks,
+                poolFee: key.fee,
+                tickSpacing: key.tickSpacing,
+                tickLower: tickLower,
+                tickUpper: tickUpper,
+                liquidity: uint128(liquidity),
+                amount0Max: amount0Max,
+                amount1Max: amount1Max,
+                deadline: deadline,
+                lpRecipient: recipient,
+                hookData: hookData
+            });
+            UniswapV4MintPositionTarget(payable(msg.sender)).migrate{value: msg.value}(
+                key.currency1, msg.value, amount1Max, abi.encode(migrationParams)
+            );
+        }
 
         if (pullToken) {
             require(
@@ -90,7 +130,17 @@ contract UniswapV4MintPositionTargetTest is Test {
         token = new MockEulrErc20();
         positionManager = new MockUniswapV4PositionManager();
         poolManager = address(new MockUniswapV4PositionManager());
-        target = new UniswapV4MintPositionTarget(poolManager, address(positionManager), lpRecipient);
+        target = new UniswapV4MintPositionTarget(
+            poolManager,
+            address(positionManager),
+            lpRecipient,
+            address(0),
+            3000,
+            60,
+            -887_220,
+            887_220,
+            keccak256(bytes(""))
+        );
     }
 
     function test_MigrateMintsV4PositionWithCanonicalActionsAndPoolId() public {
@@ -114,10 +164,74 @@ contract UniswapV4MintPositionTargetTest is Test {
         assertEq(liquidity, 1e18);
         assertEq(positionManager.lastValue(), 10e18);
         assertEq(positionManager.lastDeadline(), params.deadline);
-        assertEq(positionManager.lastActions(), hex"020d");
+        assertEq(positionManager.lastActions(), hex"020d14");
+        assertEq(positionManager.lastParamsLength(), 3);
+        (address sweepCurrency, address sweepRecipient) = abi.decode(positionManager.lastParams(2), (address, address));
+        assertEq(sweepCurrency, address(0));
+        assertEq(sweepRecipient, address(target));
         assertEq(token.balanceOf(address(target)), 0);
         assertEq(token.balanceOf(address(positionManager)), 1_000e18);
         assertEq(address(target).balance, 0);
+    }
+
+    function test_MigrateIgnoresPreExistingTokenDust() public {
+        MigrationData.Params memory params = _validParams();
+        token.mint(address(target), 1_000e18 + 1);
+
+        (address pool, uint256 liquidity) =
+            target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+
+        assertEq(pool, poolManager);
+        assertEq(liquidity, 1e18);
+        assertEq(token.balanceOf(address(target)), 1);
+        assertEq(token.balanceOf(address(positionManager)), 1_000e18);
+    }
+
+    function test_RevertWhen_MigrationUsesUnapprovedHookAddress() public {
+        MigrationData.Params memory params = _validParams();
+        params.hooks = makeAddr("malicious-hook");
+        token.mint(address(target), 1_000e18);
+
+        vm.expectRevert(UniswapV4MintPositionTarget.UnauthorizedMigrationPool.selector);
+        target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+    }
+
+    function test_RevertWhen_MigrationUsesUnapprovedPoolFee() public {
+        MigrationData.Params memory params = _validParams();
+        params.poolFee = 500;
+        token.mint(address(target), 1_000e18);
+
+        vm.expectRevert(UniswapV4MintPositionTarget.UnauthorizedMigrationPool.selector);
+        target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+    }
+
+    function test_RevertWhen_MigrationUsesUnapprovedTickSpacing() public {
+        MigrationData.Params memory params = _validParams();
+        params.tickSpacing = 10;
+        params.tickLower = -887_200;
+        params.tickUpper = 887_200;
+        token.mint(address(target), 1_000e18);
+
+        vm.expectRevert(UniswapV4MintPositionTarget.UnauthorizedMigrationPool.selector);
+        target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+    }
+
+    function test_RevertWhen_MigrationUsesUnapprovedTickRange() public {
+        MigrationData.Params memory params = _validParams();
+        params.tickLower = -887_160;
+        token.mint(address(target), 1_000e18);
+
+        vm.expectRevert(UniswapV4MintPositionTarget.UnauthorizedMigrationPool.selector);
+        target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+    }
+
+    function test_RevertWhen_MigrationUsesUnapprovedHookData() public {
+        MigrationData.Params memory params = _validParams();
+        params.hookData = "malicious-hook-data";
+        token.mint(address(target), 1_000e18);
+
+        vm.expectRevert(UniswapV4MintPositionTarget.UnauthorizedHookData.selector);
+        target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
     }
 
     function test_RevertWhen_PositionManagerDoesNotConsumeMigratedToken() public {
@@ -126,6 +240,15 @@ contract UniswapV4MintPositionTargetTest is Test {
         positionManager.setPullToken(false);
 
         vm.expectRevert(UniswapV4MintPositionTarget.ResidualToken.selector);
+        target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+    }
+
+    function test_RevertWhen_PositionManagerReentersMigration() public {
+        MigrationData.Params memory params = _validParams();
+        token.mint(address(target), 1_000e18);
+        positionManager.setReenterMigration(true);
+
+        vm.expectRevert(ReentrancyGuard.ReentrantCall.selector);
         target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
     }
 

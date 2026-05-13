@@ -19,6 +19,12 @@ interface IUniswapV4MigrationTargetRead {
     function poolManager() external view returns (address);
     function positionManager() external view returns (address);
     function lpRecipient() external view returns (address);
+    function expectedHooks() external view returns (address);
+    function expectedPoolFee() external view returns (uint24);
+    function expectedTickSpacing() external view returns (int24);
+    function expectedTickLower() external view returns (int24);
+    function expectedTickUpper() external view returns (int24);
+    function expectedHookDataHash() external view returns (bytes32);
 }
 
 contract XLayerAddressForkTest is Test {
@@ -123,6 +129,29 @@ contract XLayerAddressForkTest is Test {
         assertEq(IUniswapV4MigrationTargetRead(migrationTarget).poolManager(), vm.envAddress("UNISWAP_V4_POOL_MANAGER"));
         assertEq(IUniswapV4MigrationTargetRead(migrationTarget).positionManager(), positionManager);
         assertEq(IUniswapV4MigrationTargetRead(migrationTarget).lpRecipient(), lpRecipient);
+        assertEq(
+            IUniswapV4MigrationTargetRead(migrationTarget).expectedHooks(), vm.envOr("XLAYER_V4_HOOKS", address(0))
+        );
+        assertEq(
+            IUniswapV4MigrationTargetRead(migrationTarget).expectedPoolFee(),
+            uint24(vm.envOr("XLAYER_V4_POOL_FEE", uint256(3000)))
+        );
+        assertEq(
+            IUniswapV4MigrationTargetRead(migrationTarget).expectedTickSpacing(),
+            int24(vm.envOr("XLAYER_V4_TICK_SPACING", int256(60)))
+        );
+        assertEq(
+            IUniswapV4MigrationTargetRead(migrationTarget).expectedTickLower(),
+            int24(vm.envOr("XLAYER_V4_TICK_LOWER", int256(-887_220)))
+        );
+        assertEq(
+            IUniswapV4MigrationTargetRead(migrationTarget).expectedTickUpper(),
+            int24(vm.envOr("XLAYER_V4_TICK_UPPER", int256(887_220)))
+        );
+        assertEq(
+            IUniswapV4MigrationTargetRead(migrationTarget).expectedHookDataHash(),
+            keccak256(vm.envOr("XLAYER_V4_HOOK_DATA", bytes("")))
+        );
     }
 
     function _migrateAndAssertCustody(
