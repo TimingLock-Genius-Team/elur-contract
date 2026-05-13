@@ -46,6 +46,7 @@ All notable changes to SATPAD contract backend are tracked here.
 - Added `UniswapV4PoolKey` to compute v4 PoolIds from validated migration data.
 - Added `UniswapV4MintPositionTarget` to encode v4 `MINT_POSITION` / `SETTLE_PAIR` migrations and reject residual OKB/token.
 - Added deployment recording and doctor tooling for the Uniswap v4 migration target.
+- Added XLayer production preflight checks for required env, provenance, addresses, and private key shape.
 
 ### Known Blockers
 
