@@ -2,9 +2,11 @@
 
 Eulr is a permissionless token launch protocol for XLayer. Each launched token receives an isolated ERC-20 token, bonding-curve Hook, and Router. The protocol uses the sat1 exponential curve, native OKB settlement, 0.3% fees, graduation at 99% of token supply, and one-time liquidity migration.
 
-This repository currently covers the contract backend, local deployment scripts, TypeScript CLI tooling, and tests. It does not include the web app, wallet UI, indexer, charts, portfolio, or operations dashboard.
+This repository currently covers the contract backend, local deployment scripts, TypeScript CLI tooling, and tests. It does not implement the production web app, wallet UI, Bun.js indexer/API service, charts, portfolio, or operations dashboard, but it documents the data contracts those systems should consume.
 
 The backend exposes frontend-friendly read surfaces through `EulrFactory.getTokens(offset, limit)` for token discovery and `EulrHook.curveState()` for token detail state snapshots.
+
+Frontend/product data is split by source: current state comes from contract reads, theoretical curve and issuance series are computed client-side from `K` / `S`, and historical or aggregate fields such as 24h volume, price change, sparkline, holders, trades, and portfolio cost basis come from a separate Bun.js backend/indexer.
 
 ## Documentation
 
@@ -18,7 +20,7 @@ The backend exposes frontend-friendly read surfaces through `EulrFactory.getToke
 - `SECURITY_MODEL.md`: trust boundaries, invariants, attack surfaces, and pre-launch security checklist.
 - `CHANGELOG.md`: tracked changes grouped by Added / Changed / Fixed / Security and Known Blockers.
 - `ANVIL_SMOKE_REPORT.md`: most recent local Anvil multi-signer smoke results and follow-ups.
-- `FRONTEND_INTEGRATION.md`: frontend integration guide mapping the `Eulr Prototype.html` PRD to ABIs, reads, writes, events, and off-chain data needs.
+- `FRONTEND_INTEGRATION.md`: frontend integration guide mapping the `Eulr Prototype.html` PRD to ABIs, reads, writes, events, chart data sources, and Bun.js backend/indexer expectations.
 
 Suggested reading paths:
 
@@ -48,7 +50,8 @@ The project is not yet mainnet-commercial-ready until the production external ad
 ## Requirements
 
 - Foundry (`forge`, `cast`, `anvil`)
-- Node.js and npm
+- Node.js and npm for this contract repository's TypeScript CLI/tooling
+- Bun.js for the separate product backend/indexer when that service is implemented
 - Slither for static analysis
 - `PRIVATE_KEY` for local Anvil deploy and smoke commands
 

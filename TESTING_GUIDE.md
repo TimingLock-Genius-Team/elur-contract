@@ -25,9 +25,11 @@ Router 不残留用户 OKB 或 token
 ```text
 Unit / fuzz / invariant / fork: Forge
 Local chain: Anvil
-Backend smoke scripts: TypeScript + viem
+Contract repo smoke scripts: TypeScript + viem
 Static analysis: Slither
 ```
+
+这里的 TypeScript smoke scripts 指本仓库的合约部署、调试和 ABI 工具，不是产品 backend/indexer。产品 backend/indexer 约定使用 Bun.js，相关测试应在该服务加入仓库时单独补充。
 
 商业可用测试还必须满足 `COMMERCIAL_READINESS.md` 和 `SECURITY_MODEL.md` 的上线门禁。本地 unit/integration/invariant 通过只能证明 MVP 行为，不能替代 XLayer fork、真实迁移适配器验证和审计。
 

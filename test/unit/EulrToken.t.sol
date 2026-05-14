@@ -75,6 +75,7 @@ contract EulrTokenTest is EulrTestBase {
 
         vm.prank(trader);
         vm.expectRevert(EulrToken.ZeroAddress.selector);
+        // forge-lint: disable-next-line(erc20-unchecked-transfer)
         token.transfer(address(0), 1);
 
         vm.expectRevert(EulrToken.InsufficientBalance.selector);

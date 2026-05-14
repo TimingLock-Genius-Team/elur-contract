@@ -7,12 +7,12 @@
 ```text
 Contracts: Foundry / Forge
 Local chain: Anvil
-Backend scripts: TypeScript + viem
+Contract repo scripts: TypeScript + viem
 Target chain: XLayer
 Protocol: sat1 bonding curve + Factory + per-token Hook/Router
 ```
 
-当前开发范围不包含客户端应用。TypeScript 只用于部署、命令行调试、smoke test、地址验证和生成部署产物。
+当前开发范围不包含客户端应用或产品 backend/indexer。TypeScript 只用于部署、命令行调试、smoke test、地址验证和生成部署产物；产品 backend/indexer 约定使用 Bun.js，并在独立服务实现时补充对应开发文档。
 
 开发过程中必须同步维护：
 
@@ -23,6 +23,7 @@ Protocol: sat1 bonding curve + Factory + per-token Hook/Router
 - `COMMERCIAL_READINESS.md`
 - `DEPLOYMENT_RUNBOOK.md`
 - `SECURITY_MODEL.md`
+- `FRONTEND_INTEGRATION.md`（当 ABI、前端读写接口或 Bun.js backend/indexer 数据契约变化时）
 
 ## 2. 工程目录
 

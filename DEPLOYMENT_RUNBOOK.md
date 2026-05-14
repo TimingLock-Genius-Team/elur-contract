@@ -275,6 +275,18 @@ npm run script:deploy-xlayer
 6. 下一块执行小额 sell。
 7. 记录 tx hash、block number、地址和验证链接。
 
+### 6.1 Offchain backend/indexer
+
+本仓库的部署 runbook 只覆盖合约、deployment JSON 和本地/生产验证脚本。产品详情页所需的历史图表、24h 统计、holders、trades 和 portfolio cost basis 由独立 backend/indexer 提供。
+
+上线前如果同时发布该服务，运行时约定为 **Bun.js**，并且必须：
+
+- 从已发布的 `frontend/abi/` 或同源 Foundry artifacts 读取 ABI。
+- 从 `deployments/xlayer/latest.json` 读取 Factory 和 migration target 地址。
+- 索引 `TokenCreated`、`Bought`、`Sold` 和 ERC-20 `Transfer`。
+- 用链上 `curveState()` 校验最新状态，用事件聚合历史和统计字段。
+- 不持有部署私钥或 fee recipient 权限。
+
 ## 7. 回滚与失败处理
 
 合约不可升级，部署失败时不能“回滚”已部署地址，只能停止使用该 Factory 并重新部署。

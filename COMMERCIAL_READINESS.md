@@ -16,7 +16,7 @@
 | Migration | 第一版已实现 | 已有 `UniswapV4MintPositionTarget` 和本地 adapter 测试；真实 XLayer PositionManager 行为、PoolId 和 LP 归宿仍必须通过 fork gate 证明。 |
 | Solidity scripts | 已实现本地流 | 本地 Anvil deploy/create/quote/buy/sell/graduation/migration 可跑。 |
 | TypeScript CLI | 已实现本地流 | 用于本地部署、调试和 deployment JSON。 |
-| 前端 PRD 后端支持 | 已实现只读接口 | 合约提供 token 分页读取、详情页聚合状态和 creator-indexed 创建事件；本仓库不实现前端页面。 |
+| 前端 PRD 后端支持 | 合约只读接口已实现；聚合 indexer 待实现 | 合约提供 token 分页读取、详情页聚合状态和 creator-indexed 创建事件；24h volume、历史图、holders、portfolio cost basis 等 PRD 字段需要独立 Bun.js backend/indexer，本仓库不实现前端页面。 |
 | CI | 已实现基础门禁 | GitHub Actions 运行格式、构建、Forge 测试、invariant、guarded fork、TS 类型检查和 Slither。 |
 | Fork tests | 待补强 | 需要真实 XLayer RPC 和外部地址。 |
 | 审计 | 未完成 | 主网上线前必须完成外部审计或独立安全 review。 |

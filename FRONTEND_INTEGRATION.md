@@ -290,6 +290,34 @@ function marginalPrice(okbCum: number, k: number, s: number): number {
 
 实际价格（实线）需要把 `Bought` / `Sold` 事件按区块时间聚合到所选时间档（1m / 5m / 1h / 1d）。每个事件的 `newOkbCum` 字段足以在事后任意时刻反推当时的 `currentPrice`，前端不必额外查询。
 
+#### 4.2.3.1 详情页图表数据来源
+
+详情页图表按数据性质分层：
+
+| 图表 / 模块 | 前端数据来源 | 说明 |
+| --- | --- | --- |
+| 当前价格、当前 supply、OKB reserve、progress | `hook.curveState()` | 页面打开和交易后刷新；可用 multicall 与 token metadata 一起读 |
+| 理论 price curve | 前端用 `K` / `S` 采样计算 | 不依赖历史事件，也不需要 backend 存曲线点 |
+| 理论 issuance curve | 前端用 `minted(okb) = K * (1 - exp(-okb / S))` 采样计算 | 用于展示发行量随 reserve 增长的理论轨迹 |
+| 实际价格历史 | backend/indexer 聚合 `Bought` / `Sold` | 用事件 `newOkbCum + block.timestamp` 反推每个 bucket 的价格 |
+| 实际 supply / reserve 历史 | backend/indexer 聚合 `Bought` / `Sold` | `newOkbCum` 反推 `totalMinted`，同时作为历史 reserve |
+| 24h volume、price change、sparkline | backend/indexer | 按时间窗口和 bucket 聚合 |
+| Trades 表 | backend/indexer 或短窗口 RPC logs | 生产建议走 backend，避免浏览器扫历史 logs |
+| Holders 表 | backend/indexer 聚合 `Transfer` | 合约不暴露 holder 列表 |
+
+前端推荐把图表 API 设计成：
+
+```text
+GET /api/tokens/:address/summary
+GET /api/tokens/:address/chart?range=24h&interval=5m
+GET /api/tokens/:address/trades?limit=50&cursor=...
+GET /api/tokens/:address/holders?limit=50&cursor=...
+```
+
+`summary` 返回当前 UI 展示所需的聚合字段，例如 `holders`、`volume24hOkb`、`volume24hUsd`、`priceChange24h`、`sparkline`。当前价格、supply、reserve 仍以最新 `curveState()` 为准；如果 backend 也返回这些字段，只作为缓存展示，交易报价和 slippage 计算必须重新读链上或调用 `quoteBuy` / `quoteSell`。
+
+合约当前不需要为这些图表新增字段或事件。`TokenCreated`、`Bought`、`Sold` 和 ERC-20 `Transfer` 已足够恢复 token 列表、成交历史、历史价格、历史 supply、volume 和 holder balances。
+
 #### 4.2.4 Trades tab
 
 直接渲染 `Bought` / `Sold` 事件：
@@ -622,6 +650,8 @@ const impact = (newPrice - oldPrice) / oldPrice; // buy
 
 下列字段必须由后端索引器/价格 oracle 提供，链上没有：
 
+生产 backend/indexer 约定使用 **Bun.js** 实现 API、事件消费和聚合任务。本仓库现有 Node/npm TypeScript CLI 只用于合约部署、smoke、ABI 导出和本地调试；前端不要把这些 CLI 当作生产 indexer。
+
 | 字段 | 来源 | 备注 |
 | --- | --- | --- |
 | `OKB_USD` | 价格 oracle（CoinGecko / OKX API / Chainlink） | PRD 全站统一一个值；建议 1 分钟更新一次 |
@@ -649,6 +679,59 @@ balances(token, holder, balance, last_block) -- PRIMARY KEY (token, holder)
 -- snapshot 视图：每 10 分钟物化
 token_state(token, current_price_okb, total_minted, okb_cum, holders, volume_24h, last_price_24h)
 ```
+
+推荐 API 契约：
+
+```text
+GET /api/tokens/:address/summary
+```
+
+返回详情页顶部和统计卡所需的聚合字段：
+
+```json
+{
+  "token": "0x...",
+  "holders": 1234,
+  "volume24hOkb": "4200000000000000000",
+  "volume24hUsd": "8440.00",
+  "priceChange24hPct": "12.34",
+  "sparkline": [
+    { "ts": 1715600000, "priceOkb": "1000000000000" }
+  ]
+}
+```
+
+```text
+GET /api/tokens/:address/chart?range=24h&interval=5m
+```
+
+返回图表点。每个点应由 `Bought` / `Sold` 的 `newOkbCum` 和对应区块时间聚合得到：
+
+```json
+{
+  "range": "24h",
+  "interval": "5m",
+  "points": [
+    {
+      "ts": 1715600000,
+      "okbCum": "1000000000000000000",
+      "priceOkb": "5260000000000",
+      "totalMinted": "20800000000000000000000",
+      "volumeOkb": "300000000000000000"
+    }
+  ]
+}
+```
+
+```text
+GET /api/tokens/:address/trades?limit=50&cursor=...
+GET /api/tokens/:address/holders?limit=50&cursor=...
+GET /api/portfolio/:wallet
+```
+
+`trades` 直接来自 `Bought` / `Sold`；`holders` 和 portfolio holdings 来自 `Transfer` 聚合后的 balance 表；portfolio 的 `avgCost`、`costBasis`、`realizedPnL` 由用户维度 trade history 计算。
+
+如果 indexer 暂未上线，前端可以只展示链上当前状态和理论曲线；`holders`、`volume24h`、`priceChange24h`、历史图、portfolio cost basis 必须显示为 `-` / loading，不要显示为 `0`。
 
 ## 10. 链与环境配置
 

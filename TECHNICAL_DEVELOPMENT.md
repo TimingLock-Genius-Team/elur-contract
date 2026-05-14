@@ -2,7 +2,7 @@
 
 ## 1. 技术目标
 
-本文档只描述 Eulr 合约后端的技术实现。当前不开发客户端、页面、图表、钱包连接或独立索引服务。
+本文档主要描述 Eulr 合约后端的技术实现。本仓库当前不实现客户端、页面、图表、钱包连接或独立索引服务；本文只定义前端详情页所需的链上读接口、事件索引边界和推荐的 backend/indexer 数据契约。
 
 合约后端目标：
 
@@ -431,6 +431,61 @@ event LiquidityMigrationResult(address indexed token, address indexed pool, uint
 
 事件必须覆盖第三方读取协议状态所需的最小数据。
 Hook 的 `LiquidityMigrationResult` 只表示 migration target 返回结果，不宣称 LP 已 burn/lock；Uniswap v4 pool 不是独立 pool address，真实 adapter 必须用 `UniswapV4PoolKey.toId` 记录 `PoolId`，并在实际 mint / lock 成功后发出 `LpCustodyProven` 或等价 LP 归宿证明。
+
+### 11.1 前端详情页和图表的数据边界
+
+前端详情页的数据分三类：
+
+1. **当前状态，直接链上读取**：`factory.getTokenInfo(token)`、`hook.curveState()`、`hook.getCurveParams()`、`token.balanceOf(user)`。
+2. **理论曲线，前端本地计算**：使用 `K` / `S` 采样 `price(okb)` 和 `minted(okb)`，不需要链上存储曲线点。
+3. **历史和聚合数据，backend/indexer 提供**：历史价格线、成交列表、24h volume、price change、holders、portfolio cost basis。
+
+详情页图表不要求新增合约存储。现有事件已经覆盖 indexer 所需输入：
+
+- `TokenCreated`：建立 token registry，记录 `token`、`hook`、`router`、`creator`、metadata 和创建时间。
+- `Bought` / `Sold`：建立 trade ledger，使用 `newOkbCum` 和区块时间重建任意历史点的价格、minted supply 和 reserve。
+- `Transfer`：维护 holder balance 表和 portfolio holdings。
+
+商业前端的主数据路径：
+
+```text
+Bun.js indexer worker
+  -> Postgres
+  -> API for frontend
+```
+
+职责边界：
+
+- **Bun.js indexer worker**：消费链上 logs，处理 `TokenCreated`、`Bought`、`Sold` 和 ERC-20 `Transfer`，负责补块、断点续跑、重放、reorg 处理和聚合任务调度。
+- **Postgres**：保存 token registry、trade ledger、holder balances、time bucket snapshots、portfolio cost basis 和 indexer checkpoints。
+- **API for frontend**：为前端提供 `summary`、`chart`、`trades`、`holders`、`portfolio` 等定制接口；当前交易报价和 slippage 仍通过链上 `quoteBuy` / `quoteSell` 或最新 `curveState()` 校验。
+
+该 backend/indexer 是商业前端的核心数据基础设施，不应被 Subgraph、浏览器端 log 扫描或临时脚本替代。Subgraph 可作为公开查询层、第三方集成或 analytics 补充，但官方前端的主路径应由自建 Bun.js backend/indexer 提供。
+
+推荐 backend/indexer 表或实体：
+
+```text
+tokens(address pk, hook, router, creator, metadata_uri, social_uri, created_block, created_ts)
+trades(tx_hash, log_index, token, user, recipient, side, gross_okb, net_okb, fee_okb, tokens, old_okb_cum, new_okb_cum, block, ts)
+balances(token, holder, balance, last_block)
+token_snapshots(token, bucket, current_price_okb, total_minted, okb_cum, volume_okb, holders)
+```
+
+产品 backend/indexer 的运行时约定为 **Bun.js**。本仓库内的 Node/npm TypeScript 脚本只负责合约部署、smoke、ABI 导出和本地调试，不代表生产 indexer/API 的运行时选择。
+
+推荐前端读取 API：
+
+```text
+GET /api/tokens/:address/summary
+GET /api/tokens/:address/chart?range=24h&interval=5m
+GET /api/tokens/:address/trades?limit=50&cursor=...
+GET /api/tokens/:address/holders?limit=50&cursor=...
+GET /api/portfolio/:wallet
+```
+
+`summary` 可以混合链上最新状态和 indexer 聚合值：链上字段以 `curveState()` 为准，`holders`、`volume24h`、`priceChange24h`、`sparkline`、`costBasis` 由 indexer 填充。Indexer 未就绪时，前端必须把聚合字段展示为 `-` 或 loading，不得伪装成 `0`。
+
+因此，为实现当前详情页设计中的曲线图、发行量图、成交图和 holder 表，合约无需修改。只有当产品要求链上承诺某类聚合结果、或要求事件中直接携带额外业务维度时，才需要重新评估事件格式。
 
 ## 12. 部署流程
 

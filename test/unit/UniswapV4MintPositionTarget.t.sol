@@ -99,6 +99,10 @@ contract MockUniswapV4PositionManager {
                 tickSpacing: key.tickSpacing,
                 tickLower: tickLower,
                 tickUpper: tickUpper,
+                // Casting to uint128 is safe because the caller (`_encodeModifyLiquidities`)
+                // serializes the original uint128 `params.liquidity` via abi.encode of a uint256
+                // slot, so the round-tripped value never exceeds the uint128 range.
+                // forge-lint: disable-next-line(unsafe-typecast)
                 liquidity: uint128(liquidity),
                 amount0Max: amount0Max,
                 amount1Max: amount1Max,

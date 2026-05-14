@@ -1,6 +1,6 @@
 # Eulr 产品流程说明
 
-本文档描述 Eulr 合约后端对第三方客户端、脚本、区块浏览器和运营方暴露的完整链上流程。当前范围只包含合约后端，不包含前端页面、索引服务或运营后台。
+本文档描述 Eulr 合约后端对第三方客户端、脚本、区块浏览器和运营方暴露的完整链上流程。当前范围只包含合约后端，不包含前端页面、Bun.js 索引服务或运营后台实现。
 
 ## 1. 参与角色
 
@@ -46,6 +46,8 @@
 - `LiquidityMigrated` / `LiquidityMigrationResult` 识别 Hook 迁移结果。
 - 真实 migration adapter 的 LP burn/lock 证明事件识别 LP 最终归宿。
 - `getTokens(offset, limit)` 和 `curveState()` 分别支持无索引器分页浏览和 token 详情页聚合读取。
+
+生产级历史图、24h volume、price change、holders 和 portfolio 成本数据应由独立 Bun.js backend/indexer 从这些事件聚合；合约只提供当前状态读接口和可索引事件。
 
 ## 2. 创建 Token 流程
 
@@ -246,7 +248,7 @@ feeRecipient -> claimFees(recipient)
 
 ## 9. 第三方集成流程
 
-第三方无需后端 API 即可集成：
+第三方无需后端 API 即可完成基础交易集成：
 
 1. 监听 `TokenCreated` 得到 token 列表。
 2. 无索引器时调 `getTokens(offset, limit)` 分页读取 token 地址。
@@ -258,6 +260,8 @@ feeRecipient -> claimFees(recipient)
 8. 监听 `SelfDeprecated` 更新毕业状态。
 9. 监听 `LiquidityMigrated` / `LiquidityMigrationResult` 更新 Hook 迁移状态。
 10. 监听真实 migration adapter 的 LP burn/lock 证明事件更新 LP 归宿状态。
+
+如果要提供与官方详情页一致的历史图表、24h 统计、holder 列表和 portfolio 成本计算，第三方应运行或接入 Bun.js backend/indexer，而不是让浏览器长期扫描历史 logs。
 
 ## 10. 商业可用状态定义
 
