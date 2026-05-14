@@ -26,6 +26,7 @@ type TokenInfoObject = {
   creator: `0x${string}`;
   metadataURI: string;
   socialURI: string;
+  curveS?: number;
 };
 
 export const tokenCreatedEventAbi = {
@@ -38,6 +39,7 @@ export const tokenCreatedEventAbi = {
     { name: "creator", type: "address", indexed: true },
     { name: "metadataURI", type: "string", indexed: false },
     { name: "socialURI", type: "string", indexed: false },
+    { name: "curveS", type: "uint16", indexed: false },
   ],
 } as const;
 
@@ -57,13 +59,15 @@ function isTokenInfoObject(value: unknown): value is TokenInfoObject {
   }
 
   const record = value as Record<string, unknown>;
+  const curveS = record.curveS;
   return (
     validAddress(record.token) &&
     validAddress(record.hook) &&
     validAddress(record.router) &&
     validAddress(record.creator) &&
     typeof record.metadataURI === "string" &&
-    typeof record.socialURI === "string"
+    typeof record.socialURI === "string" &&
+    (curveS === undefined || (typeof curveS === "number" && Number.isInteger(curveS) && curveS >= 1 && curveS <= 1000))
   );
 }
 
@@ -82,6 +86,12 @@ function requireTokenInfoObject(value: unknown): TokenInfoObject {
     if (typeof record[field] !== "string") {
       throw new Error(`TokenInfo ${field} must be a string`);
     }
+  }
+  if (
+    record.curveS !== undefined &&
+    (typeof record.curveS !== "number" || !Number.isInteger(record.curveS) || record.curveS < 1 || record.curveS > 1000)
+  ) {
+    throw new Error("TokenInfo curveS must be an integer between 1 and 1000");
   }
 
   throw new Error("TokenInfo must be an object");
@@ -130,6 +140,7 @@ export function extractCreatedTokenFromLogs(logs: readonly EventLog[], factoryAd
         creator: args.creator,
         metadataURI: args.metadataURI,
         socialURI: args.socialURI,
+        curveS: Number(args.curveS),
       });
     } catch {
       continue;
@@ -158,5 +169,6 @@ export async function resolveTokenInfo() {
     creator: info.creator,
     metadataURI: info.metadataURI,
     socialURI: info.socialURI,
+    curveS: info.curveS,
   };
 }

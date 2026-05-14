@@ -6,6 +6,8 @@ import {IEulrFactory} from "../src/interfaces/IEulrFactory.sol";
 import {EulrScriptBase} from "./EulrScriptBase.s.sol";
 
 contract CreateToken is EulrScriptBase {
+    error InvalidCurveS();
+
     function run() external returns (address token, address hook, address router) {
         string memory name = vm.envString("TOKEN_NAME");
         string memory symbol = vm.envString("TOKEN_SYMBOL");
@@ -13,7 +15,11 @@ contract CreateToken is EulrScriptBase {
         string memory socialURI = vm.envOr("SOCIAL_URI", string(""));
 
         vm.startBroadcast(_privateKey());
-        (token, hook, router) = _factory().createToken(name, symbol, metadataURI, socialURI);
+        if (vm.envExists("CURVE_S")) {
+            (token, hook, router) = _factory().createToken(name, symbol, metadataURI, socialURI, _curveSFromEnv());
+        } else {
+            (token, hook, router) = _factory().createToken(name, symbol, metadataURI, socialURI);
+        }
         vm.stopBroadcast();
 
         console2.log("chainId", block.chainid);
@@ -23,5 +29,16 @@ contract CreateToken is EulrScriptBase {
 
         IEulrFactory.TokenInfo memory info = _factory().getTokenInfo(token);
         _logTokenInfo(info);
+    }
+
+    function _curveSFromEnv() internal view returns (uint16) {
+        uint256 curveS = vm.envUint("CURVE_S");
+        if (curveS < 1 || curveS > 1000) {
+            revert InvalidCurveS();
+        }
+
+        // casting to uint16 is safe because CURVE_S is bounded to 1..1000 above.
+        // forge-lint: disable-next-line(unsafe-typecast)
+        return uint16(curveS);
     }
 }

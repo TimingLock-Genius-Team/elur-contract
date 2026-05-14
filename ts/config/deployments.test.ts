@@ -81,3 +81,78 @@ test("readDeployment rejects malformed deployment JSON", () => {
     rmSync(tempDir, { recursive: true, force: true });
   }
 });
+
+test("readDeployment accepts created token curveS in the contract range", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-curve-s-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const withCurveS: Deployment = {
+      ...deployment,
+      createdTokens: [
+        {
+          token: "0x0000000000000000000000000000000000000007",
+          hook: "0x0000000000000000000000000000000000000008",
+          router: "0x0000000000000000000000000000000000000009",
+          curveS: 25,
+        },
+      ],
+    };
+    writeDeployment(withCurveS);
+
+    assert.deepEqual(readDeployment(), withCurveS);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("readDeployment rejects created token curveS outside the contract range", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-invalid-curve-s-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const path = deploymentPath();
+    mkdirSync(join(tempDir, "deployments", "xlayer"), { recursive: true });
+    writeFileSync(path, `${JSON.stringify({
+      ...deployment,
+      createdTokens: [
+        {
+          token: "0x0000000000000000000000000000000000000007",
+          hook: "0x0000000000000000000000000000000000000008",
+          router: "0x0000000000000000000000000000000000000009",
+          curveS: 1001,
+        },
+      ],
+    })}\n`);
+
+    assert.throws(() => readDeployment(), /createdTokens\[0\]\.curveS must be an integer between 1 and 1000/);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});

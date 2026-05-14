@@ -10,6 +10,16 @@ import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
 
 contract FactoryValidationTest is EulrTestBase {
+    event TokenCreated(
+        address indexed token,
+        address indexed hook,
+        address router,
+        address indexed creator,
+        string metadataURI,
+        string socialURI,
+        uint16 curveS
+    );
+
     function test_RevertWhen_ExternalDependencyHasNoCode() public {
         vm.expectRevert(abi.encodeWithSelector(EulrFactory.MissingExternalCode.selector, address(0x5678)));
         new EulrFactory(feeRecipient, address(0x5678));
@@ -76,6 +86,43 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(factoryParams.feeBps, params.feeBps);
         assertEq(factoryParams.selfDeprecationBps, params.selfDeprecationBps);
         assertEq(factoryParams.maxBuyOkb, params.maxBuyOkb);
+    }
+
+    function test_CreateTokenUsesCreatorSelectedCurveS() public {
+        (, EulrHook hook,) = createToken("Steep", "STEEP", creator, 25);
+
+        CurveParams memory params = hook.getCurveParams();
+        assertEq(params.k, 21_000_000e18);
+        assertEq(params.s, 25e18);
+        assertEq(params.feeBps, 30);
+        assertEq(params.selfDeprecationBps, 9900);
+        assertEq(params.maxBuyOkb, 10e18);
+    }
+
+    function test_TokenCreatedEmitsCreatorSelectedCurveS() public {
+        vm.expectEmit(false, false, false, false);
+        emit TokenCreated(address(0), address(0), address(0), creator, "ipfs://demo", "https://demo.example", 25);
+
+        vm.prank(creator);
+        factory.createToken("Steep", "STEEP", "ipfs://demo", "https://demo.example", 25);
+    }
+
+    function test_CreateTokenAcceptsCurveSBoundaryValues() public {
+        vm.prank(creator);
+        (, address minHookAddr,) = factory.createToken("Min", "MIN", "ipfs://min", "", 1);
+        assertEq(EulrHook(payable(minHookAddr)).getCurveParams().s, 1e18);
+
+        vm.prank(creator);
+        (, address maxHookAddr,) = factory.createToken("Max", "MAX", "ipfs://max", "", 1000);
+        assertEq(EulrHook(payable(maxHookAddr)).getCurveParams().s, 1000e18);
+    }
+
+    function test_RevertWhen_CurveSOutsideAllowedRange() public {
+        vm.expectRevert(EulrFactory.InvalidCurveS.selector);
+        factory.createToken("Zero", "ZERO", "ipfs://zero", "", 0);
+
+        vm.expectRevert(EulrFactory.InvalidCurveS.selector);
+        factory.createToken("TooFlat", "FLAT", "ipfs://flat", "", 1001);
     }
 
     function test_GetTokensReturnsPaginatedCreatedTokenAddresses() public {

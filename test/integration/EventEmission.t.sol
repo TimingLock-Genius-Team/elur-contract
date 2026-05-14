@@ -15,7 +15,8 @@ contract EventEmissionTest is EulrTestBase {
         address router,
         address indexed creator,
         string metadataURI,
-        string socialURI
+        string socialURI,
+        uint16 curveS
     );
     event Bought(
         address indexed token,
@@ -45,13 +46,20 @@ contract EventEmissionTest is EulrTestBase {
     function test_CreateTokenEmitsIndexedCreatorMetadataAndSocialUri() public {
         vm.recordLogs();
         vm.prank(creator);
-        factory.createToken("Event", "EVT", "ipfs://event", "https://event.example");
+        factory.createToken("Event", "EVT", "ipfs://event", "https://event.example", 25);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
         assertEq(entries.length, 1);
         assertEq(entries[0].emitter, address(factory));
         assertEq(entries[0].topics[0], TokenCreated.selector);
         assertEq(entries[0].topics[3], bytes32(uint256(uint160(creator))));
+
+        (address router, string memory metadataURI, string memory socialURI, uint16 curveS) =
+            abi.decode(entries[0].data, (address, string, string, uint16));
+        assertTrue(router != address(0));
+        assertEq(metadataURI, "ipfs://event");
+        assertEq(socialURI, "https://event.example");
+        assertEq(curveS, 25);
     }
 
     function test_BuySellAndFeeClaimEmitExpectedEvents() public {

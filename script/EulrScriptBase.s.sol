@@ -53,6 +53,7 @@ abstract contract EulrScriptBase is Script {
         console2.log("okbCum", hook.okbCum());
         console2.log("claimableFeeOkb", hook.claimableFeeOkb());
         console2.log("totalMinted", hook.totalMinted());
+        console2.log("curveS", hook.getCurveParams().s / 1e18);
         console2.log("tokenSupply", IEulrToken(info.token).totalSupply());
         console2.log("selfDeprecated", hook.selfDeprecated());
         console2.log("liquidityMigrated", hook.liquidityMigrated());

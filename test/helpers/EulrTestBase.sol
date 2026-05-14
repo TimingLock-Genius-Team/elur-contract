@@ -48,6 +48,19 @@ contract EulrTestBase is Test {
         router = EulrRouter(payable(routerAddr));
     }
 
+    function createToken(string memory name, string memory symbol, address tokenCreator, uint16 curveS)
+        internal
+        returns (EulrToken token, EulrHook hook, EulrRouter router)
+    {
+        vm.prank(tokenCreator);
+        (address tokenAddr, address hookAddr, address routerAddr) =
+            factory.createToken(name, symbol, "ipfs://demo", "https://demo.example", curveS);
+
+        token = EulrToken(tokenAddr);
+        hook = EulrHook(payable(hookAddr));
+        router = EulrRouter(payable(routerAddr));
+    }
+
     function deployFactory(address feeRecipient_) internal returns (EulrFactory) {
         return new EulrFactory(feeRecipient_, address(migrationTarget));
     }

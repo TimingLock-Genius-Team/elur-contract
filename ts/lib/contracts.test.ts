@@ -10,6 +10,7 @@ const tokenInfo = {
   creator: "0x0000000000000000000000000000000000000004",
   metadataURI: "ipfs://metadata",
   socialURI: "https://example.social",
+  curveS: 25,
 } as const;
 
 test("normalizeTokenInfo rejects malformed tuple values", () => {
@@ -41,8 +42,9 @@ test("extractCreatedTokenFromLogs returns token addresses from TokenCreated logs
       { name: "router", type: "address" },
       { name: "metadataURI", type: "string" },
       { name: "socialURI", type: "string" },
+      { name: "curveS", type: "uint16" },
     ],
-    [tokenInfo.router, tokenInfo.metadataURI, tokenInfo.socialURI],
+    [tokenInfo.router, tokenInfo.metadataURI, tokenInfo.socialURI, tokenInfo.curveS],
   );
 
   const logs = [{

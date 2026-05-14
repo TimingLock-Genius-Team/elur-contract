@@ -20,7 +20,7 @@ export type Deployment = {
     selfDeprecationBps: number;
     maxBuyOkb: string;
   };
-  createdTokens: Array<{ token: `0x${string}`; hook: `0x${string}`; router: `0x${string}` }>;
+  createdTokens: Array<{ token: `0x${string}`; hook: `0x${string}`; router: `0x${string}`; curveS?: number }>;
 };
 
 const deploymentAddressFields = [
@@ -99,6 +99,10 @@ function parseDeployment(value: unknown): Deployment {
       if (typeof entry[field] !== "string" || !isAddress(entry[field])) {
         throw new Error(`createdTokens[${index}].${field} must be a valid address`);
       }
+    }
+    const curveS = entry.curveS;
+    if (curveS !== undefined && (typeof curveS !== "number" || !Number.isInteger(curveS) || curveS < 1 || curveS > 1000)) {
+      throw new Error(`createdTokens[${index}].curveS must be an integer between 1 and 1000`);
     }
   });
 

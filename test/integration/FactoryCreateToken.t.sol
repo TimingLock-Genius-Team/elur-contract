@@ -15,7 +15,8 @@ contract FactoryCreateTokenTest is EulrTestBase {
         address router,
         address indexed creator,
         string metadataURI,
-        string socialURI
+        string socialURI,
+        uint16 curveS
     );
 
     function test_AnyEoaCanCreateTokenAndEventIsIndexable() public {

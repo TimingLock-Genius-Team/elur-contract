@@ -28,6 +28,26 @@ export function optionalArg(name: string): string | undefined {
   return valueForFlag(name);
 }
 
+export function optionalUint16Arg(name: string, range?: { min?: number; max?: number }): number | undefined {
+  const value = optionalArg(name);
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (!/^\d+$/.test(value)) {
+    throw new Error(`--${name} must be an integer`);
+  }
+
+  const parsed = Number(value);
+  const min = range?.min ?? 0;
+  const max = range?.max ?? 65_535;
+  if (parsed < min || parsed > max) {
+    throw new Error(`--${name} must be between ${min} and ${max}`);
+  }
+
+  return parsed;
+}
+
 export function hasArg(name: string): boolean {
   return process.argv.includes(`--${name}`);
 }

@@ -24,6 +24,32 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "DEFAULT_CURVE_S_OKB",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "MAX_CURVE_S_OKB",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "MAX_METADATA_URI_BYTES",
     "inputs": [],
     "outputs": [
@@ -76,6 +102,19 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "MIN_CURVE_S_OKB",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "allTokens",
     "inputs": [
       {
@@ -105,6 +144,55 @@ export const eulrFactoryAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "createToken",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "symbol",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "socialURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "hook",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -349,6 +437,12 @@ export const eulrFactoryAbi = [
         "type": "string",
         "indexed": false,
         "internalType": "string"
+      },
+      {
+        "name": "curveS",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
       }
     ],
     "anonymous": false
@@ -361,6 +455,11 @@ export const eulrFactoryAbi = [
   {
     "type": "error",
     "name": "EmptySymbol",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidCurveS",
     "inputs": []
   },
   {

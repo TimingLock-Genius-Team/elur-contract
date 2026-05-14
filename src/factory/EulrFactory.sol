@@ -13,6 +13,9 @@ contract EulrFactory is IEulrFactory {
     uint256 public constant MAX_SYMBOL_BYTES = 8;
     uint256 public constant MAX_METADATA_URI_BYTES = 512;
     uint256 public constant MAX_SOCIAL_URI_BYTES = 256;
+    uint16 public constant DEFAULT_CURVE_S_OKB = 100;
+    uint16 public constant MIN_CURVE_S_OKB = 1;
+    uint16 public constant MAX_CURVE_S_OKB = 1000;
 
     address public immutable feeRecipient;
     address public immutable migrationTarget;
@@ -20,15 +23,6 @@ contract EulrFactory is IEulrFactory {
     address[] public allTokens;
     mapping(address token => TokenInfo info) private _tokenInfo;
     mapping(address token => bool registered) public isToken;
-
-    event TokenCreated(
-        address indexed token,
-        address indexed hook,
-        address router,
-        address indexed creator,
-        string metadataURI,
-        string socialURI
-    );
 
     error ZeroAddress();
     error MissingExternalCode(address target);
@@ -38,6 +32,7 @@ contract EulrFactory is IEulrFactory {
     error SymbolTooLong();
     error MetadataURITooLong();
     error SocialURITooLong();
+    error InvalidCurveS();
     error UnknownToken();
 
     constructor(address feeRecipient_, address migrationTarget_) {
@@ -58,9 +53,29 @@ contract EulrFactory is IEulrFactory {
         string calldata metadataURI,
         string calldata socialURI
     ) external returns (address token, address hook, address router) {
+        return _createToken(name, symbol, metadataURI, socialURI, DEFAULT_CURVE_S_OKB);
+    }
+
+    function createToken(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS
+    ) external returns (address token, address hook, address router) {
+        return _createToken(name, symbol, metadataURI, socialURI, curveS);
+    }
+
+    function _createToken(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS
+    ) internal returns (address token, address hook, address router) {
         _validateTokenMetadata(name, symbol, metadataURI, socialURI);
 
-        CurveParams memory params = Curve.defaultParams();
+        CurveParams memory params = _curveParamsForS(curveS);
         EulrToken tokenContract = new EulrToken(name, symbol, address(this));
         EulrHook hookContract = new EulrHook(tokenContract, feeRecipient, address(this), migrationTarget, params);
         EulrRouter routerContract = new EulrRouter(IEulrFactory(address(this)), tokenContract, hookContract);
@@ -83,7 +98,16 @@ contract EulrFactory is IEulrFactory {
             socialURI: socialURI
         });
 
-        emit TokenCreated(token, hook, router, msg.sender, metadataURI, socialURI);
+        emit TokenCreated(token, hook, router, msg.sender, metadataURI, socialURI, curveS);
+    }
+
+    function _curveParamsForS(uint16 curveS) internal pure returns (CurveParams memory params) {
+        if (curveS < MIN_CURVE_S_OKB || curveS > MAX_CURVE_S_OKB) {
+            revert InvalidCurveS();
+        }
+
+        params = Curve.defaultParams();
+        params.s = uint256(curveS) * 1e18;
     }
 
     function allTokensLength() external view returns (uint256) {
