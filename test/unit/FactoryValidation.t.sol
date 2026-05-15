@@ -8,6 +8,7 @@ import {EulrFactory} from "../../src/factory/EulrFactory.sol";
 import {EulrHook} from "../../src/hook/EulrHook.sol";
 import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract FactoryValidationTest is EulrTestBase {
     event TokenCreated(
@@ -21,8 +22,17 @@ contract FactoryValidationTest is EulrTestBase {
     );
 
     function test_RevertWhen_ExternalDependencyHasNoCode() public {
+        EulrFactory implementation = new EulrFactory();
+
         vm.expectRevert(abi.encodeWithSelector(EulrFactory.MissingExternalCode.selector, address(0x5678)));
-        new EulrFactory(feeRecipient, address(0x5678));
+        new TransparentUpgradeableProxy(
+            address(implementation),
+            address(this),
+            abi.encodeCall(
+                EulrFactory.initialize,
+                (feeRecipient, address(0x5678), address(routerImplementation), address(this), address(this))
+            )
+        );
     }
 
     function test_RevertWhen_NameOrSymbolInvalid() public {

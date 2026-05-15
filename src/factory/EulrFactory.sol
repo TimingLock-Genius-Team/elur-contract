@@ -7,8 +7,10 @@ import {IEulrFactory} from "../interfaces/IEulrFactory.sol";
 import {EulrHook} from "../hook/EulrHook.sol";
 import {EulrRouter} from "../router/EulrRouter.sol";
 import {EulrToken} from "../token/EulrToken.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
-contract EulrFactory is IEulrFactory {
+contract EulrFactory is IEulrFactory, Initializable {
     uint256 public constant MAX_NAME_BYTES = 32;
     uint256 public constant MAX_SYMBOL_BYTES = 8;
     uint256 public constant MAX_METADATA_URI_BYTES = 512;
@@ -17,8 +19,11 @@ contract EulrFactory is IEulrFactory {
     uint16 public constant MIN_CURVE_S_OKB = 1;
     uint16 public constant MAX_CURVE_S_OKB = 1000;
 
-    address public immutable feeRecipient;
-    address public immutable migrationTarget;
+    address public feeRecipient;
+    address public migrationTarget;
+    address public routerImplementation;
+    address public routerProxyOwner;
+    address public upgradeAdmin;
 
     address[] public allTokens;
     mapping(address token => TokenInfo info) private _tokenInfo;
@@ -34,17 +39,59 @@ contract EulrFactory is IEulrFactory {
     error SocialURITooLong();
     error InvalidCurveS();
     error UnknownToken();
+    error OnlyUpgradeAdmin();
 
-    constructor(address feeRecipient_, address migrationTarget_) {
-        if (feeRecipient_ == address(0) || migrationTarget_ == address(0)) {
+    event RouterImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
+
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
+        address feeRecipient_,
+        address migrationTarget_,
+        address routerImplementation_,
+        address routerProxyOwner_,
+        address upgradeAdmin_
+    ) external initializer {
+        if (
+            feeRecipient_ == address(0) || migrationTarget_ == address(0) || routerImplementation_ == address(0)
+                || routerProxyOwner_ == address(0) || upgradeAdmin_ == address(0)
+        ) {
             revert ZeroAddress();
         }
         if (migrationTarget_.code.length == 0) {
             revert MissingExternalCode(migrationTarget_);
         }
+        if (routerImplementation_.code.length == 0) {
+            revert MissingExternalCode(routerImplementation_);
+        }
 
         feeRecipient = feeRecipient_;
         migrationTarget = migrationTarget_;
+        routerImplementation = routerImplementation_;
+        routerProxyOwner = routerProxyOwner_;
+        upgradeAdmin = upgradeAdmin_;
+    }
+
+    modifier onlyUpgradeAdmin() {
+        if (msg.sender != upgradeAdmin) {
+            revert OnlyUpgradeAdmin();
+        }
+        _;
+    }
+
+    function setRouterImplementation(address newRouterImplementation) external onlyUpgradeAdmin {
+        if (newRouterImplementation == address(0)) {
+            revert ZeroAddress();
+        }
+        if (newRouterImplementation.code.length == 0) {
+            revert MissingExternalCode(newRouterImplementation);
+        }
+
+        address oldImplementation = routerImplementation;
+        routerImplementation = newRouterImplementation;
+        emit RouterImplementationUpdated(oldImplementation, newRouterImplementation);
     }
 
     function createToken(
@@ -78,14 +125,18 @@ contract EulrFactory is IEulrFactory {
         CurveParams memory params = _curveParamsForS(curveS);
         EulrToken tokenContract = new EulrToken(name, symbol, address(this));
         EulrHook hookContract = new EulrHook(tokenContract, feeRecipient, address(this), migrationTarget, params);
-        EulrRouter routerContract = new EulrRouter(IEulrFactory(address(this)), tokenContract, hookContract);
+        TransparentUpgradeableProxy routerProxy = new TransparentUpgradeableProxy(
+            routerImplementation,
+            routerProxyOwner,
+            abi.encodeCall(EulrRouter.initialize, (IEulrFactory(address(this)), tokenContract, hookContract))
+        );
 
         tokenContract.setHook(address(hookContract));
-        hookContract.setRouter(address(routerContract));
+        hookContract.setRouter(address(routerProxy));
 
         token = address(tokenContract);
         hook = address(hookContract);
-        router = address(routerContract);
+        router = address(routerProxy);
 
         isToken[token] = true;
         allTokens.push(token);

@@ -10,6 +10,7 @@ import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
 import {IEulrFactory} from "../../src/interfaces/IEulrFactory.sol";
 import {MockMigrationTarget} from "../mocks/MockMigrationTarget.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 /// @dev Covers the constructor and one-shot setter reverts on `EulrHook` and
 /// `EulrRouter` that the regular factory-driven integration tests cannot
@@ -70,15 +71,28 @@ contract HookRouterValidationTest is Test {
         CurveParams memory params = Curve.defaultParams();
         EulrHook hook = new EulrHook(token, feeRecipient, factory, address(migrationTarget), params);
         IEulrFactory factoryInterface = IEulrFactory(factory);
+        EulrRouter implementation = new EulrRouter();
 
         vm.expectRevert(EulrRouter.ZeroAddress.selector);
-        new EulrRouter(IEulrFactory(address(0)), token, hook);
+        new TransparentUpgradeableProxy(
+            address(implementation),
+            address(this),
+            abi.encodeCall(EulrRouter.initialize, (IEulrFactory(address(0)), token, hook))
+        );
 
         vm.expectRevert(EulrRouter.ZeroAddress.selector);
-        new EulrRouter(factoryInterface, EulrToken(payable(address(0))), hook);
+        new TransparentUpgradeableProxy(
+            address(implementation),
+            address(this),
+            abi.encodeCall(EulrRouter.initialize, (factoryInterface, EulrToken(payable(address(0))), hook))
+        );
 
         vm.expectRevert(EulrRouter.ZeroAddress.selector);
-        new EulrRouter(factoryInterface, token, EulrHook(payable(address(0))));
+        new TransparentUpgradeableProxy(
+            address(implementation),
+            address(this),
+            abi.encodeCall(EulrRouter.initialize, (factoryInterface, token, EulrHook(payable(address(0)))))
+        );
     }
 
     function test_HookBuyAndSellRejectZeroPayerOrRecipient() public {

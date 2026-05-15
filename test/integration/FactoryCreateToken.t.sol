@@ -7,6 +7,7 @@ import {EulrFactory} from "../../src/factory/EulrFactory.sol";
 import {EulrHook} from "../../src/hook/EulrHook.sol";
 import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract FactoryCreateTokenTest is EulrTestBase {
     event TokenCreated(
@@ -52,10 +53,26 @@ contract FactoryCreateTokenTest is EulrTestBase {
     }
 
     function test_ConstructorRejectsZeroAddresses() public {
+        EulrFactory zeroFeeRecipientImplementation = new EulrFactory();
         vm.expectRevert(EulrFactory.ZeroAddress.selector);
-        new EulrFactory(address(0), address(migrationTarget));
+        new TransparentUpgradeableProxy(
+            address(zeroFeeRecipientImplementation),
+            address(this),
+            abi.encodeCall(
+                EulrFactory.initialize,
+                (address(0), address(migrationTarget), address(routerImplementation), address(this), address(this))
+            )
+        );
 
+        EulrFactory zeroMigrationTargetImplementation = new EulrFactory();
         vm.expectRevert(EulrFactory.ZeroAddress.selector);
-        new EulrFactory(feeRecipient, address(0));
+        new TransparentUpgradeableProxy(
+            address(zeroMigrationTargetImplementation),
+            address(this),
+            abi.encodeCall(
+                EulrFactory.initialize,
+                (feeRecipient, address(0), address(routerImplementation), address(this), address(this))
+            )
+        );
     }
 }

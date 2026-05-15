@@ -49,13 +49,21 @@ contract EventEmissionTest is EulrTestBase {
         factory.createToken("Event", "EVT", "ipfs://event", "https://event.example", 25);
 
         Vm.Log[] memory entries = vm.getRecordedLogs();
-        assertEq(entries.length, 1);
-        assertEq(entries[0].emitter, address(factory));
-        assertEq(entries[0].topics[0], TokenCreated.selector);
-        assertEq(entries[0].topics[3], bytes32(uint256(uint160(creator))));
+        Vm.Log memory tokenCreated;
+        bool found;
+        for (uint256 i = 0; i < entries.length; i++) {
+            if (entries[i].emitter == address(factory) && entries[i].topics[0] == TokenCreated.selector) {
+                tokenCreated = entries[i];
+                found = true;
+                break;
+            }
+        }
+
+        assertTrue(found);
+        assertEq(tokenCreated.topics[3], bytes32(uint256(uint160(creator))));
 
         (address router, string memory metadataURI, string memory socialURI, uint16 curveS) =
-            abi.decode(entries[0].data, (address, string, string, uint16));
+            abi.decode(tokenCreated.data, (address, string, string, uint16));
         assertTrue(router != address(0));
         assertEq(metadataURI, "ipfs://event");
         assertEq(socialURI, "https://event.example");

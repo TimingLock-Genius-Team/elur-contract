@@ -57,7 +57,7 @@ contract GraduationMigrationTest is EulrTestBase {
     function test_RevertWhen_MigrationTargetReturnsInvalidResult() public {
         MockBadMigrationTarget zeroPoolTarget = new MockBadMigrationTarget(address(0), 1e18);
         (EulrToken zeroPoolToken, EulrHook zeroPoolHook,) =
-            _createGraduatedToken(new EulrFactory(feeRecipient, address(zeroPoolTarget)));
+            _createGraduatedToken(deployFactory(feeRecipient, address(zeroPoolTarget)));
         uint256 zeroPoolHookBalance = address(zeroPoolHook).balance;
         uint256 zeroPoolTargetTokenBalance = zeroPoolToken.balanceOf(address(zeroPoolTarget));
 
@@ -69,7 +69,7 @@ contract GraduationMigrationTest is EulrTestBase {
 
         MockBadMigrationTarget zeroLiquidityTarget = new MockBadMigrationTarget(address(0xBEEF), 0);
         (EulrToken zeroLiquidityToken, EulrHook zeroLiquidityHook,) =
-            _createGraduatedToken(new EulrFactory(feeRecipient, address(zeroLiquidityTarget)));
+            _createGraduatedToken(deployFactory(feeRecipient, address(zeroLiquidityTarget)));
         uint256 zeroLiquidityHookBalance = address(zeroLiquidityHook).balance;
         uint256 zeroLiquidityTargetTokenBalance = zeroLiquidityToken.balanceOf(address(zeroLiquidityTarget));
 

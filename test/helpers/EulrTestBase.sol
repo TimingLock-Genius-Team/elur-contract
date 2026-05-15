@@ -10,6 +10,7 @@ import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
 import {MockExternalDependency} from "../mocks/MockExternalDependency.sol";
 import {MockMigrationTarget} from "../mocks/MockMigrationTarget.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract EulrTestBase is Test {
     address internal creator = makeAddr("creator");
@@ -18,11 +19,13 @@ contract EulrTestBase is Test {
     address internal feeRecipient = makeAddr("feeRecipient");
 
     MockMigrationTarget internal migrationTarget;
+    EulrFactory internal factoryImplementation;
+    EulrRouter internal routerImplementation;
     EulrFactory internal factory;
 
     function setUp() public virtual {
         migrationTarget = new MockMigrationTarget();
-        factory = new EulrFactory(feeRecipient, address(migrationTarget));
+        factory = deployFactory(feeRecipient);
     }
 
     function createDemoToken() internal returns (EulrToken token, EulrHook hook, EulrRouter router) {
@@ -62,7 +65,23 @@ contract EulrTestBase is Test {
     }
 
     function deployFactory(address feeRecipient_) internal returns (EulrFactory) {
-        return new EulrFactory(feeRecipient_, address(migrationTarget));
+        return deployFactory(feeRecipient_, address(migrationTarget));
+    }
+
+    function deployFactory(address feeRecipient_, address migrationTarget_) internal returns (EulrFactory) {
+        routerImplementation = new EulrRouter();
+        factoryImplementation = new EulrFactory();
+
+        TransparentUpgradeableProxy factoryProxy = new TransparentUpgradeableProxy(
+            address(factoryImplementation),
+            address(this),
+            abi.encodeCall(
+                EulrFactory.initialize,
+                (feeRecipient_, migrationTarget_, address(routerImplementation), address(this), address(this))
+            )
+        );
+
+        return EulrFactory(address(factoryProxy));
     }
 
     function buy(EulrRouter router, EulrToken token, address buyer, uint256 okbIn)

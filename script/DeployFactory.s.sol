@@ -6,15 +6,22 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {Curve} from "../src/curve/Curve.sol";
 import {CurveParams} from "../src/curve/CurveTypes.sol";
 import {EulrFactory} from "../src/factory/EulrFactory.sol";
+import {EulrRouter} from "../src/router/EulrRouter.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 contract DeployFactory is Script {
     using stdJson for string;
+
+    bytes32 internal constant ERC1967_ADMIN_SLOT = 0xb53127684a568b3173ae13b9f8a6016e243e63b6e8ee1178d6a717850b5d6103;
 
     error MissingDeploymentMetadata(string envName);
 
     struct DeploymentRecord {
         address deployer;
         address factory;
+        address proxyAdmin;
+        address factoryImplementation;
+        address routerImplementation;
         address feeRecipient;
         address poolManager;
         address positionManager;
@@ -34,13 +41,27 @@ contract DeployFactory is Script {
         _requireCode("MIGRATION_TARGET", migrationTarget);
 
         vm.startBroadcast(deployerKey);
-        factory = new EulrFactory(feeRecipient, migrationTarget);
+        EulrRouter routerImplementation = new EulrRouter();
+        EulrFactory factoryImplementation = new EulrFactory();
+        TransparentUpgradeableProxy factoryProxy = new TransparentUpgradeableProxy(
+            address(factoryImplementation),
+            deployer,
+            abi.encodeCall(
+                EulrFactory.initialize,
+                (feeRecipient, migrationTarget, address(routerImplementation), deployer, deployer)
+            )
+        );
+        factory = EulrFactory(address(factoryProxy));
         vm.stopBroadcast();
+        address proxyAdmin = _proxyAdmin(address(factoryProxy));
 
         _writeDeploymentJson(
             DeploymentRecord({
                 deployer: deployer,
                 factory: address(factory),
+                proxyAdmin: proxyAdmin,
+                factoryImplementation: address(factoryImplementation),
+                routerImplementation: address(routerImplementation),
                 feeRecipient: feeRecipient,
                 poolManager: poolManager,
                 positionManager: positionManager,
@@ -51,6 +72,9 @@ contract DeployFactory is Script {
         console2.log("chainId", block.chainid);
         console2.log("deployer", deployer);
         console2.log("factory", address(factory));
+        console2.log("proxyAdmin", proxyAdmin);
+        console2.log("factoryImplementation", address(factoryImplementation));
+        console2.log("routerImplementation", address(routerImplementation));
         console2.log("feeRecipient", feeRecipient);
         console2.log("uniswapV4PoolManager", poolManager);
         console2.log("uniswapV4PositionManager", positionManager);
@@ -61,6 +85,10 @@ contract DeployFactory is Script {
         if (target.code.length == 0) {
             revert(string.concat(label, " has no code"));
         }
+    }
+
+    function _proxyAdmin(address proxy) internal view returns (address) {
+        return address(uint160(uint256(vm.load(proxy, ERC1967_ADMIN_SLOT))));
     }
 
     function _writeDeploymentJson(DeploymentRecord memory record) internal {
@@ -107,6 +135,9 @@ contract DeployFactory is Script {
         deployment.serialize("deployedAt", deployedAt);
         deployment.serialize("deployer", record.deployer);
         deployment.serialize("factory", record.factory);
+        deployment.serialize("proxyAdmin", record.proxyAdmin);
+        deployment.serialize("factoryImplementation", record.factoryImplementation);
+        deployment.serialize("routerImplementation", record.routerImplementation);
         deployment.serialize("feeRecipient", record.feeRecipient);
         deployment.serialize("uniswapV4PoolManager", record.poolManager);
         deployment.serialize("uniswapV4PositionManager", record.positionManager);

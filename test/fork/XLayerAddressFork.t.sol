@@ -9,6 +9,7 @@ import {BaseUniswapV4MigrationTarget} from "../../src/migration/BaseUniswapV4Mig
 import {MigrationData} from "../../src/migration/MigrationData.sol";
 import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
+import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
 interface IPositionManagerRead {
     function nextTokenId() external view returns (uint256);
@@ -48,7 +49,7 @@ contract XLayerAddressForkTest is Test {
         address feeRecipient = vm.envAddress("TEAM_MULTISIG");
         address migrationTarget = vm.envAddress("MIGRATION_TARGET");
 
-        EulrFactory factory = new EulrFactory(feeRecipient, migrationTarget);
+        EulrFactory factory = _deployFactory(feeRecipient, migrationTarget);
 
         assertEq(factory.feeRecipient(), feeRecipient);
         assertEq(factory.migrationTarget(), migrationTarget);
@@ -119,7 +120,21 @@ contract XLayerAddressForkTest is Test {
     }
 
     function _deployFactoryWithProductionAddresses() internal returns (EulrFactory factory) {
-        factory = new EulrFactory(vm.envAddress("TEAM_MULTISIG"), vm.envAddress("MIGRATION_TARGET"));
+        factory = _deployFactory(vm.envAddress("TEAM_MULTISIG"), vm.envAddress("MIGRATION_TARGET"));
+    }
+
+    function _deployFactory(address feeRecipient, address migrationTarget) internal returns (EulrFactory factory) {
+        EulrRouter routerImplementation = new EulrRouter();
+        EulrFactory factoryImplementation = new EulrFactory();
+        TransparentUpgradeableProxy proxy = new TransparentUpgradeableProxy(
+            address(factoryImplementation),
+            address(this),
+            abi.encodeCall(
+                EulrFactory.initialize,
+                (feeRecipient, migrationTarget, address(routerImplementation), address(this), address(this))
+            )
+        );
+        factory = EulrFactory(address(proxy));
     }
 
     function _assertMigrationTargetConfig(address migrationTarget, address positionManager, address lpRecipient)
