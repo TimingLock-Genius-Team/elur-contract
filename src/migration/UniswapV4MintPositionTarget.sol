@@ -4,6 +4,8 @@ pragma solidity ^0.8.26;
 import {BaseUniswapV4MigrationTarget} from "./BaseUniswapV4MigrationTarget.sol";
 import {MigrationData} from "./MigrationData.sol";
 import {UniswapV4PoolKey} from "./UniswapV4PoolKey.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 interface IUniswapV4PositionManagerMinimal {
     function modifyLiquidities(bytes calldata unlockData, uint256 deadline) external payable;
@@ -11,12 +13,9 @@ interface IUniswapV4PositionManagerMinimal {
     function getPositionLiquidity(uint256 tokenId) external view returns (uint128);
 }
 
-interface IERC20ApproveAllowance {
-    function approve(address spender, uint256 amount) external returns (bool);
-    function allowance(address owner, address spender) external view returns (uint256);
-}
-
 contract UniswapV4MintPositionTarget is BaseUniswapV4MigrationTarget {
+    using SafeERC20 for IERC20;
+
     uint8 internal constant ACTION_MINT_POSITION = 0x02;
     uint8 internal constant ACTION_SETTLE_PAIR = 0x0d;
     uint8 internal constant ACTION_SWEEP = 0x14;
@@ -30,7 +29,6 @@ contract UniswapV4MintPositionTarget is BaseUniswapV4MigrationTarget {
     );
 
     error AmountMaxTooLarge();
-    error TokenApprovalFailed();
     error ResidualToken();
     error UnauthorizedMigrationPool();
     error UnauthorizedHookData();
@@ -77,10 +75,12 @@ contract UniswapV4MintPositionTarget is BaseUniswapV4MigrationTarget {
         IUniswapV4PositionManagerMinimal posm = IUniswapV4PositionManagerMinimal(positionManager);
         positionId = posm.nextTokenId();
 
-        if (!IERC20ApproveAllowance(token).approve(positionManager, tokenAmount)) revert TokenApprovalFailed();
+        IERC20 migrationToken = IERC20(token);
+
+        migrationToken.forceApprove(positionManager, tokenAmount);
         posm.modifyLiquidities{value: okbAmount}(_encodeModifyLiquidities(key, params), params.deadline);
-        if (IERC20ApproveAllowance(token).allowance(address(this), positionManager) != 0) revert ResidualToken();
-        if (!IERC20ApproveAllowance(token).approve(positionManager, 0)) revert TokenApprovalFailed();
+        if (migrationToken.allowance(address(this), positionManager) != 0) revert ResidualToken();
+        migrationToken.forceApprove(positionManager, 0);
 
         liquidity = posm.getPositionLiquidity(positionId);
 

@@ -7,6 +7,7 @@ import {Curve} from "../../src/curve/Curve.sol";
 import {EulrHook} from "../../src/hook/EulrHook.sol";
 import {EulrRouter} from "../../src/router/EulrRouter.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
+import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 contract HookSellTest is EulrTestBase {
     function test_SellBurnsTokensAndPaysNetOkb() public {
@@ -50,12 +51,14 @@ contract HookSellTest is EulrTestBase {
         vm.roll(block.number + 1);
 
         vm.prank(trader);
-        vm.expectRevert(EulrToken.InsufficientAllowance.selector);
+        vm.expectRevert(
+            abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, address(router), 0, tokensOut / 2)
+        );
         router.sell(address(token), tokensOut / 2, 0, trader);
 
         address empty = makeAddr("empty");
         vm.prank(empty);
-        vm.expectRevert(EulrToken.InsufficientAllowance.selector);
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientAllowance.selector, address(router), 0, 1));
         router.sell(address(token), 1, 0, empty);
     }
 

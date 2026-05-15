@@ -3,10 +3,10 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {BaseUniswapV4MigrationTarget} from "../../src/migration/BaseUniswapV4MigrationTarget.sol";
-import {ReentrancyGuard} from "../../src/libraries/ReentrancyGuard.sol";
 import {MigrationData} from "../../src/migration/MigrationData.sol";
 import {UniswapV4MintPositionTarget} from "../../src/migration/UniswapV4MintPositionTarget.sol";
 import {UniswapV4PoolKey} from "../../src/migration/UniswapV4PoolKey.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract MockEulrErc20 {
     mapping(address account => uint256 balance) public balanceOf;
@@ -252,7 +252,7 @@ contract UniswapV4MintPositionTargetTest is Test {
         token.mint(address(target), 1_000e18);
         positionManager.setReenterMigration(true);
 
-        vm.expectRevert(ReentrancyGuard.ReentrantCall.selector);
+        vm.expectRevert(ReentrancyGuard.ReentrancyGuardReentrantCall.selector);
         target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
     }
 

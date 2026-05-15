@@ -6,7 +6,7 @@ import {IEulrFactory} from "../interfaces/IEulrFactory.sol";
 import {IEulrRouter} from "../interfaces/IEulrRouter.sol";
 import {EulrHook} from "../hook/EulrHook.sol";
 import {EulrToken} from "../token/EulrToken.sol";
-import {ReentrancyGuard} from "../libraries/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 contract EulrRouter is IEulrRouter, ReentrancyGuard {
     IEulrFactory public immutable factory;

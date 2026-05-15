@@ -6,11 +6,11 @@ import {Curve} from "../curve/Curve.sol";
 import {IEulrHook} from "../interfaces/IEulrHook.sol";
 import {IMigrationTarget} from "../interfaces/IMigrationTarget.sol";
 import {EulrToken} from "../token/EulrToken.sol";
-import {NativeOkbTransfer} from "../libraries/NativeOkbTransfer.sol";
-import {ReentrancyGuard} from "../libraries/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
 contract EulrHook is IEulrHook, ReentrancyGuard {
-    using NativeOkbTransfer for address;
+    using Address for address payable;
 
     EulrToken public immutable token;
     address public router;
@@ -197,7 +197,9 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
         claimableFeeOkb += quote.fee;
         token.burn(address(this), tokensIn);
 
-        recipient.safeTransfer(quote.netOkbOut);
+        if (quote.netOkbOut != 0) {
+            payable(recipient).sendValue(quote.netOkbOut);
+        }
 
         emit Sold(
             address(token),
@@ -256,7 +258,7 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
         }
 
         claimableFeeOkb = 0;
-        recipient.safeTransfer(amount);
+        payable(recipient).sendValue(amount);
 
         emit FeesClaimed(recipient, amount);
     }

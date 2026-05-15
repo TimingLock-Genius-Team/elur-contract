@@ -2,8 +2,8 @@
 pragma solidity ^0.8.26;
 
 import {IMigrationTarget} from "../interfaces/IMigrationTarget.sol";
-import {ReentrancyGuard} from "../libraries/ReentrancyGuard.sol";
 import {MigrationData} from "./MigrationData.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 // slither-disable-next-line locked-ether
 abstract contract BaseUniswapV4MigrationTarget is IMigrationTarget, ReentrancyGuard {
