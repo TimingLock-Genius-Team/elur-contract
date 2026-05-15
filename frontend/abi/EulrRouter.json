@@ -1,23 +1,7 @@
 [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "factory_",
-        "type": "address",
-        "internalType": "contract IEulrFactory"
-      },
-      {
-        "name": "token_",
-        "type": "address",
-        "internalType": "contract EulrToken"
-      },
-      {
-        "name": "hook_",
-        "type": "address",
-        "internalType": "contract EulrHook"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -78,6 +62,29 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "factory_",
+        "type": "address",
+        "internalType": "contract IEulrFactory"
+      },
+      {
+        "name": "token_",
+        "type": "address",
+        "internalType": "contract EulrToken"
+      },
+      {
+        "name": "hook_",
+        "type": "address",
+        "internalType": "contract EulrHook"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -259,13 +266,36 @@
     "stateMutability": "view"
   },
   {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "InvalidInitialization",
+    "inputs": []
+  },
+  {
     "type": "error",
     "name": "InvalidToken",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "ReentrantCall",
+    "name": "NotInitializing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
   {

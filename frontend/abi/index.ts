@@ -8,18 +8,7 @@ import type { Abi } from "viem";
 export const eulrFactoryAbi = [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "feeRecipient_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "migrationTarget_",
-        "type": "address",
-        "internalType": "address"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -368,6 +357,39 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "feeRecipient_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "migrationTarget_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "routerImplementation_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "routerProxyOwner_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "upgradeAdmin_",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "isToken",
     "inputs": [
       {
@@ -397,6 +419,90 @@ export const eulrFactoryAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "routerImplementation",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "routerProxyOwner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "setRouterImplementation",
+    "inputs": [
+      {
+        "name": "newRouterImplementation",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "upgradeAdmin",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "RouterImplementationUpdated",
+    "inputs": [
+      {
+        "name": "oldImplementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newImplementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -464,6 +570,11 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "error",
+    "name": "InvalidInitialization",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "MetadataURITooLong",
     "inputs": []
   },
@@ -481,6 +592,16 @@ export const eulrFactoryAbi = [
   {
     "type": "error",
     "name": "NameTooLong",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotInitializing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "OnlyUpgradeAdmin",
     "inputs": []
   },
   {
@@ -1308,6 +1429,11 @@ export const eulrHookAbi = [
   },
   {
     "type": "error",
+    "name": "FailedCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "GrossOkbInTooLarge",
     "inputs": []
   },
@@ -1315,6 +1441,22 @@ export const eulrHookAbi = [
     "type": "error",
     "name": "GrossOkbInZero",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientBalance",
+    "inputs": [
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",
@@ -1345,22 +1487,6 @@ export const eulrHookAbi = [
     "type": "error",
     "name": "MintedOutOfRange",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NativeOkbTransferFailed",
-    "inputs": [
-      {
-        "name": "recipient",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
   },
   {
     "type": "error",
@@ -1459,7 +1585,7 @@ export const eulrHookAbi = [
   },
   {
     "type": "error",
-    "name": "ReentrantCall",
+    "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
   {
@@ -1503,23 +1629,7 @@ export const eulrHookAbi = [
 export const eulrRouterAbi = [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "factory_",
-        "type": "address",
-        "internalType": "contract IEulrFactory"
-      },
-      {
-        "name": "token_",
-        "type": "address",
-        "internalType": "contract EulrToken"
-      },
-      {
-        "name": "hook_",
-        "type": "address",
-        "internalType": "contract EulrHook"
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -1580,6 +1690,29 @@ export const eulrRouterAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "factory_",
+        "type": "address",
+        "internalType": "contract IEulrFactory"
+      },
+      {
+        "name": "token_",
+        "type": "address",
+        "internalType": "contract EulrToken"
+      },
+      {
+        "name": "hook_",
+        "type": "address",
+        "internalType": "contract EulrHook"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -1761,13 +1894,36 @@ export const eulrRouterAbi = [
     "stateMutability": "view"
   },
   {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "InvalidInitialization",
+    "inputs": []
+  },
+  {
     "type": "error",
     "name": "InvalidToken",
     "inputs": []
   },
   {
     "type": "error",
-    "name": "ReentrantCall",
+    "name": "NotInitializing",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
   {
@@ -1822,7 +1978,7 @@ export const eulrTokenAbi = [
     ],
     "outputs": [
       {
-        "name": "allowance",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -1839,7 +1995,7 @@ export const eulrTokenAbi = [
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "value",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -1865,7 +2021,7 @@ export const eulrTokenAbi = [
     ],
     "outputs": [
       {
-        "name": "balance",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -2009,7 +2165,7 @@ export const eulrTokenAbi = [
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "value",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -2038,7 +2194,7 @@ export const eulrTokenAbi = [
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "value",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -2104,17 +2260,93 @@ export const eulrTokenAbi = [
   },
   {
     "type": "error",
+    "name": "ERC20InsufficientAllowance",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "allowance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InsufficientBalance",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidApprover",
+    "inputs": [
+      {
+        "name": "approver",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidReceiver",
+    "inputs": [
+      {
+        "name": "receiver",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidSender",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidSpender",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "HookAlreadySet",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InsufficientAllowance",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InsufficientBalance",
     "inputs": []
   },
   {
@@ -2134,7 +2366,246 @@ export const eulrTokenAbi = [
   }
 ] as const satisfies Abi;
 
-// Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and burns the LP to address(0x..dEaD).
+// OZ v5 transparent proxy admin ABI. Each proxy owns a distinct ProxyAdmin; deployment metadata records the Factory proxy admin.
+export const proxyAdminAbi = [
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "UPGRADE_INTERFACE_VERSION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "owner",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "renounceOwnership",
+    "inputs": [],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "transferOwnership",
+    "inputs": [
+      {
+        "name": "newOwner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "upgradeAndCall",
+    "inputs": [
+      {
+        "name": "proxy",
+        "type": "address",
+        "internalType": "contract ITransparentUpgradeableProxy"
+      },
+      {
+        "name": "implementation",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "data",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "event",
+    "name": "OwnershipTransferred",
+    "inputs": [
+      {
+        "name": "previousOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newOwner",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "OwnableInvalidOwner",
+    "inputs": [
+      {
+        "name": "owner",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "OwnableUnauthorizedAccount",
+    "inputs": [
+      {
+        "name": "account",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  }
+] as const satisfies Abi;
+
+// Transparent proxy shell used for the singleton Factory and each per-token Router.
+export const transparentUpgradeableProxyAbi = [
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "_logic",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "initialOwner",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_data",
+        "type": "bytes",
+        "internalType": "bytes"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "fallback",
+    "stateMutability": "payable"
+  },
+  {
+    "type": "event",
+    "name": "AdminChanged",
+    "inputs": [
+      {
+        "name": "previousAdmin",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "newAdmin",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Upgraded",
+    "inputs": [
+      {
+        "name": "implementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "AddressEmptyCode",
+    "inputs": [
+      {
+        "name": "target",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC1967InvalidAdmin",
+    "inputs": [
+      {
+        "name": "admin",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC1967InvalidImplementation",
+    "inputs": [
+      {
+        "name": "implementation",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC1967NonPayable",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ERC1967ProxyUninitialized",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "FailedCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "ProxyDeniedAdminAccess",
+    "inputs": []
+  }
+] as const satisfies Abi;
+
+// Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and sends the LP position to the configured recipient.
 export const uniswapV4MintPositionTargetAbi = [
   {
     "type": "constructor",
@@ -2469,7 +2940,7 @@ export const uniswapV4MintPositionTargetAbi = [
   },
   {
     "type": "error",
-    "name": "ReentrantCall",
+    "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
   {
@@ -2484,12 +2955,18 @@ export const uniswapV4MintPositionTargetAbi = [
   },
   {
     "type": "error",
-    "name": "TickSpacingMismatch",
-    "inputs": []
+    "name": "SafeERC20FailedOperation",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
-    "name": "TokenApprovalFailed",
+    "name": "TickSpacingMismatch",
     "inputs": []
   },
   {
@@ -2539,6 +3016,8 @@ export const eulrAbis = {
   EulrHook: eulrHookAbi,
   EulrRouter: eulrRouterAbi,
   EulrToken: eulrTokenAbi,
+  ProxyAdmin: proxyAdminAbi,
+  TransparentUpgradeableProxy: transparentUpgradeableProxyAbi,
   UniswapV4MintPositionTarget: uniswapV4MintPositionTargetAbi,
 } as const;
 

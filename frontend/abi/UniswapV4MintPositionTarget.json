@@ -332,7 +332,7 @@
   },
   {
     "type": "error",
-    "name": "ReentrantCall",
+    "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
   {
@@ -347,12 +347,18 @@
   },
   {
     "type": "error",
-    "name": "TickSpacingMismatch",
-    "inputs": []
+    "name": "SafeERC20FailedOperation",
+    "inputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
   },
   {
     "type": "error",
-    "name": "TokenApprovalFailed",
+    "name": "TickSpacingMismatch",
     "inputs": []
   },
   {

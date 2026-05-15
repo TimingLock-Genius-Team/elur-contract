@@ -37,7 +37,7 @@
     ],
     "outputs": [
       {
-        "name": "allowance",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -54,7 +54,7 @@
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "value",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -80,7 +80,7 @@
     ],
     "outputs": [
       {
-        "name": "balance",
+        "name": "",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -224,7 +224,7 @@
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "value",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -253,7 +253,7 @@
         "internalType": "address"
       },
       {
-        "name": "amount",
+        "name": "value",
         "type": "uint256",
         "internalType": "uint256"
       }
@@ -319,17 +319,93 @@
   },
   {
     "type": "error",
+    "name": "ERC20InsufficientAllowance",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "allowance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InsufficientBalance",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidApprover",
+    "inputs": [
+      {
+        "name": "approver",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidReceiver",
+    "inputs": [
+      {
+        "name": "receiver",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidSender",
+    "inputs": [
+      {
+        "name": "sender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
+    "name": "ERC20InvalidSpender",
+    "inputs": [
+      {
+        "name": "spender",
+        "type": "address",
+        "internalType": "address"
+      }
+    ]
+  },
+  {
+    "type": "error",
     "name": "HookAlreadySet",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InsufficientAllowance",
-    "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "InsufficientBalance",
     "inputs": []
   },
   {

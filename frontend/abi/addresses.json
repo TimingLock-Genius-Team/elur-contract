@@ -1,17 +1,20 @@
 {
-  "generatedAt": "2026-05-13T14:54:18.344Z",
+  "generatedAt": "2026-05-15T01:34:47.055Z",
   "generatedFrom": "deployments/<network>/latest.json + out/<Contract>.sol/<Contract>.json",
   "byNetwork": {
     "anvil": {
       "network": "anvil",
       "chainId": 31337,
-      "commit": "def48fe",
-      "deployedAt": "2026-05-13T14:53:57.999Z",
-      "factory": "0x75b09E468e66d6341968477244E01764A5BAe546",
-      "feeRecipient": "0x2546BcD3c84621e976D8185a91A922aE77ECEc30",
-      "migrationTarget": "0x7129ecFbcb8d61f4F5ADE27b9E73FE82f4E3757B",
-      "uniswapV4PoolManager": "0xc2B6d90F1A7131500869E88d02D553941F2328B9",
-      "uniswapV4PositionManager": "0x206216B943961B23b75333e2CDa10b0036e0Ac2f",
+      "commit": "417595f",
+      "deployedAt": "2026-05-14T16:31:24.763Z",
+      "factory": "0xe1DA8919f262Ee86f9BE05059C9280142CF23f48",
+      "proxyAdmin": "0x36005A8e2295e5186699663a4f4D9CE3Da89Aefa",
+      "factoryImplementation": "0xe1Aa25618fA0c7A1CFDab5d6B456af611873b629",
+      "routerImplementation": "0x8ce361602B935680E8DeC218b820ff5056BeB7af",
+      "feeRecipient": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
+      "migrationTarget": "0xb19b36b1456E65E3A6D514D3F715f204BD59f431",
+      "uniswapV4PoolManager": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+      "uniswapV4PositionManager": "0xA15BB66138824a1c7167f5E85b957d04Dd34E468",
       "curve": {
         "k": "21000000000000000000000000",
         "s": "100000000000000000000",
@@ -37,20 +40,67 @@
         "s": "100000000000000000000",
         "selfDeprecationBps": 9900
       }
+    },
+    "hashkeytest": {
+      "network": "hashkeytest",
+      "chainId": 133,
+      "commit": "417595f",
+      "deployedAt": "2026-05-14T16:33:19.907Z",
+      "factory": "0x726B98099fCA8a1778EAC863Bac1232A9753a55A",
+      "proxyAdmin": "0x40Fb77DEB510584D878b73E676dC62c2EaebBc87",
+      "factoryImplementation": "0xB1F5802db3bD3e66A19eAb72bFd65260F931A59F",
+      "routerImplementation": "0x3035c5428062B6f42cA1248baAF8Fa48338f1D7b",
+      "feeRecipient": "0xd8F391e10223580611A70160d1D42bf55fCc882C",
+      "migrationTarget": "0x3c5969d393197E42B4b5Fcc54055c361f2F6ACef",
+      "uniswapV4PoolManager": "0xeDddAAF26109BF15E4701A61484b396DFf0A9968",
+      "uniswapV4PositionManager": "0x94C6269f1D34AC47594c81c2feb9953E7cE7117E",
+      "curve": {
+        "k": "21000000000000000000000000",
+        "s": "100000000000000000000",
+        "feeBps": 30,
+        "selfDeprecationBps": 9900,
+        "maxBuyOkb": "10000000000000000000"
+      }
     }
   },
   "byChainId": {
+    "133": [
+      {
+        "network": "hashkeytest",
+        "chainId": 133,
+        "commit": "417595f",
+        "deployedAt": "2026-05-14T16:33:19.907Z",
+        "factory": "0x726B98099fCA8a1778EAC863Bac1232A9753a55A",
+        "proxyAdmin": "0x40Fb77DEB510584D878b73E676dC62c2EaebBc87",
+        "factoryImplementation": "0xB1F5802db3bD3e66A19eAb72bFd65260F931A59F",
+        "routerImplementation": "0x3035c5428062B6f42cA1248baAF8Fa48338f1D7b",
+        "feeRecipient": "0xd8F391e10223580611A70160d1D42bf55fCc882C",
+        "migrationTarget": "0x3c5969d393197E42B4b5Fcc54055c361f2F6ACef",
+        "uniswapV4PoolManager": "0xeDddAAF26109BF15E4701A61484b396DFf0A9968",
+        "uniswapV4PositionManager": "0x94C6269f1D34AC47594c81c2feb9953E7cE7117E",
+        "curve": {
+          "k": "21000000000000000000000000",
+          "s": "100000000000000000000",
+          "feeBps": 30,
+          "selfDeprecationBps": 9900,
+          "maxBuyOkb": "10000000000000000000"
+        }
+      }
+    ],
     "31337": [
       {
         "network": "anvil",
         "chainId": 31337,
-        "commit": "def48fe",
-        "deployedAt": "2026-05-13T14:53:57.999Z",
-        "factory": "0x75b09E468e66d6341968477244E01764A5BAe546",
-        "feeRecipient": "0x2546BcD3c84621e976D8185a91A922aE77ECEc30",
-        "migrationTarget": "0x7129ecFbcb8d61f4F5ADE27b9E73FE82f4E3757B",
-        "uniswapV4PoolManager": "0xc2B6d90F1A7131500869E88d02D553941F2328B9",
-        "uniswapV4PositionManager": "0x206216B943961B23b75333e2CDa10b0036e0Ac2f",
+        "commit": "417595f",
+        "deployedAt": "2026-05-14T16:31:24.763Z",
+        "factory": "0xe1DA8919f262Ee86f9BE05059C9280142CF23f48",
+        "proxyAdmin": "0x36005A8e2295e5186699663a4f4D9CE3Da89Aefa",
+        "factoryImplementation": "0xe1Aa25618fA0c7A1CFDab5d6B456af611873b629",
+        "routerImplementation": "0x8ce361602B935680E8DeC218b820ff5056BeB7af",
+        "feeRecipient": "0xa0Ee7A142d267C1f36714E4a8F75612F20a79720",
+        "migrationTarget": "0xb19b36b1456E65E3A6D514D3F715f204BD59f431",
+        "uniswapV4PoolManager": "0x700b6A60ce7EaaEA56F065753d8dcB9653dbAD35",
+        "uniswapV4PositionManager": "0xA15BB66138824a1c7167f5E85b957d04Dd34E468",
         "curve": {
           "k": "21000000000000000000000000",
           "s": "100000000000000000000",

@@ -800,6 +800,11 @@
   },
   {
     "type": "error",
+    "name": "FailedCall",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "GrossOkbInTooLarge",
     "inputs": []
   },
@@ -807,6 +812,22 @@
     "type": "error",
     "name": "GrossOkbInZero",
     "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InsufficientBalance",
+    "inputs": [
+      {
+        "name": "balance",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "needed",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ]
   },
   {
     "type": "error",
@@ -837,22 +858,6 @@
     "type": "error",
     "name": "MintedOutOfRange",
     "inputs": []
-  },
-  {
-    "type": "error",
-    "name": "NativeOkbTransferFailed",
-    "inputs": [
-      {
-        "name": "recipient",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "amount",
-        "type": "uint256",
-        "internalType": "uint256"
-      }
-    ]
   },
   {
     "type": "error",
@@ -951,7 +956,7 @@
   },
   {
     "type": "error",
-    "name": "ReentrantCall",
+    "name": "ReentrancyGuardReentrantCall",
     "inputs": []
   },
   {
