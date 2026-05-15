@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {EulrTestBase} from "../helpers/EulrTestBase.sol";
 import {EulrToken} from "../../src/token/EulrToken.sol";
+import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.sol";
 
 contract EulrTokenTest is EulrTestBase {
     function test_RevertWhen_ConstructorFactoryIsZero() public {
@@ -65,20 +66,20 @@ contract EulrTokenTest is EulrTestBase {
         token.setHook(address(this));
 
         vm.prank(trader);
-        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidSpender.selector, address(0)));
         token.approve(address(0), 1e18);
 
-        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         token.mint(address(0), 1e18);
 
         token.mint(trader, 1e18);
 
         vm.prank(trader);
-        vm.expectRevert(EulrToken.ZeroAddress.selector);
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InvalidReceiver.selector, address(0)));
         // forge-lint: disable-next-line(erc20-unchecked-transfer)
         token.transfer(address(0), 1);
 
-        vm.expectRevert(EulrToken.InsufficientBalance.selector);
+        vm.expectRevert(abi.encodeWithSelector(IERC20Errors.ERC20InsufficientBalance.selector, trader, 1e18, 2e18));
         token.burn(trader, 2e18);
     }
 }
