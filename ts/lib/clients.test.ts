@@ -1,7 +1,8 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import { ANVIL_CHAIN_ID, DEFAULT_ANVIL_RPC_URL, XLAYER_CHAIN_ID } from "../config/chains.js";
-import { chainConfig, rpcUrl } from "./clients.js";
+import { privateKeyToAccount } from "viem/accounts";
+import { ANVIL_CHAIN_ID, DEFAULT_ANVIL_RPC_URL, HASHKEYTEST_CHAIN_ID, XLAYER_CHAIN_ID } from "../config/chains.js";
+import { chainConfig, rpcUrl, walletClient } from "./clients.js";
 
 function restoreEnv(name: string, value: string | undefined): void {
   if (value === undefined) {
@@ -12,11 +13,11 @@ function restoreEnv(name: string, value: string | undefined): void {
   process.env[name] = value;
 }
 
-function withArgv(argv: string[], fn: () => void): void {
+function withArgv<T>(argv: string[], fn: () => T): T {
   const originalArgv = process.argv;
   process.argv = argv;
   try {
-    fn();
+    return fn();
   } finally {
     process.argv = originalArgv;
   }
@@ -56,6 +57,70 @@ test("rpcUrl uses xlayer RPC and chain id for xlayer network", () => {
     restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
     restoreEnv("XLAYER_RPC_URL", originalXLayerRpc);
     restoreEnv("XLAYER_CHAIN_ID", originalXLayerChainId);
+  }
+});
+
+test("rpcUrl uses temporary hashkeytest RPC and chain id", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalHashKeyTestRpc = process.env.HASHKEYTEST_RPC_URL;
+  process.env.DEPLOYMENT_NETWORK = "hashkeytest";
+  process.env.HASHKEYTEST_RPC_URL = "https://hashkeytest.example";
+
+  try {
+    withArgv(["node", "script"], () => {
+      assert.equal(rpcUrl(), "https://hashkeytest.example");
+      assert.equal(chainConfig().id, HASHKEYTEST_CHAIN_ID);
+    });
+  } finally {
+    restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
+    restoreEnv("HASHKEYTEST_RPC_URL", originalHashKeyTestRpc);
+  }
+});
+
+test("walletClient uses hashkeytest owner private key fallback", async () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalHashKeyTestRpc = process.env.HASHKEYTEST_RPC_URL;
+  const originalPrivateKey = process.env.PRIVATE_KEY;
+  const originalHashKeyTestOwnerPrivateKey = process.env.HASHKEYTEST_OWNER_PRIVATE_KEY;
+  const ownerPrivateKey = `0x${"1".repeat(64)}` as `0x${string}`;
+  process.env.DEPLOYMENT_NETWORK = "hashkeytest";
+  process.env.HASHKEYTEST_RPC_URL = "https://hashkeytest.example";
+  process.env.HASHKEYTEST_OWNER_PRIVATE_KEY = ownerPrivateKey;
+  process.env.PRIVATE_KEY = "";
+
+  try {
+    await withArgv(["node", "script"], async () => {
+      assert.deepEqual(await walletClient().getAddresses(), [privateKeyToAccount(ownerPrivateKey).address]);
+    });
+  } finally {
+    restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
+    restoreEnv("HASHKEYTEST_RPC_URL", originalHashKeyTestRpc);
+    restoreEnv("PRIVATE_KEY", originalPrivateKey);
+    restoreEnv("HASHKEYTEST_OWNER_PRIVATE_KEY", originalHashKeyTestOwnerPrivateKey);
+  }
+});
+
+test("walletClient prefers hashkeytest owner private key over generic private key", async () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalHashKeyTestRpc = process.env.HASHKEYTEST_RPC_URL;
+  const originalPrivateKey = process.env.PRIVATE_KEY;
+  const originalHashKeyTestOwnerPrivateKey = process.env.HASHKEYTEST_OWNER_PRIVATE_KEY;
+  const genericPrivateKey = `0x${"1".repeat(64)}` as `0x${string}`;
+  const ownerPrivateKey = `0x${"2".repeat(64)}` as `0x${string}`;
+  process.env.DEPLOYMENT_NETWORK = "hashkeytest";
+  process.env.HASHKEYTEST_RPC_URL = "https://hashkeytest.example";
+  process.env.PRIVATE_KEY = genericPrivateKey;
+  process.env.HASHKEYTEST_OWNER_PRIVATE_KEY = ownerPrivateKey;
+
+  try {
+    await withArgv(["node", "script"], async () => {
+      assert.deepEqual(await walletClient().getAddresses(), [privateKeyToAccount(ownerPrivateKey).address]);
+    });
+  } finally {
+    restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
+    restoreEnv("HASHKEYTEST_RPC_URL", originalHashKeyTestRpc);
+    restoreEnv("PRIVATE_KEY", originalPrivateKey);
+    restoreEnv("HASHKEYTEST_OWNER_PRIVATE_KEY", originalHashKeyTestOwnerPrivateKey);
   }
 });
 

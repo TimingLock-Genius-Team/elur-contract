@@ -13,6 +13,10 @@ export type DeploymentCodeReader = {
   getFactoryConfig?: (args: { address: `0x${string}` }) => Promise<{
     feeRecipient: `0x${string}`;
     migrationTarget: `0x${string}`;
+    routerImplementation?: `0x${string}`;
+    proxyAdmin?: `0x${string}`;
+    routerProxyOwner?: `0x${string}`;
+    upgradeAdmin?: `0x${string}`;
   }>;
 };
 
@@ -38,6 +42,8 @@ const contractAddressFields = [
 ] as const;
 
 const createdTokenAddressFields = ["token", "hook", "router"] as const;
+const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "routerImplementation"] as const;
+const optionalCreatedTokenAddressFields = ["routerImplementation"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -84,6 +90,12 @@ function requireAddress(record: Record<string, unknown>, field: string, errors: 
   requireAddressValue(record[field], field, errors);
 }
 
+function requireOptionalAddress(record: Record<string, unknown>, field: string, errors: string[]): void {
+  if (record[field] !== undefined) {
+    requireAddressValue(record[field], field, errors);
+  }
+}
+
 async function checkCode(
   label: string,
   address: `0x${string}`,
@@ -124,6 +136,31 @@ async function checkFactoryConfig(
         `Factory migrationTarget ${config.migrationTarget} does not match deployment migrationTarget ${deployment.migrationTarget}`,
       );
     }
+    if (
+      validAddress(deployment.routerImplementation) &&
+      validAddress(config.routerImplementation) &&
+      !sameAddress(config.routerImplementation, deployment.routerImplementation)
+    ) {
+      errors.push(
+        `Factory routerImplementation ${config.routerImplementation} does not match deployment routerImplementation ${deployment.routerImplementation}`,
+      );
+    }
+    if (
+      validAddress(deployment.proxyAdmin) &&
+      validAddress(config.proxyAdmin) &&
+      !sameAddress(config.proxyAdmin, deployment.proxyAdmin)
+    ) {
+      errors.push(`Factory proxy admin ${config.proxyAdmin} does not match deployment proxyAdmin ${deployment.proxyAdmin}`);
+    }
+    if (
+      validAddress(deployment.deployer) &&
+      validAddress(config.routerProxyOwner) &&
+      !sameAddress(config.routerProxyOwner, deployment.deployer)
+    ) {
+      errors.push(
+        `Factory routerProxyOwner ${config.routerProxyOwner} does not match deployment deployer ${deployment.deployer}`,
+      );
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     errors.push(`Could not check Factory config at ${deployment.factory}: ${message}`);
@@ -152,6 +189,9 @@ export async function doctorDeployment(
   for (const field of deploymentAddressFields) {
     requireAddress(deployment, field, errors);
   }
+  for (const field of optionalDeploymentAddressFields) {
+    requireOptionalAddress(deployment, field, errors);
+  }
 
   const curve = deployment.curve;
   if (!isRecord(curve)) {
@@ -175,6 +215,11 @@ export async function doctorDeployment(
 
       for (const field of createdTokenAddressFields) {
         requireAddressValue(entry[field], `createdTokens[${index}].${field}`, errors);
+      }
+      for (const field of optionalCreatedTokenAddressFields) {
+        if (entry[field] !== undefined) {
+          requireAddressValue(entry[field], `createdTokens[${index}].${field}`, errors);
+        }
       }
     });
   }
@@ -212,6 +257,12 @@ export async function doctorDeployment(
         codeChecks.push(() => checkCode(field, address, codeReader, errors, warnings));
       }
     }
+    for (const field of optionalDeploymentAddressFields) {
+      const address = deploymentWithType[field];
+      if (validAddress(address)) {
+        codeChecks.push(() => checkCode(field, address, codeReader, errors, warnings));
+      }
+    }
 
     if (Array.isArray(deployment.createdTokens)) {
       deployment.createdTokens.forEach((entry, index) => {
@@ -220,6 +271,12 @@ export async function doctorDeployment(
         }
 
         for (const field of createdTokenAddressFields) {
+          const address = entry[field];
+          if (validAddress(address)) {
+            codeChecks.push(() => checkCode(`createdTokens[${index}].${field}`, address, codeReader, errors, warnings));
+          }
+        }
+        for (const field of optionalCreatedTokenAddressFields) {
           const address = entry[field];
           if (validAddress(address)) {
             codeChecks.push(() => checkCode(`createdTokens[${index}].${field}`, address, codeReader, errors, warnings));

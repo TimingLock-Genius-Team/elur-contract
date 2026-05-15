@@ -1,11 +1,12 @@
 import { execSync } from "node:child_process";
-import { getAddress } from "viem";
+import { encodeFunctionData, getAddress } from "viem";
 import { artifacts } from "../config/artifacts.js";
 import { defaultCurveParams } from "../config/params.js";
 import { writeDeployment } from "../config/deployments.js";
 import { publicClient, walletClient } from "../lib/clients.js";
 import { bytecodeOf, abiOf } from "../lib/artifacts.js";
 import { printJson } from "../lib/json.js";
+import { readProxyAdmin } from "../lib/proxy.js";
 import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 
 const wallet = walletClient();
@@ -78,10 +79,25 @@ const migrationTarget = await envOrDeploy(
   artifacts.localMigrationTarget,
 );
 
-const factory = await deploy(artifacts.factory, [
-  feeRecipient,
-  migrationTarget,
+const routerImplementation = await deploy(artifacts.router);
+const factoryImplementation = await deploy(artifacts.factory);
+const factoryInitializer = encodeFunctionData({
+  abi: abiOf(artifacts.factory),
+  functionName: "initialize",
+  args: [
+    feeRecipient,
+    migrationTarget,
+    routerImplementation,
+    deployer,
+    deployer,
+  ],
+});
+const factory = await deploy(artifacts.transparentUpgradeableProxy, [
+  factoryImplementation,
+  deployer,
+  factoryInitializer,
 ]);
+const proxyAdmin = await readProxyAdmin(publicRpc, factory);
 
 writeDeployment({
   chainId,
@@ -89,6 +105,9 @@ writeDeployment({
   deployedAt,
   deployer,
   factory,
+  proxyAdmin,
+  factoryImplementation,
+  routerImplementation,
   feeRecipient,
   uniswapV4PoolManager: poolManager,
   uniswapV4PositionManager: positionManager,
@@ -103,6 +122,9 @@ printJson({
   deployedAt,
   deployer,
   factory,
+  proxyAdmin,
+  factoryImplementation,
+  routerImplementation,
   feeRecipient,
   poolManager,
   positionManager,

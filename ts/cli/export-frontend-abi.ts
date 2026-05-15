@@ -1,10 +1,11 @@
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Abi } from "viem";
+import ts from "typescript";
 import { readArtifact } from "../lib/artifacts.js";
 import { artifacts } from "../config/artifacts.js";
 import { readDeployment, type Deployment } from "../config/deployments.js";
-import { getArg } from "../lib/args.js";
+import { getArg, hasArg } from "../lib/args.js";
 
 type ExportContract = {
   name: string;
@@ -34,9 +35,19 @@ const CONTRACT_EXPORTS: ExportContract[] = [
     description: "Per-token ERC-20. Mint and burn are gated to the bound hook; transfer/approve match the standard ABI.",
   },
   {
+    name: "ProxyAdmin",
+    artifact: artifacts.proxyAdmin,
+    description: "OZ v5 transparent proxy admin ABI. Each proxy owns a distinct ProxyAdmin; deployment metadata records the Factory proxy admin.",
+  },
+  {
+    name: "TransparentUpgradeableProxy",
+    artifact: artifacts.transparentUpgradeableProxy,
+    description: "Transparent proxy shell used for the singleton Factory and each per-token Router.",
+  },
+  {
     name: "UniswapV4MintPositionTarget",
     artifact: artifacts.uniswapV4MintPositionTarget,
-    description: "Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and burns the LP to address(0x..dEaD).",
+    description: "Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and sends the LP position to the configured recipient.",
   },
 ];
 
@@ -62,6 +73,9 @@ type NetworkDeployment = {
   commit: string;
   deployedAt: string;
   factory: `0x${string}`;
+  proxyAdmin?: `0x${string}`;
+  factoryImplementation?: `0x${string}`;
+  routerImplementation?: `0x${string}`;
   feeRecipient: `0x${string}`;
   migrationTarget: `0x${string}`;
   uniswapV4PoolManager: `0x${string}`;
@@ -69,33 +83,40 @@ type NetworkDeployment = {
   curve: Deployment["curve"];
 };
 
-const outputDir = join(process.cwd(), getArg("out", "frontend/abi"));
-mkdirSync(outputDir, { recursive: true });
+const outputDirs = [join(process.cwd(), getArg("out", "frontend/abi"))];
+if (!hasArg("out") || hasArg("backend-out")) {
+  outputDirs.push(join(process.cwd(), getArg("backend-out", "backend/abi")));
+}
+if (!hasArg("out") || hasArg("backend-package-out")) {
+  outputDirs.push(join(process.cwd(), getArg("backend-package-out", "backend/frontend/abi")));
+}
 
 const abiOutputs: AbiOutput[] = CONTRACT_EXPORTS.map((entry) => {
   const artifact = readArtifact(entry.artifact);
   return { name: entry.name, description: entry.description, abi: artifact.abi };
 });
 
-for (const entry of abiOutputs) {
-  const path = join(outputDir, `${entry.name}.json`);
-  writeFileSync(path, `${JSON.stringify(entry.abi, null, 2)}\n`);
-}
-
 const indexTs = renderIndexTs(abiOutputs);
-writeFileSync(join(outputDir, "index.ts"), indexTs);
-
 const addresses = collectAddresses();
-writeFileSync(join(outputDir, "addresses.json"), `${JSON.stringify(addresses, null, 2)}\n`);
-writeFileSync(join(outputDir, "addresses.ts"), renderAddressesTs(addresses));
-
 const readme = renderReadme(abiOutputs, addresses);
-writeFileSync(join(outputDir, "README.md"), readme);
+
+for (const outputDir of [...new Set(outputDirs)]) {
+  mkdirSync(outputDir, { recursive: true });
+  for (const entry of abiOutputs) {
+    const path = join(outputDir, `${entry.name}.json`);
+    writeFileSync(path, `${JSON.stringify(entry.abi, null, 2)}\n`);
+  }
+  writeFileSync(join(outputDir, "index.ts"), indexTs);
+  writeFileSync(join(outputDir, "index.js"), renderIndexJs(indexTs));
+  writeFileSync(join(outputDir, "addresses.json"), `${JSON.stringify(addresses, null, 2)}\n`);
+  writeFileSync(join(outputDir, "addresses.ts"), renderAddressesTs(addresses));
+  writeFileSync(join(outputDir, "README.md"), readme);
+}
 
 console.log(
   JSON.stringify(
     {
-      outputDir,
+      outputDirs: [...new Set(outputDirs)],
       contracts: abiOutputs.map((entry) => ({
         name: entry.name,
         functions: entry.abi.filter((item) => item.type === "function").length,
@@ -156,10 +177,20 @@ function renderAddressesTs(addresses: AddressesShape): string {
   ].join("\n");
 }
 
+function renderIndexJs(indexTs: string): string {
+  return ts.transpileModule(indexTs, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ES2022,
+      removeComments: false,
+    },
+  }).outputText;
+}
+
 function renderReadme(entries: AbiOutput[], addresses: AddressesShape): string {
   const networkLines = Object.values(addresses.byNetwork)
     .map((deployment) =>
-      `| ${deployment.network} | ${deployment.chainId} | ${deployment.factory} | ${deployment.migrationTarget} |`,
+      `| ${deployment.network} | ${deployment.chainId} | ${deployment.factory} | ${deployment.proxyAdmin ?? ""} | ${deployment.migrationTarget} |`,
     )
     .join("\n");
 
@@ -168,7 +199,7 @@ function renderReadme(entries: AbiOutput[], addresses: AddressesShape): string {
     .join("\n");
 
   return [
-    "# Eulr Frontend ABI Bundle",
+    "# Eulr ABI Bundle",
     "",
     "Generated from `out/` Foundry artifacts and `deployments/<network>/latest.json` via",
     "`npm run export:abis`. Re-run after every contract or deployment change.",
@@ -177,13 +208,15 @@ function renderReadme(entries: AbiOutput[], addresses: AddressesShape): string {
     "",
     contractLines,
     "- `index.ts` — typed `as const` ABIs for viem / wagmi.",
-    "- `addresses.json` / `addresses.ts` — deployment addresses, chain ids, curve params.",
+    "- `addresses.json` / `addresses.ts` — deployment addresses, chain ids, proxy metadata, curve params.",
+    "",
+    "OZ v5 transparent proxies create a distinct `ProxyAdmin` per proxy. The `proxyAdmin` column below is the recorded Factory proxy admin when available; Router proxy admins are read from each Router proxy's ERC-1967 admin slot by upgrade tooling.",
     "",
     "## Networks",
     "",
-    "| Network | Chain ID | Factory | Migration Target |",
-    "| --- | --- | --- | --- |",
-    networkLines || "| _(no deployments recorded yet)_ | | | |",
+    "| Network | Chain ID | Factory Proxy | Proxy Admin | Migration Target |",
+    "| --- | --- | --- | --- | --- |",
+    networkLines || "| _(no deployments recorded yet)_ | | | | |",
     "",
     "See `FRONTEND_INTEGRATION.md` at the repository root for the full integration guide.",
     "",
@@ -218,6 +251,9 @@ function collectAddresses(): AddressesShape {
       commit: deployment.commit,
       deployedAt: deployment.deployedAt,
       factory: deployment.factory,
+      proxyAdmin: deployment.proxyAdmin,
+      factoryImplementation: deployment.factoryImplementation,
+      routerImplementation: deployment.routerImplementation,
       feeRecipient: deployment.feeRecipient,
       migrationTarget: deployment.migrationTarget,
       uniswapV4PoolManager: deployment.uniswapV4PoolManager,

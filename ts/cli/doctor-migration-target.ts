@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { createPublicClient, http } from "viem";
-import { ANVIL_CHAIN_ID, XLAYER_CHAIN_ID, rpcUrlFromEnv } from "../config/chains.js";
+import { knownChainIdForNetwork, rpcUrlFromEnv } from "../config/chains.js";
 import { deploymentNetwork } from "../config/deployments.js";
 import {
   migrationTargetDeploymentPath,
@@ -14,12 +14,6 @@ import {
   doctorMigrationTargetDeployment,
 } from "../lib/migration-target-deployment.js";
 
-const knownNetworkChainIds: Record<string, number> = {
-  anvil: ANVIL_CHAIN_ID,
-  "forge-local": ANVIL_CHAIN_ID,
-  xlayer: XLAYER_CHAIN_ID,
-};
-
 function rpcUrlForNetwork(network: string): string | undefined {
   return optionalArg("rpc-url") ?? rpcUrlFromEnv(network);
 }
@@ -27,7 +21,7 @@ function rpcUrlForNetwork(network: string): string | undefined {
 function expectedChainIdForNetwork(network: string): number | undefined {
   const configured = optionalArg("chain-id");
   if (!configured) {
-    return knownNetworkChainIds[network];
+    return knownChainIdForNetwork(network);
   }
 
   const chainId = Number(configured);
@@ -47,7 +41,7 @@ function codeReaderForRpc(rpcUrl: string): DeploymentCodeReader {
 }
 
 function redactionSecrets(rpcUrl: string | undefined): Array<string | undefined> {
-  return [rpcUrl, process.env.RPC_URL, process.env.XLAYER_RPC_URL, process.env.ANVIL_RPC_URL];
+  return [rpcUrl, process.env.RPC_URL, process.env.XLAYER_RPC_URL, process.env.HASHKEYTEST_RPC_URL, process.env.ANVIL_RPC_URL];
 }
 
 async function main(): Promise<void> {

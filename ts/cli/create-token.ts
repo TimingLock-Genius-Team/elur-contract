@@ -4,7 +4,7 @@ import { abiOf } from "../lib/artifacts.js";
 import { walletClient, publicClient } from "../lib/clients.js";
 import { getArg, optionalUint16Arg } from "../lib/args.js";
 import { printJson } from "../lib/json.js";
-import { extractCreatedTokenFromLogs } from "../lib/contracts.js";
+import { extractCreatedTokenFromLogs, readOptionalFactoryRouterImplementation } from "../lib/contracts.js";
 import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
 
 const deployment = readDeployment();
@@ -30,7 +30,18 @@ const hash = await wallet.writeContract({
 const receipt = await waitForSuccessfulTransactionReceipt({ client: publicRpc, hash, label: "createToken" });
 const tokenInfo = extractCreatedTokenFromLogs(receipt.logs, deployment.factory);
 const createdCurveS = tokenInfo.curveS ?? curveS ?? 100;
-deployment.createdTokens.push({ token: tokenInfo.token, hook: tokenInfo.hook, router: tokenInfo.router, curveS: createdCurveS });
+const routerImplementation = await readOptionalFactoryRouterImplementation({
+  client: publicRpc,
+  factory: deployment.factory,
+  abi: factoryAbi,
+});
+deployment.createdTokens.push({
+  token: tokenInfo.token,
+  hook: tokenInfo.hook,
+  router: tokenInfo.router,
+  curveS: createdCurveS,
+  ...(routerImplementation ? { routerImplementation } : {}),
+});
 writeDeployment(deployment);
 
 printJson({
@@ -38,6 +49,7 @@ printJson({
   token: tokenInfo.token,
   hook: tokenInfo.hook,
   router: tokenInfo.router,
+  routerImplementation,
   curveS: createdCurveS,
   txHash: hash,
   blockNumber: receipt.blockNumber,

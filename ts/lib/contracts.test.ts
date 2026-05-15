@@ -1,7 +1,12 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { encodeAbiParameters, encodeEventTopics } from "viem";
-import { extractCreatedTokenFromLogs, normalizeTokenInfo, tokenCreatedEventAbi } from "./contracts.js";
+import {
+  extractCreatedTokenFromLogs,
+  normalizeTokenInfo,
+  readOptionalFactoryRouterImplementation,
+  tokenCreatedEventAbi,
+} from "./contracts.js";
 
 const tokenInfo = {
   token: "0x0000000000000000000000000000000000000001",
@@ -58,4 +63,50 @@ test("extractCreatedTokenFromLogs returns token addresses from TokenCreated logs
 
 test("extractCreatedTokenFromLogs rejects receipts without TokenCreated logs", () => {
   assert.throws(() => extractCreatedTokenFromLogs([]), /TokenCreated event not found/);
+});
+
+test("readOptionalFactoryRouterImplementation returns undefined for legacy factories", async () => {
+  const client = {
+    readContract: async () => {
+      throw new Error("function selector was not recognized");
+    },
+  };
+
+  const routerImplementation = await readOptionalFactoryRouterImplementation({
+    client,
+    factory: "0x00000000000000000000000000000000000000f0",
+    abi: [],
+  });
+
+  assert.equal(routerImplementation, undefined);
+});
+
+test("readOptionalFactoryRouterImplementation validates new factory return values", async () => {
+  const client = {
+    readContract: async () => "0x0000000000000000000000000000000000000010",
+  };
+
+  const routerImplementation = await readOptionalFactoryRouterImplementation({
+    client,
+    factory: "0x00000000000000000000000000000000000000f0",
+    abi: [],
+  });
+
+  assert.equal(routerImplementation, "0x0000000000000000000000000000000000000010");
+});
+
+test("readOptionalFactoryRouterImplementation rejects malformed new factory return values", async () => {
+  const client = {
+    readContract: async () => "not-an-address",
+  };
+
+  await assert.rejects(
+    () =>
+      readOptionalFactoryRouterImplementation({
+        client,
+        factory: "0x00000000000000000000000000000000000000f0",
+        abi: [],
+      }),
+    /Factory routerImplementation must be a valid address/,
+  );
 });

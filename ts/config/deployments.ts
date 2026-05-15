@@ -9,6 +9,9 @@ export type Deployment = {
   deployedAt: string;
   deployer: `0x${string}`;
   factory: `0x${string}`;
+  proxyAdmin?: `0x${string}`;
+  factoryImplementation?: `0x${string}`;
+  routerImplementation?: `0x${string}`;
   feeRecipient: `0x${string}`;
   uniswapV4PoolManager: `0x${string}`;
   uniswapV4PositionManager: `0x${string}`;
@@ -20,7 +23,13 @@ export type Deployment = {
     selfDeprecationBps: number;
     maxBuyOkb: string;
   };
-  createdTokens: Array<{ token: `0x${string}`; hook: `0x${string}`; router: `0x${string}`; curveS?: number }>;
+  createdTokens: Array<{
+    token: `0x${string}`;
+    hook: `0x${string}`;
+    router: `0x${string}`;
+    curveS?: number;
+    routerImplementation?: `0x${string}`;
+  }>;
 };
 
 const deploymentAddressFields = [
@@ -33,6 +42,8 @@ const deploymentAddressFields = [
 ] as const;
 
 const createdTokenAddressFields = ["token", "hook", "router"] as const;
+const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "routerImplementation"] as const;
+const optionalCreatedTokenAddressFields = ["routerImplementation"] as const;
 
 function assertDeploymentNetwork(network: string): string {
   if (!/^[a-z0-9][a-z0-9-]*$/i.test(network)) {
@@ -48,6 +59,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function requireAddress(record: Record<string, unknown>, field: string): void {
   if (typeof record[field] !== "string" || !isAddress(record[field])) {
+    throw new Error(`${field} must be a valid address`);
+  }
+}
+
+function requireOptionalAddress(record: Record<string, unknown>, field: string): void {
+  if (record[field] !== undefined && (typeof record[field] !== "string" || !isAddress(record[field]))) {
     throw new Error(`${field} must be a valid address`);
   }
 }
@@ -80,6 +97,9 @@ function parseDeployment(value: unknown): Deployment {
   for (const field of deploymentAddressFields) {
     requireAddress(value, field);
   }
+  for (const field of optionalDeploymentAddressFields) {
+    requireOptionalAddress(value, field);
+  }
   if (!isRecord(value.curve)) {
     throw new Error("curve must be an object");
   }
@@ -97,6 +117,11 @@ function parseDeployment(value: unknown): Deployment {
     }
     for (const field of createdTokenAddressFields) {
       if (typeof entry[field] !== "string" || !isAddress(entry[field])) {
+        throw new Error(`createdTokens[${index}].${field} must be a valid address`);
+      }
+    }
+    for (const field of optionalCreatedTokenAddressFields) {
+      if (entry[field] !== undefined && (typeof entry[field] !== "string" || !isAddress(entry[field]))) {
         throw new Error(`createdTokens[${index}].${field} must be a valid address`);
       }
     }

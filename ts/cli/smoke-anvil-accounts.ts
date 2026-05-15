@@ -52,6 +52,7 @@ async function main(): Promise<number> {
         ANVIL_RPC_URL: rpcUrl,
         DEPLOYMENT_NETWORK: "anvil",
         PRIVATE_KEY: account.privateKey,
+        TEAM_MULTISIG: account.address,
       },
     });
 

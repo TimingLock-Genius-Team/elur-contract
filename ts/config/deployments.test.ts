@@ -119,6 +119,75 @@ test("readDeployment accepts created token curveS in the contract range", () => 
   }
 });
 
+test("readDeployment accepts proxy metadata for factory and created router proxies", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-proxy-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const proxiedDeployment: Deployment = {
+      ...deployment,
+      proxyAdmin: "0x0000000000000000000000000000000000000010",
+      factoryImplementation: "0x0000000000000000000000000000000000000011",
+      routerImplementation: "0x0000000000000000000000000000000000000012",
+      createdTokens: [
+        {
+          token: "0x0000000000000000000000000000000000000007",
+          hook: "0x0000000000000000000000000000000000000008",
+          router: "0x0000000000000000000000000000000000000009",
+          curveS: 25,
+          routerImplementation: "0x0000000000000000000000000000000000000012",
+        },
+      ],
+    };
+    writeDeployment(proxiedDeployment);
+
+    assert.deepEqual(readDeployment(), proxiedDeployment);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("readDeployment rejects invalid proxy metadata addresses", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-invalid-proxy-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const path = deploymentPath();
+    mkdirSync(join(tempDir, "deployments", "xlayer"), { recursive: true });
+    writeFileSync(path, `${JSON.stringify({ ...deployment, proxyAdmin: "not-an-address" })}\n`);
+
+    assert.throws(() => readDeployment(), /proxyAdmin must be a valid address/);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test("readDeployment rejects created token curveS outside the contract range", () => {
   const originalNetwork = process.env.DEPLOYMENT_NETWORK;
   const originalArgv = process.argv;

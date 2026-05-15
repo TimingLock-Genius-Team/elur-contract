@@ -1,4 +1,4 @@
-import { decodeEventLog, isAddress } from "viem";
+import { decodeEventLog, isAddress, type Abi } from "viem";
 import { abiOf } from "./artifacts.js";
 import { artifacts } from "../config/artifacts.js";
 import { latestToken, readDeployment } from "../config/deployments.js";
@@ -9,6 +9,10 @@ export const factoryAbi = abiOf(artifacts.factory);
 export const hookAbi = abiOf("EulrHook.sol/EulrHook.json");
 export const routerAbi = abiOf("EulrRouter.sol/EulrRouter.json");
 export const tokenAbi = abiOf("EulrToken.sol/EulrToken.json");
+
+type FactoryRouterImplementationReader = {
+  readContract: (args: { address: `0x${string}`; abi: Abi; functionName: "routerImplementation" }) => Promise<unknown>;
+};
 
 export type TokenInfoTuple = readonly [
   `0x${string}`,
@@ -148,6 +152,29 @@ export function extractCreatedTokenFromLogs(logs: readonly EventLog[], factoryAd
   }
 
   throw new Error("TokenCreated event not found in transaction receipt");
+}
+
+export async function readOptionalFactoryRouterImplementation(args: {
+  client: FactoryRouterImplementationReader;
+  factory: `0x${string}`;
+  abi: Abi;
+}): Promise<`0x${string}` | undefined> {
+  let value: unknown;
+  try {
+    value = await args.client.readContract({
+      address: args.factory,
+      abi: args.abi,
+      functionName: "routerImplementation",
+    });
+  } catch {
+    return undefined;
+  }
+
+  if (!validAddress(value)) {
+    throw new Error("Factory routerImplementation must be a valid address");
+  }
+
+  return value;
 }
 
 export async function resolveTokenInfo() {

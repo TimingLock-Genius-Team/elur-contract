@@ -110,6 +110,66 @@ test("doctorDeployment checks Factory immutable config when a reader is availabl
   ]);
 });
 
+test("doctorDeployment validates proxy metadata code and Factory proxy config", async () => {
+  const proxiedDeployment: Deployment = {
+    ...validDeployment,
+    proxyAdmin: "0x0000000000000000000000000000000000000010",
+    factoryImplementation: "0x0000000000000000000000000000000000000011",
+    routerImplementation: "0x0000000000000000000000000000000000000012",
+    createdTokens: [
+      {
+        ...validDeployment.createdTokens[0],
+        routerImplementation: "0x0000000000000000000000000000000000000012",
+      },
+    ],
+  };
+  const checked: string[] = [];
+  const codeReader: DeploymentCodeReader = {
+    getCode: async ({ address }) => {
+      checked.push(address);
+      return "0x6000";
+    },
+    getFactoryConfig: async () => ({
+      feeRecipient: proxiedDeployment.feeRecipient,
+      migrationTarget: proxiedDeployment.migrationTarget,
+      routerImplementation: proxiedDeployment.routerImplementation,
+      proxyAdmin: proxiedDeployment.proxyAdmin,
+    }),
+  };
+
+  const result = await doctorDeployment(proxiedDeployment, { codeReader });
+
+  assert.deepEqual(result, { ok: true, errors: [], warnings: [] });
+  assert.ok(checked.includes(proxiedDeployment.proxyAdmin!));
+  assert.ok(checked.includes(proxiedDeployment.factoryImplementation!));
+  assert.ok(checked.includes(proxiedDeployment.routerImplementation!));
+});
+
+test("doctorDeployment reports Factory proxy metadata mismatches", async () => {
+  const proxiedDeployment: Deployment = {
+    ...validDeployment,
+    proxyAdmin: "0x0000000000000000000000000000000000000010",
+    routerImplementation: "0x0000000000000000000000000000000000000012",
+  };
+  const codeReader: DeploymentCodeReader = {
+    getCode: async () => "0x6000",
+    getFactoryConfig: async () => ({
+      feeRecipient: proxiedDeployment.feeRecipient,
+      migrationTarget: proxiedDeployment.migrationTarget,
+      routerImplementation: "0x0000000000000000000000000000000000000013",
+      proxyAdmin: "0x0000000000000000000000000000000000000014",
+    }),
+  };
+
+  const result = await doctorDeployment(proxiedDeployment, { codeReader });
+
+  assert.equal(result.ok, false);
+  assert.deepEqual(result.errors, [
+    "Factory routerImplementation 0x0000000000000000000000000000000000000013 does not match deployment routerImplementation 0x0000000000000000000000000000000000000012",
+    "Factory proxy admin 0x0000000000000000000000000000000000000014 does not match deployment proxyAdmin 0x0000000000000000000000000000000000000010",
+  ]);
+});
+
 test("doctorDeployment fails when Factory immutable config cannot be read", async () => {
   const codeReader: DeploymentCodeReader = {
     getCode: async () => "0x6000",
@@ -237,6 +297,53 @@ test("doctor-deployment CLI accepts a valid explicit --chain-id override", () =>
       network: "xlayer",
       path: join(realpathSync(tempDir), "deployments", "xlayer", "latest.json"),
       expectedChainId: 196,
+      rpcChecked: false,
+      ok: true,
+      errors: [],
+      warnings: [],
+    });
+  } finally {
+    chdir(originalCwd);
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("doctor-deployment CLI defaults hashkeytest to chain id 133", () => {
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-doctor-cli-hashkeytest-"));
+  const deploymentDir = join(tempDir, "deployments", "hashkeytest");
+  const scriptPath = fileURLToPath(new URL("../cli/doctor-deployment.ts", import.meta.url));
+  const tsxLoaderPath = fileURLToPath(new URL("../../node_modules/tsx/dist/loader.mjs", import.meta.url));
+  const hashkeyDeployment = { ...validDeployment, chainId: 133 };
+
+  mkdirSync(deploymentDir, { recursive: true });
+  writeFileSync(join(deploymentDir, "latest.json"), `${JSON.stringify(hashkeyDeployment, null, 2)}\n`);
+  chdir(tempDir);
+
+  try {
+    const result = spawnSync(process.execPath, [
+      "--import",
+      tsxLoaderPath,
+      scriptPath,
+      "--network",
+      "hashkeytest",
+    ], {
+      cwd: tempDir,
+      env: {
+        ...process.env,
+        DEPLOYMENT_NETWORK: "",
+        HASHKEYTEST_RPC_URL: "",
+        NODE_OPTIONS: "--no-warnings",
+        RPC_URL: "",
+      },
+      encoding: "utf8",
+    });
+
+    assert.equal(result.status, 0);
+    assert.deepEqual(JSON.parse(result.stdout), {
+      network: "hashkeytest",
+      path: join(realpathSync(tempDir), "deployments", "hashkeytest", "latest.json"),
+      expectedChainId: 133,
       rpcChecked: false,
       ok: true,
       errors: [],
