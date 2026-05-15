@@ -1,0 +1,13 @@
+{
+  "folders": [
+    {
+      "path": ".",
+      "name": "uniswap-hook-pool"
+    },
+    {
+      "path": "backend/backend",
+      "name": "elur-api (Ponder / 后端)"
+    }
+  ],
+  "settings": {}
+}

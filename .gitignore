@@ -1,8 +1,11 @@
 .env
+.secrets/
 .DS_Store
 out/
 cache/
 broadcast/
 node_modules/
+coverage/
+backend/.coverage-build/
 deployments/*/latest.json
 lcov.info
