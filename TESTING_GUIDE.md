@@ -150,21 +150,12 @@ PRIVATE_KEY=<anvil-private-key> DEPLOYMENT_NETWORK=anvil npm run smoke:anvil
 多 Anvil signer 轮询 smoke：
 
 ```bash
-for entry in \
-  "0:0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266:0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80" \
-  "1:0x70997970C51812dc3A010C7d01b50e0d17dc79C8:0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d" \
-  "2:0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC:0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
-do
-  account_index="${entry%%:*}"
-  rest="${entry#*:}"
-  account_address="${rest%%:*}"
-  private_key="${rest#*:}"
-  echo "=== smoke:anvil account ${account_index} ${account_address} ==="
-  PRIVATE_KEY="${private_key}" DEPLOYMENT_NETWORK=anvil ANVIL_RPC_URL=http://127.0.0.1:8545 npm run smoke:anvil
-done
+DEPLOYMENT_NETWORK=anvil ANVIL_PRIVATE_KEYS=<comma-separated-anvil-private-keys> npm run smoke:anvil:accounts
 ```
 
-每轮 `smoke:anvil` 都会重新部署本地 Factory、创建新 token，并覆盖 `deployments/anvil/latest.json`。多 signer smoke 用来验证 TypeScript CLI 不依赖固定 deployer，且不同 Anvil 测试账户都能完成创建、交易、毕业、迁移和 fee claim。默认至少跑 account 0、1、2；需要更完整覆盖时，把 Anvil 默认 account 3-19 继续追加到 `for entry in ...`。
+每轮 `smoke:anvil` 都会重新部署本地 Factory、创建新 token，并覆盖 `deployments/anvil/latest.json`。多 signer smoke 用来验证 TypeScript CLI 不依赖固定 deployer，且不同 Anvil 测试账户都能完成创建、交易、毕业、迁移和 fee claim。
+
+仍需注意：单独执行 Forge `script:*` 时，`FACTORY`、`TOKEN`、`RECIPIENT`、`TEAM_MULTISIG` 等变量仍来自当前 shell / `.env`。如果 `.env` 正在指向 HashKey testnet，单独跑 Anvil `script:*` 前必须显式导出 Anvil 本地值。
 
 或逐步执行：
 

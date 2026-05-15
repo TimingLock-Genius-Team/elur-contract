@@ -193,9 +193,9 @@ npm run export:abis
 
 This writes `frontend/abi/`:
 
-- `EulrFactory.json`, `EulrHook.json`, `EulrRouter.json`, `EulrToken.json`, `UniswapV4MintPositionTarget.json` — raw ABIs for runtime use (viem, ethers, REST gateways).
+- `EulrFactory.json`, `EulrHook.json`, `EulrRouter.json`, `EulrToken.json`, `ProxyAdmin.json`, `TransparentUpgradeableProxy.json`, `UniswapV4MintPositionTarget.json` — raw ABIs for runtime use (viem, ethers, REST gateways, deployment doctors).
 - `index.ts` — same ABIs inlined as `as const satisfies Abi` so viem / wagmi infer call argument and return types.
-- `addresses.json` / `addresses.ts` — per-network snapshot of factory address, migration target, fee recipient, and curve parameters from `deployments/<network>/latest.json`.
+- `addresses.json` / `addresses.ts` — per-network snapshot of factory address, proxy metadata, migration target, fee recipient, and curve parameters from `deployments/<network>/latest.json`.
 - `README.md` — bundle table of contents.
 
 See `FRONTEND_INTEGRATION.md` for the page-by-page mapping from the `Eulr Prototype.html` PRD to contract calls, slippage handling, event subscription, error mapping, and off-chain data expectations.

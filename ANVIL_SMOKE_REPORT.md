@@ -8,8 +8,11 @@
 
 | 时间 (UTC) | 范围 | 命令形态 | 结果 |
 | --- | --- | --- | --- |
+| 2026-05-14 12:56:31 - 13:00:00 | package script sweep | `npm run` Anvil 脚本矩阵、`smoke:anvil`、`smoke:anvil:accounts`、Forge `script:*` 单独脚本 | 通过；日志见 `test-logs/package-scripts-anvil-fixes.log` |
 | 2026-05-13 12:08:29 - 12:21:14 | account 0-2 | 串行执行 `PRIVATE_KEY=... DEPLOYMENT_NETWORK=anvil ANVIL_RPC_URL=http://127.0.0.1:8545 npm run smoke:anvil` | 通过，退出码 `0`，耗时 `764667 ms` |
 | 2026-05-13 12:24:38 - 12:54:09 | 请求覆盖 account 3-19 | 同样串行执行，每次只跑一个 signer | account 3-9 通过；account 10 在 `deploy:anvil` 阶段失败；account 11-19 未执行；退出码 `1`，耗时 `1771095 ms` |
+
+2026-05-14 的复跑中，所有 Anvil package scripts 均通过。
 
 account 3-19 批次是有意串行执行的，因为每一轮 `smoke:anvil` 都会重新部署本地 Factory，并覆盖 `deployments/anvil/latest.json`。每轮内部 RPC 检查都确认 `chainId = 31337`，说明本批次连接的是本地 Anvil，而不是 XLayer 或其他 RPC。
 
@@ -177,7 +180,11 @@ anvil --chain-id 31337 --accounts 20
 npm run smoke:anvil:accounts
 ```
 
-该 CLI 内置 Anvil 默认 account 地址和私钥映射，只在 `DEPLOYMENT_NETWORK=anvil` 且 `chainId = 31337` 时允许使用，并在每轮开始前校验 `PRIVATE_KEY` 派生地址等于预期账户。新的 smoke 复跑应优先使用该脚本，而不是手写 shell 循环。
+该 CLI 只在 `DEPLOYMENT_NETWORK=anvil` 且 `chainId = 31337` 时允许使用。新的 smoke 复跑应优先使用该脚本，而不是手写 shell 循环。
+
+### 仍需注意的脚本边界
+
+单独运行 Forge `script:*` 时，`FACTORY`、`TOKEN`、`RECIPIENT`、`TEAM_MULTISIG` 仍来自当前 shell / `.env`。如果要单独跑这些脚本，需要显式设置 Anvil 本地值。
 
 仍需要持续改进的能力：
 
@@ -213,7 +220,7 @@ cast balance <account-address> --rpc-url http://127.0.0.1:8545
 - Function coverage：`100.00%`
 - Branch coverage：`80.49%`
 
-如果后续要求 branch coverage 也达到 95%，需要继续补 `EulrHook`、`EulrRouter`、`ReentrancyGuard` 的异常和 reentrancy 分支测试。
+如果后续要求 branch coverage 也达到 95%，需要继续补 `EulrHook`、`EulrRouter` 和 migration 路径的业务异常 / reentrancy 场景测试；不需要重复测试 OpenZeppelin 内部实现。
 
 ### 区分本地 smoke、coverage 和 XLayer gate
 

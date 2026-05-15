@@ -60,9 +60,6 @@ eulr-contract/
       IEulrRouter.sol
       IEulrToken.sol
       IMigrationTarget.sol
-    libraries/
-      NativeOkbTransfer.sol
-      ReentrancyGuard.sol
     mocks/
       LocalExternalDependency.sol
       LocalMigrationTarget.sol
@@ -180,9 +177,9 @@ forge init --no-commit
 
 ```bash
 forge install foundry-rs/forge-std
-forge install OpenZeppelin/openzeppelin-contracts
 forge install Uniswap/v4-core
 forge install Uniswap/v4-periphery
+npm install @openzeppelin/contracts @openzeppelin/contracts-upgradeable
 ```
 
 `foundry.toml`：

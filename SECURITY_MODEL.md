@@ -21,6 +21,7 @@
 
 - Factory 构造时传入的 fee recipient。
 - Factory 构造时传入的 migration target。
+- Factory / Router transparent proxy 的升级 signer（`upgradeAdmin` / `routerProxyOwner`，生产应为团队多签或受控部署 signer）。
 - 部署和 fork 测试中验证的 Uniswap v4 PoolManager / PositionManager。
 
 这些地址必须在部署前通过 fork 测试和人工来源确认。
@@ -117,9 +118,11 @@ Migration 是当前最大生产风险，因为它依赖外部 Uniswap v4 和 LP 
 
 Factory：
 
-- 无 owner 管理路径。
+- 无暂停、拉黑、储备提取或任意 owner mint 路径。
+- `upgradeAdmin` 只能更新未来新 token 使用的 Router implementation。
 - 创建 token 无许可。
 - 不允许修改已部署 token。
+- Factory 本身通过 OZ v5 transparent proxy 升级；Factory proxy 的 ProxyAdmin 必须由生产升级 signer 控制。
 
 Token：
 
@@ -138,6 +141,13 @@ Router：
 
 - 只能操作 Factory registry 中的 token。
 - 不接受任意 Hook。
+- 每个 Router 都通过独立 OZ v5 transparent proxy 部署；其 ProxyAdmin 由 Factory 记录的 `routerProxyOwner` 初始拥有。
+
+升级约束：
+
+- 任何 Factory / Router implementation 升级都必须先审查 storage layout。
+- `upgrade:factory` 只升级 Factory proxy，`upgrade:routers` 逐个读取 Router proxy 的 ERC-1967 admin slot 后调用对应 ProxyAdmin。
+- 升级交易、implementation 地址和 ProxyAdmin owner 变更必须进入上线记录。
 
 ## 8. MEV 与用户保护
 

@@ -283,13 +283,46 @@ npm run script:deploy-xlayer
 
 - 从已发布的 `frontend/abi/` 或同源 Foundry artifacts 读取 ABI。
 - 从 `deployments/xlayer/latest.json` 读取 Factory 和 migration target 地址。
-- 索引 `TokenCreated`、`Bought`、`Sold` 和 ERC-20 `Transfer`。
+- 索引 `TokenCreated`、`Bought`、`Sold`、ERC-20 `Transfer` 以及 Factory / Router proxy upgrade events。
 - 用链上 `curveState()` 校验最新状态，用事件聚合历史和统计字段。
 - 不持有部署私钥或 fee recipient 权限。
 
 ## 7. 回滚与失败处理
 
-合约不可升级，部署失败时不能“回滚”已部署地址，只能停止使用该 Factory 并重新部署。
+Factory 和 Router 通过 OpenZeppelin v5 Transparent Proxy 可升级，但部署阶段的外部地址、chain id、migration target 或初始化参数错误仍不能简单“回滚”。如果初始化参数错误，应停止使用该 Factory 并重新部署；如果 implementation 逻辑错误且 storage layout 兼容，可通过升级发布修复。
+
+### 7.1 升级流程
+
+升级前必须：
+
+1. 确认升级 signer / 多签拥有 Factory proxy 的 ProxyAdmin，以及目标 Router proxy 各自的 ProxyAdmin。
+2. 对新 implementation 做 storage layout review；禁止重排、删除或改变已有 storage slot 语义。
+3. 运行 `forge build && forge test`、`npm run test:ts`、backend typecheck/test 和目标链 `doctor:deployment`。
+4. 记录旧 implementation、旧 ProxyAdmin owner、新 implementation 和升级 tx hash。
+
+升级 Factory：
+
+```bash
+DEPLOYMENT_NETWORK=xlayer npm run upgrade:factory
+npm run doctor:deployment -- --network xlayer --rpc-url "$XLAYER_RPC_URL" --chain-id 196
+```
+
+升级 Router：
+
+```bash
+# 单个已记录 router proxy
+DEPLOYMENT_NETWORK=xlayer npm run upgrade:routers -- --router <routerProxy>
+
+# 所有已记录 router proxy，并更新 Factory 的未来 Router implementation
+DEPLOYMENT_NETWORK=xlayer npm run upgrade:routers -- --all
+```
+
+注意：OZ v5 `TransparentUpgradeableProxy` 会为每个 proxy 创建独立 `ProxyAdmin`。Factory deployment JSON 中的 `proxyAdmin` 是 Factory proxy 的 admin；Router 升级 CLI 会从每个 Router proxy 的 ERC-1967 admin slot 读取各自 ProxyAdmin 后调用 `upgradeAndCall`。
+
+如升级后发现问题：
+
+- storage layout 兼容且旧 implementation 仍可信时，可再次升级回旧 implementation。
+- storage layout 不兼容或初始化状态错误时，停止使用该 Factory / Router 记录，重新部署并公告新地址。
 
 失败处理原则：
 
@@ -309,6 +342,9 @@ chainId:
 commit:
 deployer:
 factory:
+proxyAdmin:
+factoryImplementation:
+routerImplementation:
 feeRecipient:
 uniswapV4PoolManager:
 uniswapV4PositionManager:

@@ -36,7 +36,7 @@ Eulr 协议由一个工厂和「每个 token 一组」隔离合约构成：
                             | migrateLiquidity (一次性)
                             v
        UniswapV4MintPositionTarget (协议级单例)
-       → mint Uniswap v4 LP，LP 接收方固定为 burn address
+       → mint Uniswap v4 LP，LP 接收方为部署时配置的 `lpRecipient`
 ```
 
 关键事实：
@@ -44,7 +44,7 @@ Eulr 协议由一个工厂和「每个 token 一组」隔离合约构成：
 - **`EulrFactory` 是协议级单例**：所有 token 通过它创建，前端用它做 token 列表和元数据读。
 - **每个 token 拥有独立的 (Token, Hook, Router)**：前端必须按 token 维度去读 Hook / Router 地址，不能假定单一地址。
 - **结算货币是 native OKB**（不是 wrapped）。`buy` 通过 `msg.value` 发送 OKB；`sell` 通过 hook → 用户的 native OKB 回执完成。前端不需要 wrap/unwrap。
-- **合约一旦部署不可升级**，且没有管理员。前端不应展示「暂停」「升级」「治理」等概念。
+- **Factory 和 Router 使用 OpenZeppelin v5 Transparent Proxy，可由运维 signer 升级**。这不是面向普通用户的治理功能：前端产品页不应展示「暂停」「升级」「治理」入口，但运维后台和 indexer 可以展示 proxy / implementation metadata。
 
 ## 2. 导出物：`frontend/abi/`
 
@@ -56,9 +56,11 @@ frontend/abi/
   EulrHook.json
   EulrRouter.json
   EulrToken.json
+  ProxyAdmin.json                    OZ v5 transparent proxy admin ABI（运维/doctor 用）
+  TransparentUpgradeableProxy.json   OZ v5 transparent proxy shell ABI（事件/indexer 用）
   UniswapV4MintPositionTarget.json
   index.ts                          以 `as const satisfies Abi` 内联，供 viem/wagmi 推断类型
-  addresses.json                    每个链的 factory / migrationTarget / curve 参数快照
+  addresses.json                    每个链的 factory / proxy metadata / migrationTarget / curve 参数快照
   addresses.ts                      同上的 TS const 导出
   README.md
 ```
@@ -574,7 +576,7 @@ const hash = await walletClient.writeContract({
 - pool key 必须使用 `addresses.json` 中的 `uniswapV4PoolManager` 和迁移时使用的参数（`poolFee`, `tickSpacing`, `hooks`, `currency0`, `currency1`）。
 - 这些参数从 `MigrationData` 解码或由 `UniswapV4MintPositionTarget.expected*` 视图函数读取：
   - `expectedPoolFee()` / `expectedTickSpacing()` / `expectedHooks()` / `expectedTickLower()` / `expectedTickUpper()` / `expectedHookDataHash()`
-- LP 接收方固定为 `0x000000000000000000000000000000000000dEaD`（链上已强制），前端可以在 About tab 显式声明「LP 已永久销毁」。
+- LP 接收方由 `UniswapV4MintPositionTarget.lpRecipient()` 读取，并应与部署记录 / `LP_RECIPIENT` 环境配置一致。只有当该地址确认为 burn / lock 地址时，前端才可以声明「LP 已永久销毁」。
 
 ### 6.4 创建 token
 
@@ -659,7 +661,7 @@ const impact = (newPrice - oldPrice) / oldPrice; // buy
 | `volume24hUsd` | 索引 `Bought.grossOkbIn` + `Sold.grossOkbOut`，按 24h 窗口求和 × `OKB_USD` | |
 | `priceChange24h` | 当前 `currentPrice` 与 24h 前 `currentPrice` 的差 | 24h 前价格可由 24h 前最近一次 `Bought` / `Sold` 事件的 `newOkbCum` 反推 |
 | `sparkline` | 24 个时间桶的 `currentPrice` 序列 | 用事件聚合 |
-| `holders` | 维护 `EulrToken.Transfer` 状态表，统计 `balanceOf > 0` 的地址数 | 注意排除 `address(0)`、`migrationTarget`、burn address |
+| `holders` | 维护 `EulrToken.Transfer` 状态表，统计 `balanceOf > 0` 的地址数 | 注意排除 `address(0)`、`migrationTarget`，以及经部署记录确认的 LP burn / lock recipient |
 | `avgCost` / `costBasis` / `realizedPnL` | 用户视角下从其 buy/sell 历史 FIFO 计算 | Portfolio 专用 |
 | `tx hash` 区块浏览器链接 | 拼接 `https://www.oklink.com/oktc/tx/<hash>` 或类似 | 链 ID 196 对应 XLayer |
 
