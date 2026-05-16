@@ -4,6 +4,9 @@
 out/
 cache/
 broadcast/
+# Next.js app lives in https://github.com/TimingLock-Genius-Team/satpad-web
+web/
+
 node_modules/
 coverage/
 backend/.coverage-build/

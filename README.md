@@ -42,7 +42,7 @@ backend/abi/             Generated ABI bundle for backend/tooling consumers
 backend/frontend/abi/    Generated ABI bundle used by the backend package
 backend/backend/         Bun.js/Postgres indexer and API package
 docs/                    Canonical mechanism documentation
-web/                     Frontend application workspace
+web/                     (optional local checkout; canonical repo: github.com/TimingLock-Genius-Team/satpad-web)
 ```
 
 Third-party dependency documentation under `lib/**` and `backend/lib/**` is vendor material and is not part of the project documentation set.
