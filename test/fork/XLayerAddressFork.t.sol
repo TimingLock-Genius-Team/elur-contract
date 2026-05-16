@@ -207,7 +207,7 @@ contract XLayerAddressForkTest is Test {
     function _graduateToken(EulrToken token, EulrHook hook, EulrRouter router) internal {
         address trader = makeAddr("xlayer-fork-migration-trader");
 
-        for (uint256 i = 0; i < 47; i++) {
+        for (uint256 i = 0; i < 17; i++) {
             vm.roll(block.number + 1);
             vm.deal(trader, 10e18);
             BuyQuote memory quote = hook.quoteBuy(10e18);

@@ -23,6 +23,11 @@ contract EulrTestBase is Test {
     EulrRouter internal routerImplementation;
     EulrFactory internal factory;
 
+    /// @dev With `Curve.defaultParams()` and 10 OKB gross buys, implied mint first reaches `selfDeprecationBps` on this 1-indexed buy count.
+    uint256 internal constant GRADUATION_10OKB_BUYS = 17;
+    /// @dev Buys that keep the hook below the graduation threshold; the next buy is expected to cross and emit `SelfDeprecated`.
+    uint256 internal constant GRADUATION_10OKB_BUYS_BEFORE_THRESHOLD = 16;
+
     function setUp() public virtual {
         migrationTarget = new MockMigrationTarget();
         factory = deployFactory(feeRecipient);

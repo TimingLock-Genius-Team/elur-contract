@@ -19,9 +19,10 @@ contract CurveTest is Test {
         assertEq(curve.totalMinted(0), 0);
     }
 
-    function test_TotalMintedAtGraduationOkbIsApproximatelyNinetyNinePercentOfK() public view {
-        uint256 minted = curve.totalMinted(460.517e18);
+    function test_TotalMintedAtGraduationOkbMatchesSelfDeprecationThreshold() public view {
         uint256 threshold = (params.k * params.selfDeprecationBps) / 10_000;
+        uint256 okbCum = curve.okbAtMinted(threshold);
+        uint256 minted = curve.totalMinted(okbCum);
 
         assertApproxEqAbs(minted, threshold, 2_000e18);
     }

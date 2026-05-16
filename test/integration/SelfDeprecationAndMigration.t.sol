@@ -11,7 +11,7 @@ contract SelfDeprecationAndMigrationTest is EulrTestBase {
         (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         uint256 totalBought;
-        for (uint256 i = 0; i < 47; i++) {
+        for (uint256 i = 0; i < GRADUATION_10OKB_BUYS; i++) {
             vm.roll(i + 2);
             totalBought += buy(router, token, trader, 10e18);
         }
@@ -41,7 +41,7 @@ contract SelfDeprecationAndMigrationTest is EulrTestBase {
         vm.expectRevert(EulrHook.NotSelfDeprecated.selector);
         hook.migrateLiquidity("");
 
-        for (uint256 i = 0; i < 47; i++) {
+        for (uint256 i = 0; i < GRADUATION_10OKB_BUYS; i++) {
             vm.roll(i + 2);
             buy(router, token, trader, 10e18);
         }
@@ -65,7 +65,7 @@ contract SelfDeprecationAndMigrationTest is EulrTestBase {
         (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
         uint256 totalBought;
-        for (uint256 i = 0; i < 47; i++) {
+        for (uint256 i = 0; i < GRADUATION_10OKB_BUYS; i++) {
             vm.roll(i + 2);
             totalBought += buy(router, token, trader, 10e18);
         }

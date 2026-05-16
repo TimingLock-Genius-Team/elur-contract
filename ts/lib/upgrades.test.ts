@@ -20,7 +20,7 @@ const deployment: Deployment = {
     k: "1",
     s: "2",
     feeBps: 30,
-    selfDeprecationBps: 9900,
+    selfDeprecationBps: 8000,
     maxBuyOkb: "3",
   },
   createdTokens: [

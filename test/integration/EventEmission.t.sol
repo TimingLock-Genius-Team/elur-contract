@@ -119,7 +119,7 @@ contract EventEmissionTest is EulrTestBase {
 
     function test_MigrationEmitsPoolAndLiquidityEvents() public {
         (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
-        for (uint256 i = 0; i < 47; i++) {
+        for (uint256 i = 0; i < GRADUATION_10OKB_BUYS; i++) {
             vm.roll(i + 2);
             buy(router, token, trader, 10e18);
         }

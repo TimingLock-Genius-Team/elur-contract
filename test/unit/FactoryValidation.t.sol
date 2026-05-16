@@ -87,7 +87,7 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.k, 21_000_000e18);
         assertEq(params.s, 100e18);
         assertEq(params.feeBps, 30);
-        assertEq(params.selfDeprecationBps, 9900);
+        assertEq(params.selfDeprecationBps, 8000);
         assertEq(params.maxBuyOkb, 10e18);
 
         CurveParams memory factoryParams = factory.curveParams();
@@ -105,7 +105,7 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.k, 21_000_000e18);
         assertEq(params.s, 25e18);
         assertEq(params.feeBps, 30);
-        assertEq(params.selfDeprecationBps, 9900);
+        assertEq(params.selfDeprecationBps, 8000);
         assertEq(params.maxBuyOkb, 10e18);
     }
 

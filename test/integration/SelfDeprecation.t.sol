@@ -20,7 +20,7 @@ contract SelfDeprecationTest is EulrTestBase {
     function test_ThresholdBuySetsSelfDeprecatedAndEmitsEvent() public {
         (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
 
-        for (uint256 i = 0; i < 46; i++) {
+        for (uint256 i = 0; i < GRADUATION_10OKB_BUYS_BEFORE_THRESHOLD; i++) {
             vm.roll(i + 2);
             buy(router, token, trader, 10e18);
         }
@@ -36,7 +36,7 @@ contract SelfDeprecationTest is EulrTestBase {
     function test_BuyStaysClosedAfterSelfDeprecatedButSellWorks() public {
         (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
         uint256 bought;
-        for (uint256 i = 0; i < 47; i++) {
+        for (uint256 i = 0; i < GRADUATION_10OKB_BUYS; i++) {
             vm.roll(i + 2);
             bought += buy(router, token, trader, 10e18);
         }

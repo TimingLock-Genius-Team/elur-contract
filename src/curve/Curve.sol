@@ -15,7 +15,7 @@ library Curve {
     error MintedOutOfRange();
 
     function defaultParams() internal pure returns (CurveParams memory) {
-        return CurveParams({k: 21_000_000e18, s: 100e18, feeBps: 30, selfDeprecationBps: 9900, maxBuyOkb: 10e18});
+        return CurveParams({k: 21_000_000e18, s: 100e18, feeBps: 30, selfDeprecationBps: 8000, maxBuyOkb: 10e18});
     }
 
     function validateParams(CurveParams memory params) internal pure {
