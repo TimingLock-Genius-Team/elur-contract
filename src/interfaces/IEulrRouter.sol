@@ -5,6 +5,11 @@ import {BuyQuote, SellQuote} from "../curve/CurveTypes.sol";
 
 interface IEulrRouter {
     function buy(address token, uint256 minTokensOut, address recipient) external payable returns (uint256 tokensOut);
+    /// @notice Factory-only: `payer` is the economic buyer; `msg.sender` must be the factory.
+    function buyFor(address payer, address token, uint256 minTokensOut, address recipient)
+        external
+        payable
+        returns (uint256 tokensOut);
     function sell(address token, uint256 tokensIn, uint256 minOkbOut, address recipient)
         external
         returns (uint256 okbOut);

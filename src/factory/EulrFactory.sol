@@ -4,6 +4,7 @@ pragma solidity ^0.8.26;
 import {Curve} from "../curve/Curve.sol";
 import {CurveParams} from "../curve/CurveTypes.sol";
 import {IEulrFactory} from "../interfaces/IEulrFactory.sol";
+import {IEulrRouter} from "../interfaces/IEulrRouter.sol";
 import {EulrHook} from "../hook/EulrHook.sol";
 import {EulrRouter} from "../router/EulrRouter.sol";
 import {EulrToken} from "../token/EulrToken.sol";
@@ -40,6 +41,7 @@ contract EulrFactory is IEulrFactory, Initializable {
     error InvalidCurveS();
     error UnknownToken();
     error OnlyUpgradeAdmin();
+    error BuyAmountZero();
 
     event RouterImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
 
@@ -111,6 +113,50 @@ contract EulrFactory is IEulrFactory, Initializable {
         uint16 curveS
     ) external returns (address token, address hook, address router) {
         return _createToken(name, symbol, metadataURI, socialURI, curveS);
+    }
+
+    function createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint256 minTokensOut,
+        address recipient
+    ) external payable returns (address token, address hook, address router) {
+        return _createTokenAndBuy(name, symbol, metadataURI, socialURI, DEFAULT_CURVE_S_OKB, minTokensOut, recipient);
+    }
+
+    function createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        uint256 minTokensOut,
+        address recipient
+    ) external payable returns (address token, address hook, address router) {
+        return _createTokenAndBuy(name, symbol, metadataURI, socialURI, curveS, minTokensOut, recipient);
+    }
+
+    function _createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        uint256 minTokensOut,
+        address recipient
+    ) internal returns (address token, address hook, address router) {
+        if (msg.value == 0) {
+            revert BuyAmountZero();
+        }
+        if (recipient == address(0)) {
+            revert ZeroAddress();
+        }
+        (address tokenAddr, address hookAddr, address routerAddr) =
+            _createToken(name, symbol, metadataURI, socialURI, curveS);
+        IEulrRouter(routerAddr).buyFor{value: msg.value}(msg.sender, tokenAddr, minTokensOut, recipient);
+        return (tokenAddr, hookAddr, routerAddr);
     }
 
     function _createToken(

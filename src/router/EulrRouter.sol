@@ -17,6 +17,7 @@ contract EulrRouter is IEulrRouter, Initializable, ReentrancyGuard {
     error InvalidToken();
     error ZeroAddress();
     error TokenTransferFailed();
+    error OnlyFactory();
 
     constructor() {
         _disableInitializers();
@@ -43,6 +44,24 @@ contract EulrRouter is IEulrRouter, Initializable, ReentrancyGuard {
         }
 
         return hook.buy{value: msg.value}(msg.sender, recipient, minTokensOut);
+    }
+
+    /// @inheritdoc IEulrRouter
+    function buyFor(address payer, address token_, uint256 minTokensOut, address recipient)
+        external
+        payable
+        nonReentrant
+        returns (uint256 tokensOut)
+    {
+        if (msg.sender != address(factory)) {
+            revert OnlyFactory();
+        }
+        _validateToken(token_);
+        if (payer == address(0) || recipient == address(0)) {
+            revert ZeroAddress();
+        }
+
+        return hook.buy{value: msg.value}(payer, recipient, minTokensOut);
     }
 
     function sell(address token_, uint256 tokensIn, uint256 minOkbOut, address recipient)

@@ -36,6 +36,25 @@ interface IEulrFactory {
         uint16 curveS
     ) external returns (address token, address hook, address router);
 
+    function createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint256 minTokensOut,
+        address recipient
+    ) external payable returns (address token, address hook, address router);
+
+    function createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        uint256 minTokensOut,
+        address recipient
+    ) external payable returns (address token, address hook, address router);
+
     function allTokensLength() external view returns (uint256);
     function getTokens(uint256 offset, uint256 limit) external view returns (address[] memory tokens);
     function getTokenInfo(address token) external view returns (TokenInfo memory);
