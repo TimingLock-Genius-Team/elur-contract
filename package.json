@@ -46,6 +46,7 @@
     "buy": "tsx ts/cli/buy.ts",
     "quote:sell": "tsx ts/cli/quote-sell.ts",
     "sell": "tsx ts/cli/sell.ts",
+    "swap:sepolia-v4-sell": "tsx ts/cli/swap-sepolia-v4-sell.ts",
     "simulate:graduation": "tsx ts/cli/simulate-graduation.ts",
     "migrate:liquidity": "tsx ts/cli/migrate-liquidity.ts",
     "claim:fees": "tsx ts/cli/claim-fees.ts",
@@ -80,6 +81,9 @@
   "dependencies": {
     "@openzeppelin/contracts": "^5.6.1",
     "@openzeppelin/contracts-upgradeable": "^5.6.1",
+    "@uniswap/sdk-core": "^7.9.0",
+    "@uniswap/universal-router-sdk": "^5.3.0",
+    "@uniswap/v4-sdk": "^2.1.0",
     "dotenv": "^17.4.2",
     "viem": "^2.48.11"
   },
