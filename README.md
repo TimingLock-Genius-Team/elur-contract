@@ -1,114 +1,100 @@
-# Eulr Contract Backend
+# Eulr
 
-Eulr is a permissionless token launch protocol for XLayer. Each launched token receives an isolated ERC-20 token, bonding-curve Hook, and Router. The protocol uses the sat1 exponential curve, native OKB settlement, 0.3% fees, graduation at 99% of token supply, and one-time liquidity migration.
+Eulr is a permissionless token launch protocol for XLayer. Each launch creates an isolated ERC-20 token, bonding-curve hook, and router. Trading uses native OKB, a sat1-style exponential curve, a 0.3% fee, creator-selected curve steepness, and a one-time graduation migration.
 
-This repository currently covers the contract backend, local deployment scripts, TypeScript CLI tooling, and tests. It does not implement the production web app, wallet UI, Bun.js indexer/API service, charts, portfolio, or operations dashboard, but it documents the data contracts those systems should consume.
+This repository contains the contract backend, Foundry tests, deployment scripts, TypeScript CLI tooling, ABI export tooling, and the backend indexer/API package. The canonical project documentation is intentionally small:
 
-The backend exposes frontend-friendly read surfaces through `EulrFactory.getTokens(offset, limit)` for token discovery and `EulrHook.curveState()` for token detail state snapshots.
+- `README.md`: product scope, repository layout, development commands, and deployment notes.
+- `docs/curve-graduation-and-migration.md`: mechanism, product behavior, graduation, migration, and user-facing caveats.
 
-Frontend/product data is split by source: current state comes from contract reads, theoretical curve and issuance series are computed client-side from `K` / `S`, and historical or aggregate fields such as 24h volume, price change, sparkline, holders, trades, and portfolio cost basis come from a separate Bun.js backend/indexer.
+## Product Scope
 
-## Documentation
+Eulr supports three core user actions:
 
-- `PRODUCT_DOCUMENT.md`: product requirements and protocol rules.
-- `PRODUCT_FLOW.md`: end-to-end product flows for creation, buy, sell, graduation, migration, fee, and third-party integration.
-- `TECHNICAL_DEVELOPMENT.md`: architecture, interfaces, state model, and implementation requirements.
-- `TESTING_GUIDE.md`: unit, integration, fuzz, invariant, fork, smoke, and CI testing requirements.
-- `FORGE_ANVIL_TS_DEVELOPMENT.md`: Foundry, Anvil, Solidity scripts, and TypeScript CLI development workflow.
-- `COMMERCIAL_READINESS.md`: commercial availability gates, blockers, stage definitions, and launch criteria.
-- `DEPLOYMENT_RUNBOOK.md`: local, fork, and XLayer deployment procedures.
-- `SECURITY_MODEL.md`: trust boundaries, invariants, attack surfaces, and pre-launch security checklist.
-- `CHANGELOG.md`: tracked changes grouped by Added / Changed / Fixed / Security and Known Blockers.
-- `ANVIL_SMOKE_REPORT.md`: most recent local Anvil multi-signer smoke results and follow-ups.
-- `FRONTEND_INTEGRATION.md`: frontend integration guide mapping the `Eulr Prototype.html` PRD to ABIs, reads, writes, events, chart data sources, and Bun.js backend/indexer expectations.
+- Creators launch a token with `name`, `symbol`, `metadataURI`, `socialURI`, and optional `curveS`.
+- Traders buy with native OKB or sell tokens back through the token's router.
+- Any caller can trigger liquidity migration after graduation, if migration has not already succeeded.
 
-Suggested reading paths:
+The protocol does not let creators change K, fees, graduation threshold, router, hook, or reserves after creation. The default curve parameters are:
 
-- New developer onboarding: `FORGE_ANVIL_TS_DEVELOPMENT.md` → this README.
-- Product understanding: `PRODUCT_DOCUMENT.md` → `PRODUCT_FLOW.md`.
-- Contract review / audit: `TECHNICAL_DEVELOPMENT.md` → `SECURITY_MODEL.md`.
-- Testing / CI: `TESTING_GUIDE.md` → `COMMERCIAL_READINESS.md` §4.
-- Deployment / operations: `DEPLOYMENT_RUNBOOK.md` → `COMMERCIAL_READINESS.md`.
-- Change tracking: `CHANGELOG.md` → `ANVIL_SMOKE_REPORT.md`.
-- Frontend integration: `FRONTEND_INTEGRATION.md` → `frontend/abi/`.
+```text
+K = 21,000,000 tokens
+default curveS = 100
+feeBps = 30
+selfDeprecationBps = 8000
+maxBuyOkb = 10 OKB
+```
 
-## Current Status
+`curveS` is optional at creation time and must be in `1..1000`. It maps to `S = curveS * 1e18`. Smaller values graduate with less net OKB and steeper early price movement; larger values require deeper net OKB and produce a flatter curve.
 
-The local MVP includes:
+For a detailed mechanism explanation, read `docs/curve-graduation-and-migration.md`.
 
-- `EulrFactory`
-- `EulrToken`
-- `EulrHook`
-- `EulrRouter`
-- `Curve`
-- Solidity scripts for local full-flow execution
-- TypeScript CLI scripts for local deployment and smoke testing
-- Unit, integration, fuzz, and invariant tests
+## Repository Layout
 
-The project is not yet mainnet-commercial-ready until the production external addresses, real Uniswap v4 migration adapter, XLayer fork tests, source verification workflow, and external audit/review are complete.
+```text
+src/                     Solidity contracts
+script/                  Foundry deployment and operation scripts
+test/                    Unit, integration, invariant, and fork tests
+ts/                      TypeScript deploy, CLI, doctor, ABI export, and smoke tooling
+deployments/             Network deployment snapshots
+frontend/abi/            Generated ABI bundle for app consumers
+backend/abi/             Generated ABI bundle for backend/tooling consumers
+backend/frontend/abi/    Generated ABI bundle used by the backend package
+backend/backend/         Bun.js/Postgres indexer and API package
+docs/                    Canonical mechanism documentation
+web/                     Frontend application workspace
+```
+
+Third-party dependency documentation under `lib/**` and `backend/lib/**` is vendor material and is not part of the project documentation set.
 
 ## Requirements
 
-- Foundry (`forge`, `cast`, `anvil`)
-- Node.js and npm for this contract repository's TypeScript CLI/tooling
-- Bun.js for the separate product backend/indexer when that service is implemented
+- Foundry: `forge`, `cast`, `anvil`
+- Node.js and npm for contract tooling
+- Bun.js and Postgres for the backend indexer/API package
 - Slither for static analysis
-- `PRIVATE_KEY` for local Anvil deploy and smoke commands
+- A local Anvil private key for local broadcast scripts
 
-Install TypeScript dependencies:
+Install root dependencies:
 
 ```bash
 npm install
 ```
 
-## Common Commands
+Install backend package dependencies when working on the indexer/API:
 
-Build:
+```bash
+npm --prefix backend/backend install
+```
+
+## Common Development Commands
+
+Build contracts:
 
 ```bash
 npm run build
 ```
 
-Run tests:
+Run Solidity tests:
 
 ```bash
 npm test
-```
-
-Run deeper fuzz tests:
-
-```bash
 npm run test:fuzz
-```
-
-Run invariant tests:
-
-```bash
 npm run test:invariant
 ```
 
-Run TypeScript type checking:
+Run TypeScript checks:
 
 ```bash
 npx tsc --noEmit
-```
-
-Run TypeScript unit tests:
-
-```bash
 npm run test:ts
 ```
 
-Run coverage and the 95% line-coverage gate:
+Run coverage and static analysis:
 
 ```bash
 npm run coverage
 npm run coverage:95
-```
-
-Run static analysis:
-
-```bash
 npm run slither
 ```
 
@@ -118,7 +104,7 @@ Run the local CI gate:
 npm run ci
 ```
 
-`npm run ci` runs `forge fmt --check`, `forge build`, fuzz / invariant / fork builds, `npx tsc --noEmit`, `npm run test:ts`, `npm run coverage:95`, and Slither in the same order as `.github/workflows/ci.yml`.
+`npm run ci` runs formatting checks, build, fuzz tests, invariant tests, fork test entrypoints, TypeScript typecheck, TypeScript tests, the 95% coverage gate, and Slither.
 
 ## Local Anvil Flow
 
@@ -128,7 +114,7 @@ Start Anvil:
 npm run anvil
 ```
 
-Deploy local Factory:
+Deploy the local factory:
 
 ```bash
 npm run deploy:anvil
@@ -137,8 +123,10 @@ npm run deploy:anvil
 Create a token:
 
 ```bash
-npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo
+npm run create-token -- --name Demo --symbol DEMO --metadata-uri ipfs://demo --curve-s 25
 ```
+
+Omit `--curve-s` to use the default `curveS = 100`.
 
 Inspect and trade:
 
@@ -150,18 +138,9 @@ npm run quote:sell -- --token <token> --tokens <amount>
 npm run sell -- --token <token> --tokens <amount> --min-out <netOkbOut>
 ```
 
-The TypeScript buy/sell CLIs require an explicit non-zero `--min-out`. Local smoke tests may pass `--allow-zero-min-out` for deterministic development flows only.
+Buy and sell CLIs require explicit non-zero `--min-out` values. Local smoke tests may use `--allow-zero-min-out` only for deterministic development flows.
 
-TypeScript deployment and CLI tools read `deployments/anvil/latest.json` and `ANVIL_RPC_URL` by default. Use `DEPLOYMENT_NETWORK=xlayer` or `--network xlayer` to read/write `deployments/xlayer/latest.json` and connect through `XLAYER_RPC_URL`. Production migration target deployment is a separate step: set `UNISWAP_V4_POOL_MANAGER`, `UNISWAP_V4_POSITION_MANAGER`, `LP_RECIPIENT`, and the `XLAYER_V4_*` pool allowlist values, run `npm run deploy:migration-target`, validate it with `npm run doctor:migration-target -- --network xlayer --rpc-url $XLAYER_RPC_URL`, then use the recorded `migrationTarget` address as `MIGRATION_TARGET`. After `MIGRATION_TARGET` is set, run `npm run preflight:xlayer` to verify required XLayer env and provenance before the Factory deploy. Before launch, run `npm run gate:xlayer` to cross-check XLayer env, deployment records, on-chain Factory config, and guarded fork migration behavior.
-
-Validate deployment JSON before production smoke:
-
-```bash
-npm run doctor:deployment -- --network xlayer --rpc-url $XLAYER_RPC_URL
-npm run doctor:xlayer-readiness
-```
-
-Simulate graduation and migration:
+Simulate graduation and migration locally:
 
 ```bash
 npm run simulate:graduation -- --token <token>
@@ -169,45 +148,89 @@ npm run migrate:liquidity -- --token <token>
 npm run claim:fees -- --token <token>
 ```
 
-Run the full local smoke flow:
+Run the local smoke flow:
 
 ```bash
-PRIVATE_KEY=<anvil-private-key> npm run smoke:anvil
+PRIVATE_KEY=<anvil-private-key> TEAM_MULTISIG=<anvil-account> DEPLOYMENT_NETWORK=anvil npm run smoke:anvil
 ```
 
-Run the multi-signer Anvil smoke regression across default Anvil accounts:
+Run multi-signer Anvil smoke:
 
 ```bash
-npm run smoke:anvil:accounts
+DEPLOYMENT_NETWORK=anvil npm run smoke:anvil:accounts
 ```
 
-`npm run smoke:anvil:accounts` is the canonical replacement for hand-rolled shell loops; see `ANVIL_SMOKE_REPORT.md` for the most recent multi-signer results.
+## ABI Export
 
-## Frontend Integration
-
-Generate the frontend ABI bundle from the latest Foundry artifacts and deployment records:
+Generate ABI bundles from Foundry artifacts and deployment records:
 
 ```bash
 npm run export:abis
 ```
 
-This writes `frontend/abi/`:
+The exporter writes:
 
-- `EulrFactory.json`, `EulrHook.json`, `EulrRouter.json`, `EulrToken.json`, `ProxyAdmin.json`, `TransparentUpgradeableProxy.json`, `UniswapV4MintPositionTarget.json` — raw ABIs for runtime use (viem, ethers, REST gateways, deployment doctors).
-- `index.ts` — same ABIs inlined as `as const satisfies Abi` so viem / wagmi infer call argument and return types.
-- `addresses.json` / `addresses.ts` — per-network snapshot of factory address, proxy metadata, migration target, fee recipient, and curve parameters from `deployments/<network>/latest.json`.
-- `README.md` — bundle table of contents.
+- `frontend/abi/`
+- `backend/abi/`
+- `backend/frontend/abi/`
 
-See `FRONTEND_INTEGRATION.md` for the page-by-page mapping from the `Eulr Prototype.html` PRD to contract calls, slippage handling, event subscription, error mapping, and off-chain data expectations.
+Each bundle contains contract ABIs, typed TypeScript/JavaScript entries, deployment address snapshots, and proxy metadata.
 
-## Pre-Commit Verification
+## Backend Indexer/API
 
-Before each stage commit run the same gate as CI:
+The backend package indexes contract events into Postgres and serves frontend read models for token lists, token summaries, charts, trades, holders, portfolio data, metadata, health checks, and OpenAPI docs.
+
+Root aliases:
 
 ```bash
-npm run ci
+npm run backend:migrate
+npm run backend:indexer
+npm run backend:dev
+npm run backend:test
+npm run backend:typecheck
 ```
 
-`npm run ci` expands to `forge fmt --check`, `forge build`, fuzz / invariant / fork tests, `npx tsc --noEmit`, `npm run test:ts`, `npm run coverage:95`, and Slither.
+The backend reads deployment metadata from generated ABI address snapshots. Wallet writes still belong in the frontend or CLI; the backend indexes confirmed events and serves read-only product data.
 
-Before production deployment also run XLayer fork tests, gas reporting, coverage, source verification, and audit/review steps described in `COMMERCIAL_READINESS.md`.
+## XLayer Deployment Notes
+
+Production deployment requires confirmed and verified external addresses:
+
+- `TEAM_MULTISIG`
+- `UNISWAP_V4_POOL_MANAGER`
+- `UNISWAP_V4_POSITION_MANAGER`
+- `LP_RECIPIENT`
+- `MIGRATION_TARGET`
+
+Deploy the Uniswap v4 migration target first, then set its address as `MIGRATION_TARGET` before deploying the factory:
+
+```bash
+DEPLOYMENT_NETWORK=xlayer npm run deploy:migration-target
+npm run doctor:migration-target -- --network xlayer --rpc-url "$XLAYER_RPC_URL"
+npm run preflight:xlayer
+DEPLOYMENT_NETWORK=xlayer npm run script:deploy-xlayer
+```
+
+Before launch, run the non-broadcast readiness gate:
+
+```bash
+npm run gate:xlayer
+```
+
+After deployment, verify the deployment snapshot and regenerate ABI bundles:
+
+```bash
+npm run doctor:deployment -- --network xlayer --rpc-url "$XLAYER_RPC_URL" --chain-id 196
+npm run doctor:xlayer-readiness
+npm run export:abis
+```
+
+Mainnet commercial readiness also requires source verification, fork proof for the real migration path, LP custody proof, gas and coverage records, and independent security review or audit.
+
+## Safety Notes
+
+- Never commit `.env`, private keys, RPC secrets, or wallet files.
+- Do not treat local migration mocks as proof of production Uniswap v4 behavior.
+- Do not run smoke flows concurrently, because deployment snapshots are overwritten.
+- Do not default user trades to zero slippage protection.
+- Treat `selfDeprecated` as irreversible: graduation closes buys permanently, while sells remain open.
