@@ -172,11 +172,13 @@ User interfaces should display graduation from `curveState().selfDeprecated`, no
 
 ## Migration
 
-After graduation, any address can call:
+After graduation, the backend keeper normally calls:
 
 ```text
 migrateLiquidity(migrationData)
 ```
+
+The hook function is permissionless at the contract layer, but the normal frontend should not show a migration button to ordinary users. If `LP_RECIPIENT` is not set during target deployment, it defaults to the deployer; operators may still configure a different recipient explicitly.
 
 The migration can only succeed once. The hook sends the migration target:
 

@@ -36,6 +36,11 @@ function requiredAddressEnv(envName: string): `0x${string}` {
   return getAddress(value);
 }
 
+function optionalAddressEnv(envName: string): `0x${string}` | undefined {
+  const value = process.env[envName];
+  return value ? getAddress(value) : undefined;
+}
+
 async function requireCode(label: string, address: `0x${string}`): Promise<void> {
   const code = await publicRpc.getCode({ address });
   if (!code || code === "0x") {
@@ -45,7 +50,6 @@ async function requireCode(label: string, address: `0x${string}`): Promise<void>
 
 const poolManager = requiredAddressEnv("UNISWAP_V4_POOL_MANAGER");
 const positionManager = requiredAddressEnv("UNISWAP_V4_POSITION_MANAGER");
-const lpRecipient = requiredAddressEnv("LP_RECIPIENT");
 const migrationPool = migrationPoolConfigFromEnv(process.env, { requireExplicit: true });
 
 await requireCode("UNISWAP_V4_POOL_MANAGER", poolManager);
@@ -53,6 +57,7 @@ await requireCode("UNISWAP_V4_POSITION_MANAGER", positionManager);
 
 const chainId = await publicRpc.getChainId();
 const deployer = getAddress((await wallet.getAddresses())[0]);
+const lpRecipient = optionalAddressEnv("LP_RECIPIENT") ?? deployer;
 const commit = currentCommit();
 const deployedAt = process.env.DEPLOYED_AT ?? new Date().toISOString();
 

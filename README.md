@@ -199,7 +199,7 @@ Production deployment requires confirmed and verified external addresses:
 - `TEAM_MULTISIG`
 - `UNISWAP_V4_POOL_MANAGER`
 - `UNISWAP_V4_POSITION_MANAGER`
-- `LP_RECIPIENT`
+- `LP_RECIPIENT` (optional for target deployment; defaults to the deployer)
 - `MIGRATION_TARGET`
 
 Deploy the Uniswap v4 migration target first, then set its address as `MIGRATION_TARGET` before deploying the factory:

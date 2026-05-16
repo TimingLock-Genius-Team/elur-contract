@@ -96,15 +96,11 @@ contract XLayerAddressForkTest is Test {
         }
 
         address lpRecipient = vm.envAddress("LP_RECIPIENT");
-        address teamMultisig = vm.envAddress("TEAM_MULTISIG");
         address migrationTarget = vm.envAddress("MIGRATION_TARGET");
         address positionManager = vm.envAddress("UNISWAP_V4_POSITION_MANAGER");
 
-        assertNotEq(lpRecipient, teamMultisig, "LP recipient must not be team multisig");
-        assertNotEq(lpRecipient, address(this), "LP recipient must not be fork deployer");
         _requireCode(migrationTarget);
         _requireCode(positionManager);
-        _requireLpRecipientCodeIfLock(lpRecipient);
         _assertMigrationTargetConfig(migrationTarget, positionManager, lpRecipient);
 
         (EulrToken token, EulrHook hook, EulrRouter router) = _createForkToken();
@@ -112,7 +108,7 @@ contract XLayerAddressForkTest is Test {
 
         uint256 expectedPositionId =
             _migrateAndAssertCustody(token, hook, migrationTarget, positionManager, lpRecipient);
-        _assertPositionOwner(positionManager, expectedPositionId, lpRecipient, teamMultisig);
+        _assertPositionOwner(positionManager, expectedPositionId, lpRecipient);
     }
 
     function _isExpectedForkChain() internal view returns (bool) {
@@ -243,18 +239,7 @@ contract XLayerAddressForkTest is Test {
         return abi.encode(params);
     }
 
-    function _requireLpRecipientCodeIfLock(address lpRecipient) internal view {
-        if (lpRecipient != MigrationData.BURN_ADDRESS) {
-            _requireCode(lpRecipient);
-        }
-    }
-
-    function _assertPositionOwner(
-        address positionManager,
-        uint256 positionId,
-        address expectedRecipient,
-        address teamMultisig
-    ) internal view {
+    function _assertPositionOwner(address positionManager, uint256 positionId, address expectedRecipient) internal view {
         (bool ok, bytes memory data) = positionManager.staticcall(
             abi.encodeCall(IPositionManagerRead.ownerOf, (positionId))
         );
@@ -263,8 +248,6 @@ contract XLayerAddressForkTest is Test {
 
         address owner = abi.decode(data, (address));
         assertEq(owner, expectedRecipient, "position owner");
-        assertNotEq(owner, address(this), "position owned by fork deployer");
-        assertNotEq(owner, teamMultisig, "position owned by team multisig");
     }
 
     function _requireCode(address target) internal view {

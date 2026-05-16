@@ -163,14 +163,6 @@ export async function doctorMigrationTargetDeployment(
   }
 
   if (
-    validAddress(deployment.deployer) &&
-    validAddress(deployment.lpRecipient) &&
-    sameAddress(deployment.lpRecipient, deployment.deployer)
-  ) {
-    errors.push("lpRecipient must not equal deployer");
-  }
-
-  if (
     options.expectedChainId !== undefined &&
     Number.isInteger(deployment.chainId) &&
     deployment.chainId !== options.expectedChainId

@@ -81,9 +81,5 @@ export function doctorXLayerReadinessConsistency(
   } catch (error) {
     errors.push(error instanceof Error ? error.message : String(error));
   }
-  if (sameAddress(migrationTargetDeployment.lpRecipient, deployment.deployer)) {
-    errors.push("LP_RECIPIENT must not equal deployment deployer");
-  }
-
   return { ok: errors.length === 0, errors, warnings };
 }

@@ -31,7 +31,7 @@ const record: MigrationTargetDeploymentRecord = {
   transactionHash: "0x0000000000000000000000000000000000000000000000000000000000000005",
   uniswapV4PoolManager: "0x0000000000000000000000000000000000000003",
   uniswapV4PositionManager: "0x0000000000000000000000000000000000000004",
-  lpRecipient: "0x000000000000000000000000000000000000dEaD",
+  lpRecipient: "0x0000000000000000000000000000000000000001",
   migrationPool: {
     hooks: "0x0000000000000000000000000000000000000000",
     poolFee: 3000,
@@ -100,15 +100,22 @@ test("doctorMigrationTargetDeployment reports malformed records", async () => {
   ]);
 });
 
-test("doctorMigrationTargetDeployment rejects deployer as LP recipient", async () => {
+test("doctorMigrationTargetDeployment accepts deployer as LP recipient", async () => {
   const result = await doctorMigrationTargetDeployment({
     ...record,
-    deployer: "0x000000000000000000000000000000000000dead",
-    lpRecipient: "0x000000000000000000000000000000000000dEaD",
+    lpRecipient: record.deployer,
   });
 
-  assert.equal(result.ok, false);
-  assert.deepEqual(result.errors, ["lpRecipient must not equal deployer"]);
+  assert.equal(result.ok, true);
+});
+
+test("doctorMigrationTargetDeployment accepts explicit non-deployer LP recipient", async () => {
+  const result = await doctorMigrationTargetDeployment({
+    ...record,
+    lpRecipient: "0x0000000000000000000000000000000000000009",
+  });
+
+  assert.equal(result.ok, true);
 });
 
 test("doctorMigrationTargetDeployment rejects impossible migration pool config", async () => {

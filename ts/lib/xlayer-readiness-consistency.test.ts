@@ -102,7 +102,7 @@ test("doctorXLayerReadinessConsistency rejects mismatched deployment records and
   }, {
     ...migrationTargetDeployment,
     uniswapV4PoolManager: "0x0000000000000000000000000000000000000012",
-    lpRecipient: deployment.deployer,
+    lpRecipient: "0x0000000000000000000000000000000000000017",
   }, {
     ...env,
     TEAM_MULTISIG: "0x0000000000000000000000000000000000000013",
@@ -117,7 +117,6 @@ test("doctorXLayerReadinessConsistency rejects mismatched deployment records and
     "MIGRATION_TARGET does not match deployment migrationTarget",
     "UNISWAP_V4_POOL_MANAGER does not match migration target deployment uniswapV4PoolManager",
     "LP_RECIPIENT does not match migration target deployment lpRecipient",
-    "LP_RECIPIENT must not equal deployment deployer",
   ]);
 });
 
