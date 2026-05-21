@@ -20,6 +20,8 @@ contract HookBuyTest is EulrTestBase {
         router.buy{value: 1e18}(address(token), quote.tokensOut, recipient);
 
         assertEq(token.balanceOf(recipient), quote.tokensOut);
+        assertEq(hook.taxBurnedTokens(), quote.burnTaxTokens);
+        assertEq(token.totalSupply() + hook.taxBurnedTokens(), quote.grossTokensOut);
         assertEq(token.balanceOf(trader), 0);
         assertEq(hook.lastBuyBlock(trader), block.number);
         assertEq(hook.okbCum(), quote.effectiveOkbIn);

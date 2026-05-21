@@ -87,6 +87,8 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.k, 21_000_000e18);
         assertEq(params.s, 100e18);
         assertEq(params.feeBps, 30);
+        assertEq(params.burnTaxMinBps, 100);
+        assertEq(params.burnTaxMaxBps, 1_000);
         assertEq(params.selfDeprecationBps, 8000);
         assertEq(params.maxBuyOkb, 10e18);
 
@@ -94,6 +96,8 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(factoryParams.k, params.k);
         assertEq(factoryParams.s, params.s);
         assertEq(factoryParams.feeBps, params.feeBps);
+        assertEq(factoryParams.burnTaxMinBps, params.burnTaxMinBps);
+        assertEq(factoryParams.burnTaxMaxBps, params.burnTaxMaxBps);
         assertEq(factoryParams.selfDeprecationBps, params.selfDeprecationBps);
         assertEq(factoryParams.maxBuyOkb, params.maxBuyOkb);
     }
@@ -105,8 +109,21 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.k, 21_000_000e18);
         assertEq(params.s, 25e18);
         assertEq(params.feeBps, 30);
+        assertEq(params.burnTaxMinBps, 100);
+        assertEq(params.burnTaxMaxBps, 1_000);
         assertEq(params.selfDeprecationBps, 8000);
         assertEq(params.maxBuyOkb, 10e18);
+    }
+
+    function test_CreateTokenUsesCreatorSelectedDualTaxParams() public {
+        vm.prank(creator);
+        (, address hookAddr,) = factory.createToken("Custom", "CUST", "ipfs://custom", "", 25, 75, 200, 800);
+
+        CurveParams memory params = EulrHook(payable(hookAddr)).getCurveParams();
+        assertEq(params.s, 25e18);
+        assertEq(params.feeBps, 75);
+        assertEq(params.burnTaxMinBps, 200);
+        assertEq(params.burnTaxMaxBps, 800);
     }
 
     function test_TokenCreatedEmitsCreatorSelectedCurveS() public {

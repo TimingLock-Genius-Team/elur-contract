@@ -180,6 +180,21 @@
             "name": "tokensOut",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "grossTokensOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
           }
         ]
       }
@@ -244,6 +259,21 @@
           },
           {
             "name": "newMinted",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "effectiveTokensIn",
             "type": "uint256",
             "internalType": "uint256"
           }

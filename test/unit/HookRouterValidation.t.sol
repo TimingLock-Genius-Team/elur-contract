@@ -21,33 +21,35 @@ import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transpa
 contract HookRouterValidationTest is Test {
     EulrToken internal token;
     MockMigrationTarget internal migrationTarget;
+    EulrHook internal hookImplementation;
     address internal feeRecipient = makeAddr("feeRecipient");
     address internal factory = makeAddr("factory");
 
     function setUp() public {
         token = new EulrToken("Demo", "DEMO", address(this));
         migrationTarget = new MockMigrationTarget();
+        hookImplementation = new EulrHook();
     }
 
-    function test_HookConstructorRejectsEachZeroDependencyAddress() public {
+    function test_HookInitializeRejectsEachZeroDependencyAddress() public {
         CurveParams memory params = Curve.defaultParams();
 
         vm.expectRevert(EulrHook.ZeroAddress.selector);
-        new EulrHook(EulrToken(payable(address(0))), feeRecipient, factory, address(migrationTarget), params);
+        _deployHook(EulrToken(payable(address(0))), feeRecipient, factory, address(migrationTarget), params);
 
         vm.expectRevert(EulrHook.ZeroAddress.selector);
-        new EulrHook(token, address(0), factory, address(migrationTarget), params);
+        _deployHook(token, address(0), factory, address(migrationTarget), params);
 
         vm.expectRevert(EulrHook.ZeroAddress.selector);
-        new EulrHook(token, feeRecipient, address(0), address(migrationTarget), params);
+        _deployHook(token, feeRecipient, address(0), address(migrationTarget), params);
 
         vm.expectRevert(EulrHook.ZeroAddress.selector);
-        new EulrHook(token, feeRecipient, factory, address(0), params);
+        _deployHook(token, feeRecipient, factory, address(0), params);
     }
 
     function test_HookSetRouterRejectsZeroAndPreventsRebinding() public {
         CurveParams memory params = Curve.defaultParams();
-        EulrHook hook = new EulrHook(token, feeRecipient, factory, address(migrationTarget), params);
+        EulrHook hook = _deployHook(token, feeRecipient, factory, address(migrationTarget), params);
 
         vm.prank(makeAddr("not-factory"));
         vm.expectRevert(EulrHook.OnlyFactory.selector);
@@ -69,7 +71,7 @@ contract HookRouterValidationTest is Test {
 
     function test_RouterConstructorRejectsEachZeroDependencyAddress() public {
         CurveParams memory params = Curve.defaultParams();
-        EulrHook hook = new EulrHook(token, feeRecipient, factory, address(migrationTarget), params);
+        EulrHook hook = _deployHook(token, feeRecipient, factory, address(migrationTarget), params);
         IEulrFactory factoryInterface = IEulrFactory(factory);
         EulrRouter implementation = new EulrRouter();
 
@@ -97,7 +99,7 @@ contract HookRouterValidationTest is Test {
 
     function test_HookBuyAndSellRejectZeroPayerOrRecipient() public {
         CurveParams memory params = Curve.defaultParams();
-        EulrHook hook = new EulrHook(token, feeRecipient, factory, address(migrationTarget), params);
+        EulrHook hook = _deployHook(token, feeRecipient, factory, address(migrationTarget), params);
 
         address router = address(this);
         vm.prank(factory);
@@ -115,5 +117,25 @@ contract HookRouterValidationTest is Test {
 
         vm.expectRevert(EulrHook.ZeroAddress.selector);
         hook.sell(makeAddr("seller"), address(0), 1, 0);
+    }
+
+    function _deployHook(
+        EulrToken token_,
+        address feeRecipient_,
+        address factory_,
+        address migrationTarget_,
+        CurveParams memory params
+    ) internal returns (EulrHook) {
+        return EulrHook(
+            payable(
+                address(
+                    new TransparentUpgradeableProxy(
+                        address(hookImplementation),
+                        address(this),
+                        abi.encodeCall(EulrHook.initialize, (token_, feeRecipient_, factory_, migrationTarget_, params))
+                    )
+                )
+            )
+        );
     }
 }

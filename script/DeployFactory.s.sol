@@ -6,6 +6,7 @@ import {stdJson} from "forge-std/StdJson.sol";
 import {Curve} from "../src/curve/Curve.sol";
 import {CurveParams} from "../src/curve/CurveTypes.sol";
 import {EulrFactory} from "../src/factory/EulrFactory.sol";
+import {EulrHook} from "../src/hook/EulrHook.sol";
 import {EulrRouter} from "../src/router/EulrRouter.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -21,6 +22,7 @@ contract DeployFactory is Script {
         address factory;
         address proxyAdmin;
         address factoryImplementation;
+        address hookImplementation;
         address routerImplementation;
         address feeRecipient;
         address poolManager;
@@ -41,6 +43,7 @@ contract DeployFactory is Script {
         _requireCode("MIGRATION_TARGET", migrationTarget);
 
         vm.startBroadcast(deployerKey);
+        EulrHook hookImplementation = new EulrHook();
         EulrRouter routerImplementation = new EulrRouter();
         EulrFactory factoryImplementation = new EulrFactory();
         TransparentUpgradeableProxy factoryProxy = new TransparentUpgradeableProxy(
@@ -52,6 +55,7 @@ contract DeployFactory is Script {
             )
         );
         factory = EulrFactory(address(factoryProxy));
+        factory.setHookImplementation(address(hookImplementation));
         vm.stopBroadcast();
         address proxyAdmin = _proxyAdmin(address(factoryProxy));
 
@@ -61,6 +65,7 @@ contract DeployFactory is Script {
                 factory: address(factory),
                 proxyAdmin: proxyAdmin,
                 factoryImplementation: address(factoryImplementation),
+                hookImplementation: address(hookImplementation),
                 routerImplementation: address(routerImplementation),
                 feeRecipient: feeRecipient,
                 poolManager: poolManager,
@@ -74,6 +79,7 @@ contract DeployFactory is Script {
         console2.log("factory", address(factory));
         console2.log("proxyAdmin", proxyAdmin);
         console2.log("factoryImplementation", address(factoryImplementation));
+        console2.log("hookImplementation", address(hookImplementation));
         console2.log("routerImplementation", address(routerImplementation));
         console2.log("feeRecipient", feeRecipient);
         console2.log("uniswapV4PoolManager", poolManager);
@@ -117,6 +123,8 @@ contract DeployFactory is Script {
         curve.serialize("k", vm.toString(params.k));
         curve.serialize("s", vm.toString(params.s));
         curve.serialize("feeBps", params.feeBps);
+        curve.serialize("burnTaxMinBps", params.burnTaxMinBps);
+        curve.serialize("burnTaxMaxBps", params.burnTaxMaxBps);
         curve.serialize("selfDeprecationBps", params.selfDeprecationBps);
         curveJson = curve.serialize("maxBuyOkb", vm.toString(params.maxBuyOkb));
     }
@@ -137,6 +145,7 @@ contract DeployFactory is Script {
         deployment.serialize("factory", record.factory);
         deployment.serialize("proxyAdmin", record.proxyAdmin);
         deployment.serialize("factoryImplementation", record.factoryImplementation);
+        deployment.serialize("hookImplementation", record.hookImplementation);
         deployment.serialize("routerImplementation", record.routerImplementation);
         deployment.serialize("feeRecipient", record.feeRecipient);
         deployment.serialize("uniswapV4PoolManager", record.poolManager);

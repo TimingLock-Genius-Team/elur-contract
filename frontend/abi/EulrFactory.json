@@ -222,6 +222,70 @@
   },
   {
     "type": "function",
+    "name": "createToken",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "symbol",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "socialURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "feeBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMinBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMaxBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "hook",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "createTokenAndBuy",
     "inputs": [
       {
@@ -246,6 +310,80 @@
       },
       {
         "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "minTokensOut",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "hook",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "createTokenAndBuy",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "symbol",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "socialURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "feeBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMinBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMaxBps",
         "type": "uint16",
         "internalType": "uint16"
       },
@@ -359,6 +497,16 @@
             "internalType": "uint16"
           },
           {
+            "name": "burnTaxMinBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
             "name": "selfDeprecationBps",
             "type": "uint16",
             "internalType": "uint16"
@@ -463,6 +611,19 @@
   },
   {
     "type": "function",
+    "name": "hookImplementation",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "initialize",
     "inputs": [
       {
@@ -554,6 +715,19 @@
   },
   {
     "type": "function",
+    "name": "setHookImplementation",
+    "inputs": [
+      {
+        "name": "newHookImplementation",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setRouterImplementation",
     "inputs": [
       {
@@ -577,6 +751,25 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "HookImplementationUpdated",
+    "inputs": [
+      {
+        "name": "oldImplementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newImplementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -672,6 +865,11 @@
   {
     "type": "error",
     "name": "EmptySymbol",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "HookImplementationMissing",
     "inputs": []
   },
   {

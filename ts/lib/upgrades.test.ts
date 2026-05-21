@@ -1,7 +1,12 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import type { Deployment } from "../config/deployments.js";
-import { applyRouterImplementationMetadata, resolveRouterUpgradeTargets } from "./upgrades.js";
+import {
+  applyHookImplementationMetadata,
+  applyRouterImplementationMetadata,
+  resolveHookUpgradeTargets,
+  resolveRouterUpgradeTargets,
+} from "./upgrades.js";
 
 const deployment: Deployment = {
   chainId: 133,
@@ -11,6 +16,7 @@ const deployment: Deployment = {
   factory: "0x0000000000000000000000000000000000000002",
   proxyAdmin: "0x0000000000000000000000000000000000000003",
   factoryImplementation: "0x0000000000000000000000000000000000000004",
+    hookImplementation: "0x0000000000000000000000000000000000000006",
   routerImplementation: "0x0000000000000000000000000000000000000005",
   feeRecipient: "0x0000000000000000000000000000000000000006",
   uniswapV4PoolManager: "0x0000000000000000000000000000000000000007",
@@ -20,6 +26,8 @@ const deployment: Deployment = {
     k: "1",
     s: "2",
     feeBps: 30,
+    burnTaxMinBps: 100,
+    burnTaxMaxBps: 1000,
     selfDeprecationBps: 8000,
     maxBuyOkb: "3",
   },
@@ -29,12 +37,14 @@ const deployment: Deployment = {
       hook: "0x0000000000000000000000000000000000000011",
       router: "0x0000000000000000000000000000000000000012",
       curveS: 25,
+      hookImplementation: "0x0000000000000000000000000000000000000006",
     },
     {
       token: "0x0000000000000000000000000000000000000013",
       hook: "0x0000000000000000000000000000000000000014",
       router: "0x0000000000000000000000000000000000000015",
       curveS: 100,
+      hookImplementation: "0x0000000000000000000000000000000000000006",
     },
   ],
 };
@@ -48,6 +58,29 @@ test("resolveRouterUpgradeTargets rejects unrecorded router addresses", () => {
       }),
     /Router 0x0000000000000000000000000000000000000099 is not recorded in deployment JSON/,
   );
+});
+
+test("resolveHookUpgradeTargets returns all recorded hooks for --all", () => {
+  assert.deepEqual(resolveHookUpgradeTargets(deployment, { all: true }), {
+    hooks: [
+      "0x0000000000000000000000000000000000000011",
+      "0x0000000000000000000000000000000000000014",
+    ],
+    updateFactoryDefault: true,
+  });
+});
+
+test("applyHookImplementationMetadata updates targeted hooks and optionally default", () => {
+  const next: Deployment = JSON.parse(JSON.stringify(deployment)) as Deployment;
+  applyHookImplementationMetadata(next, {
+    hooks: ["0x0000000000000000000000000000000000000011"],
+    implementation: "0x0000000000000000000000000000000000000021",
+    updateFactoryDefault: false,
+  });
+
+  assert.equal(next.hookImplementation, deployment.hookImplementation);
+  assert.equal(next.createdTokens[0].hookImplementation, "0x0000000000000000000000000000000000000021");
+  assert.equal(next.createdTokens[1].hookImplementation, deployment.hookImplementation);
 });
 
 test("resolveRouterUpgradeTargets returns all recorded routers for --all", () => {

@@ -25,6 +25,7 @@ contract EulrFactory is IEulrFactory, Initializable {
     address public routerImplementation;
     address public routerProxyOwner;
     address public upgradeAdmin;
+    address public hookImplementation;
 
     address[] public allTokens;
     mapping(address token => TokenInfo info) private _tokenInfo;
@@ -42,8 +43,10 @@ contract EulrFactory is IEulrFactory, Initializable {
     error UnknownToken();
     error OnlyUpgradeAdmin();
     error BuyAmountZero();
+    error HookImplementationMissing();
 
     event RouterImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
+    event HookImplementationUpdated(address indexed oldImplementation, address indexed newImplementation);
 
     constructor() {
         _disableInitializers();
@@ -96,6 +99,19 @@ contract EulrFactory is IEulrFactory, Initializable {
         emit RouterImplementationUpdated(oldImplementation, newRouterImplementation);
     }
 
+    function setHookImplementation(address newHookImplementation) external onlyUpgradeAdmin {
+        if (newHookImplementation == address(0)) {
+            revert ZeroAddress();
+        }
+        if (newHookImplementation.code.length == 0) {
+            revert MissingExternalCode(newHookImplementation);
+        }
+
+        address oldImplementation = hookImplementation;
+        hookImplementation = newHookImplementation;
+        emit HookImplementationUpdated(oldImplementation, newHookImplementation);
+    }
+
     function createToken(
         string calldata name,
         string calldata symbol,
@@ -113,6 +129,23 @@ contract EulrFactory is IEulrFactory, Initializable {
         uint16 curveS
     ) external returns (address token, address hook, address router) {
         return _createToken(name, symbol, metadataURI, socialURI, curveS);
+    }
+
+    function createToken(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        uint16 feeBps,
+        uint16 burnTaxMinBps,
+        uint16 burnTaxMaxBps
+    ) external returns (address token, address hook, address router) {
+        CurveParams memory params = _curveParamsForS(curveS);
+        params.feeBps = feeBps;
+        params.burnTaxMinBps = burnTaxMinBps;
+        params.burnTaxMaxBps = burnTaxMaxBps;
+        return _createToken(name, symbol, metadataURI, socialURI, curveS, params);
     }
 
     function createTokenAndBuy(
@@ -138,12 +171,46 @@ contract EulrFactory is IEulrFactory, Initializable {
         return _createTokenAndBuy(name, symbol, metadataURI, socialURI, curveS, minTokensOut, recipient);
     }
 
+    function createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        uint16 feeBps,
+        uint16 burnTaxMinBps,
+        uint16 burnTaxMaxBps,
+        uint256 minTokensOut,
+        address recipient
+    ) external payable returns (address token, address hook, address router) {
+        CurveParams memory params = _curveParamsForS(curveS);
+        params.feeBps = feeBps;
+        params.burnTaxMinBps = burnTaxMinBps;
+        params.burnTaxMaxBps = burnTaxMaxBps;
+        return _createTokenAndBuy(name, symbol, metadataURI, socialURI, curveS, params, minTokensOut, recipient);
+    }
+
     function _createTokenAndBuy(
         string calldata name,
         string calldata symbol,
         string calldata metadataURI,
         string calldata socialURI,
         uint16 curveS,
+        uint256 minTokensOut,
+        address recipient
+    ) internal returns (address token, address hook, address router) {
+        return _createTokenAndBuy(
+            name, symbol, metadataURI, socialURI, curveS, _curveParamsForS(curveS), minTokensOut, recipient
+        );
+    }
+
+    function _createTokenAndBuy(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        CurveParams memory params,
         uint256 minTokensOut,
         address recipient
     ) internal returns (address token, address hook, address router) {
@@ -154,7 +221,7 @@ contract EulrFactory is IEulrFactory, Initializable {
             revert ZeroAddress();
         }
         (address tokenAddr, address hookAddr, address routerAddr) =
-            _createToken(name, symbol, metadataURI, socialURI, curveS);
+            _createToken(name, symbol, metadataURI, socialURI, curveS, params);
         IEulrRouter(routerAddr).buyFor{value: msg.value}(msg.sender, tokenAddr, minTokensOut, recipient);
         return (tokenAddr, hookAddr, routerAddr);
     }
@@ -166,11 +233,31 @@ contract EulrFactory is IEulrFactory, Initializable {
         string calldata socialURI,
         uint16 curveS
     ) internal returns (address token, address hook, address router) {
+        CurveParams memory params = _curveParamsForS(curveS);
+        return _createToken(name, symbol, metadataURI, socialURI, curveS, params);
+    }
+
+    function _createToken(
+        string calldata name,
+        string calldata symbol,
+        string calldata metadataURI,
+        string calldata socialURI,
+        uint16 curveS,
+        CurveParams memory params
+    ) internal returns (address token, address hook, address router) {
         _validateTokenMetadata(name, symbol, metadataURI, socialURI);
 
-        CurveParams memory params = _curveParamsForS(curveS);
+        if (hookImplementation == address(0)) {
+            revert HookImplementationMissing();
+        }
+
         EulrToken tokenContract = new EulrToken(name, symbol, address(this));
-        EulrHook hookContract = new EulrHook(tokenContract, feeRecipient, address(this), migrationTarget, params);
+        TransparentUpgradeableProxy hookProxy = new TransparentUpgradeableProxy(
+            hookImplementation,
+            routerProxyOwner,
+            abi.encodeCall(EulrHook.initialize, (tokenContract, feeRecipient, address(this), migrationTarget, params))
+        );
+        EulrHook hookContract = EulrHook(payable(address(hookProxy)));
         TransparentUpgradeableProxy routerProxy = new TransparentUpgradeableProxy(
             routerImplementation,
             routerProxyOwner,

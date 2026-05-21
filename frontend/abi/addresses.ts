@@ -2,26 +2,29 @@
 // Snapshot of every recorded deployment JSON under `deployments/<network>/latest.json`.
 
 export const eulrDeployments = {
-  "generatedAt": "2026-05-16T12:48:10.446Z",
+  "generatedAt": "2026-05-21T13:25:08.970Z",
   "generatedFrom": "deployments/<network>/latest.json + out/<Contract>.sol/<Contract>.json",
   "byNetwork": {
     "anvil": {
       "network": "anvil",
       "chainId": 31337,
-      "commit": "71515d5",
-      "deployedAt": "2026-05-16T08:50:13.081Z",
-      "factory": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-      "proxyAdmin": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
-      "factoryImplementation": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-      "routerImplementation": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+      "commit": "d01e3e8",
+      "deployedAt": "2026-05-21T12:33:46.185Z",
+      "factory": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
+      "proxyAdmin": "0x9467A509DA43CB50EB332187602534991Be1fEa4",
+      "factoryImplementation": "0xf5059a5D33d5853360D16C683c16e67980206f36",
+      "hookImplementation": "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf",
+      "routerImplementation": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
       "feeRecipient": "0x956A587c0e0A879c179939be9907E82aB8a7CB36",
-      "migrationTarget": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-      "uniswapV4PoolManager": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-      "uniswapV4PositionManager": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+      "migrationTarget": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+      "uniswapV4PoolManager": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+      "uniswapV4PositionManager": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
       "curve": {
         "k": "21000000000000000000000000",
         "s": "100000000000000000000",
         "feeBps": 30,
+        "burnTaxMinBps": 100,
+        "burnTaxMaxBps": 1000,
         "selfDeprecationBps": 8000,
         "maxBuyOkb": "10000000000000000000"
       }
@@ -41,7 +44,9 @@ export const eulrDeployments = {
         "k": "21000000000000000000000000",
         "maxBuyOkb": "10000000000000000000",
         "s": "100000000000000000000",
-        "selfDeprecationBps": 8000
+        "selfDeprecationBps": 8000,
+        "burnTaxMinBps": 0,
+        "burnTaxMaxBps": 0
       }
     },
     "hashkeytest": {
@@ -62,7 +67,9 @@ export const eulrDeployments = {
         "s": "100000000000000000000",
         "feeBps": 30,
         "selfDeprecationBps": 8000,
-        "maxBuyOkb": "10000000000000000000"
+        "maxBuyOkb": "10000000000000000000",
+        "burnTaxMinBps": 0,
+        "burnTaxMaxBps": 0
       }
     },
     "sepolia": {
@@ -72,7 +79,8 @@ export const eulrDeployments = {
       "deployedAt": "2026-05-16T12:46:02Z",
       "factory": "0x659B9e6BC036535f34597c8BCBC2051B964e4a7F",
       "proxyAdmin": "0x4dDAd72B990aA5b434A5B653556D420A232E5a81",
-      "factoryImplementation": "0x3bdD387d346Fe7FF9b80186D1EaB067939393658",
+      "factoryImplementation": "0x347f98942EE95Db4A887aa892Be5B77322ac3d02",
+      "hookImplementation": "0x7462d9c9522e66C824990f4E6805F3262093526c",
       "routerImplementation": "0x4Dd48d5929baFaBd10d18D976C8F6Af35f221852",
       "feeRecipient": "0x956A587c0e0A879c179939be9907E82aB8a7CB36",
       "migrationTarget": "0x8ca7F9C9D739C582c95B3A48f9F7668AFf1A2E78",
@@ -83,7 +91,9 @@ export const eulrDeployments = {
         "k": "21000000000000000000000000",
         "maxBuyOkb": "10000000000000000000",
         "s": "100000000000000000000",
-        "selfDeprecationBps": 8000
+        "selfDeprecationBps": 8000,
+        "burnTaxMinBps": 100,
+        "burnTaxMaxBps": 1000
       }
     }
   },
@@ -107,7 +117,9 @@ export const eulrDeployments = {
           "s": "100000000000000000000",
           "feeBps": 30,
           "selfDeprecationBps": 8000,
-          "maxBuyOkb": "10000000000000000000"
+          "maxBuyOkb": "10000000000000000000",
+          "burnTaxMinBps": 0,
+          "burnTaxMaxBps": 0
         }
       }
     ],
@@ -115,20 +127,23 @@ export const eulrDeployments = {
       {
         "network": "anvil",
         "chainId": 31337,
-        "commit": "71515d5",
-        "deployedAt": "2026-05-16T08:50:13.081Z",
-        "factory": "0x5FC8d32690cc91D4c39d9d3abcBD16989F875707",
-        "proxyAdmin": "0x61c36a8d610163660E21a8b7359e1Cac0C9133e1",
-        "factoryImplementation": "0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9",
-        "routerImplementation": "0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9",
+        "commit": "d01e3e8",
+        "deployedAt": "2026-05-21T12:33:46.185Z",
+        "factory": "0x1613beB3B2C4f22Ee086B2b38C1476A3cE7f78E8",
+        "proxyAdmin": "0x9467A509DA43CB50EB332187602534991Be1fEa4",
+        "factoryImplementation": "0xf5059a5D33d5853360D16C683c16e67980206f36",
+        "hookImplementation": "0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf",
+        "routerImplementation": "0x9E545E3C0baAB3E08CdfD552C960A1050f373042",
         "feeRecipient": "0x956A587c0e0A879c179939be9907E82aB8a7CB36",
-        "migrationTarget": "0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0",
-        "uniswapV4PoolManager": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
-        "uniswapV4PositionManager": "0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512",
+        "migrationTarget": "0xc3e53F4d16Ae77Db1c982e75a937B9f60FE63690",
+        "uniswapV4PoolManager": "0x67d269191c92Caf3cD7723F116c85e6E9bf55933",
+        "uniswapV4PositionManager": "0xE6E340D132b5f46d1e472DebcD681B2aBc16e57E",
         "curve": {
           "k": "21000000000000000000000000",
           "s": "100000000000000000000",
           "feeBps": 30,
+          "burnTaxMinBps": 100,
+          "burnTaxMaxBps": 1000,
           "selfDeprecationBps": 8000,
           "maxBuyOkb": "10000000000000000000"
         }
@@ -148,7 +163,9 @@ export const eulrDeployments = {
           "k": "21000000000000000000000000",
           "maxBuyOkb": "10000000000000000000",
           "s": "100000000000000000000",
-          "selfDeprecationBps": 8000
+          "selfDeprecationBps": 8000,
+          "burnTaxMinBps": 0,
+          "burnTaxMaxBps": 0
         }
       }
     ],
@@ -160,7 +177,8 @@ export const eulrDeployments = {
         "deployedAt": "2026-05-16T12:46:02Z",
         "factory": "0x659B9e6BC036535f34597c8BCBC2051B964e4a7F",
         "proxyAdmin": "0x4dDAd72B990aA5b434A5B653556D420A232E5a81",
-        "factoryImplementation": "0x3bdD387d346Fe7FF9b80186D1EaB067939393658",
+        "factoryImplementation": "0x347f98942EE95Db4A887aa892Be5B77322ac3d02",
+        "hookImplementation": "0x7462d9c9522e66C824990f4E6805F3262093526c",
         "routerImplementation": "0x4Dd48d5929baFaBd10d18D976C8F6Af35f221852",
         "feeRecipient": "0x956A587c0e0A879c179939be9907E82aB8a7CB36",
         "migrationTarget": "0x8ca7F9C9D739C582c95B3A48f9F7668AFf1A2E78",
@@ -171,7 +189,9 @@ export const eulrDeployments = {
           "k": "21000000000000000000000000",
           "maxBuyOkb": "10000000000000000000",
           "s": "100000000000000000000",
-          "selfDeprecationBps": 8000
+          "selfDeprecationBps": 8000,
+          "burnTaxMinBps": 100,
+          "burnTaxMaxBps": 1000
         }
       }
     ]

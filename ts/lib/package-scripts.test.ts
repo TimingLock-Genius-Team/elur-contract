@@ -23,3 +23,8 @@ test("root backend aliases target the backend indexer package", () => {
   assert.equal(packageJson.scripts?.["backend:test:bun"], "npm --prefix backend/backend test");
   assert.equal(packageJson.scripts?.["backend:typecheck"], "npm --prefix backend/backend run typecheck");
 });
+
+test("root scripts expose hook architecture upgrade and smoke flow", () => {
+  assert.match(packageJson.scripts?.["upgrade:hook-architecture"] ?? "", /upgrade-hook-architecture\.ts/);
+  assert.match(packageJson.scripts?.["smoke:anvil:hook-upgrade"] ?? "", /smoke-hook-upgrade-anvil\.ts/);
+});

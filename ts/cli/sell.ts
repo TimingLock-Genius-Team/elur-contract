@@ -12,6 +12,12 @@ const info = await resolveTokenInfo();
 const tokens = parseToken(getArg("tokens"));
 const minOut = getRequiredMinOutArg();
 const recipient = getAddress(getArg("recipient", (await wallet.getAddresses())[0]));
+const quote = await client.readContract({
+  address: info.hook,
+  abi: hookAbi,
+  functionName: "quoteSell",
+  args: [tokens],
+});
 
 const approvalHash = await wallet.writeContract({
   address: info.token,
@@ -40,6 +46,7 @@ printJson({
   token: info.token,
   tokensIn: tokens,
   minOut,
+  quote,
   approvalHash,
   txHash: hash,
   blockNumber: receipt.blockNumber,

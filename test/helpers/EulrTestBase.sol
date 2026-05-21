@@ -20,6 +20,7 @@ contract EulrTestBase is Test {
 
     MockMigrationTarget internal migrationTarget;
     EulrFactory internal factoryImplementation;
+    EulrHook internal hookImplementation;
     EulrRouter internal routerImplementation;
     EulrFactory internal factory;
 
@@ -74,6 +75,7 @@ contract EulrTestBase is Test {
     }
 
     function deployFactory(address feeRecipient_, address migrationTarget_) internal returns (EulrFactory) {
+        hookImplementation = new EulrHook();
         routerImplementation = new EulrRouter();
         factoryImplementation = new EulrFactory();
 
@@ -86,7 +88,9 @@ contract EulrTestBase is Test {
             )
         );
 
-        return EulrFactory(address(factoryProxy));
+        EulrFactory deployedFactory = EulrFactory(address(factoryProxy));
+        deployedFactory.setHookImplementation(address(hookImplementation));
+        return deployedFactory;
     }
 
     function buy(EulrRouter router, EulrToken token, address buyer, uint256 okbIn)

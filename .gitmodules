@@ -1,3 +1,6 @@
 [submodule "backend"]
 	path = backend
 	url = git@github.com:TimingLock-Genius-Team/elur-api.git
+[submodule "web"]
+	path = web
+	url = git@github.com:TimingLock-Genius-Team/satpad-web.git

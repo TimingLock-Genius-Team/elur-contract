@@ -3,8 +3,10 @@ import test from "node:test";
 import {
   ANVIL_CHAIN_ID,
   DEFAULT_ANVIL_RPC_URL,
+  SEPOLIA_CHAIN_ID,
   XLAYER_CHAIN_ID,
   chainConfigFor,
+  knownChainIdForNetwork,
   rpcUrlFromEnv,
   rpcEnvKeyForNetwork,
 } from "./chains.js";
@@ -12,10 +14,14 @@ import {
 test("chain config exposes canonical local and XLayer chain metadata", () => {
   assert.equal(ANVIL_CHAIN_ID, 31337);
   assert.equal(XLAYER_CHAIN_ID, 196);
+  assert.equal(SEPOLIA_CHAIN_ID, 11155111);
   assert.equal(DEFAULT_ANVIL_RPC_URL, "http://127.0.0.1:8545");
   assert.equal(rpcEnvKeyForNetwork("xlayer"), "XLAYER_RPC_URL");
   assert.equal(chainConfigFor("anvil", DEFAULT_ANVIL_RPC_URL).id, ANVIL_CHAIN_ID);
   assert.equal(chainConfigFor("xlayer", "https://rpc.xlayer.example").id, XLAYER_CHAIN_ID);
+  assert.equal(chainConfigFor("sepolia", "https://sepolia.example").id, SEPOLIA_CHAIN_ID);
+  assert.equal(chainConfigFor("sepolia", "https://sepolia.example").nativeCurrency.symbol, "ETH");
+  assert.equal(knownChainIdForNetwork("sepolia"), SEPOLIA_CHAIN_ID);
 });
 
 test("network-specific RPC env has priority over generic RPC_URL", () => {

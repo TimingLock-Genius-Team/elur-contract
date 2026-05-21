@@ -187,6 +187,23 @@ test("doctorDeployment fails when Factory immutable config cannot be read", asyn
   assert.deepEqual(result.warnings, []);
 });
 
+test("doctorDeployment warns when legacy Factory lacks optional implementation selectors", async () => {
+  const codeReader: DeploymentCodeReader = {
+    getCode: async () => "0x6000",
+    getFactoryConfig: async () => {
+      throw new Error('The contract function "hookImplementation" reverted.');
+    },
+  };
+
+  const result = await doctorDeployment(validDeployment, { codeReader });
+
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.errors, []);
+  assert.deepEqual(result.warnings, [
+    `Could not check optional Factory upgrade metadata at ${validDeployment.factory}: The contract function "hookImplementation" reverted.`,
+  ]);
+});
+
 test("doctor-deployment CLI rejects invalid --chain-id values before running checks", () => {
   const originalCwd = cwd();
   const tempDir = mkdtempSync(join(tmpdir(), "eulr-doctor-cli-"));

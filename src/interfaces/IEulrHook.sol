@@ -10,6 +10,7 @@ interface IEulrHook {
         uint256 totalMinted;
         uint256 currentPrice;
         uint256 claimableFeeOkb;
+        uint256 taxBurnedTokens;
         bool selfDeprecated;
         bool liquidityMigrated;
     }
@@ -18,6 +19,7 @@ interface IEulrHook {
     function router() external view returns (address);
     function okbCum() external view returns (uint256);
     function claimableFeeOkb() external view returns (uint256);
+    function taxBurnedTokens() external view returns (uint256);
     function selfDeprecated() external view returns (bool);
     function liquidityMigrated() external view returns (bool);
     function getCurveParams() external view returns (CurveParams memory);

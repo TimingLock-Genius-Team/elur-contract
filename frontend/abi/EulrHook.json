@@ -1,60 +1,7 @@
 [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "token_",
-        "type": "address",
-        "internalType": "contract EulrToken"
-      },
-      {
-        "name": "feeRecipient_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "factory_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "migrationTarget_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "curveParams_",
-        "type": "tuple",
-        "internalType": "struct CurveParams",
-        "components": [
-          {
-            "name": "k",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "s",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "feeBps",
-            "type": "uint16",
-            "internalType": "uint16"
-          },
-          {
-            "name": "selfDeprecationBps",
-            "type": "uint16",
-            "internalType": "uint16"
-          },
-          {
-            "name": "maxBuyOkb",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -156,6 +103,16 @@
         "internalType": "uint16"
       },
       {
+        "name": "burnTaxMinBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMaxBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
         "name": "selfDeprecationBps",
         "type": "uint16",
         "internalType": "uint16"
@@ -195,6 +152,11 @@
           },
           {
             "name": "claimableFeeOkb",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "taxBurnedTokens",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -265,6 +227,16 @@
             "internalType": "uint16"
           },
           {
+            "name": "burnTaxMinBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
             "name": "selfDeprecationBps",
             "type": "uint16",
             "internalType": "uint16"
@@ -278,6 +250,76 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "token_",
+        "type": "address",
+        "internalType": "contract EulrToken"
+      },
+      {
+        "name": "feeRecipient_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "factory_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "migrationTarget_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "curveParams_",
+        "type": "tuple",
+        "internalType": "struct CurveParams",
+        "components": [
+          {
+            "name": "k",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "s",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMinBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "selfDeprecationBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "maxBuyOkb",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -416,6 +458,21 @@
             "name": "tokensOut",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "grossTokensOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
           }
         ]
       }
@@ -475,6 +532,21 @@
           },
           {
             "name": "newMinted",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "effectiveTokensIn",
             "type": "uint256",
             "internalType": "uint256"
           }
@@ -558,6 +630,19 @@
   },
   {
     "type": "function",
+    "name": "taxBurnedTokens",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "token",
     "inputs": [],
     "outputs": [
@@ -617,6 +702,24 @@
         "internalType": "uint256"
       },
       {
+        "name": "burnTaxBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "grossTokensOut",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "burnTaxTokens",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
         "name": "tokensOut",
         "type": "uint256",
         "indexed": false,
@@ -652,6 +755,19 @@
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
       }
     ],
     "anonymous": false
@@ -766,6 +882,24 @@
         "internalType": "uint256"
       },
       {
+        "name": "burnTaxBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxTokens",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "effectiveTokensIn",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
         "name": "grossOkbOut",
         "type": "uint256",
         "indexed": false,
@@ -841,6 +975,11 @@
   },
   {
     "type": "error",
+    "name": "InvalidInitialization",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidMigrationResult",
     "inputs": []
   },
@@ -862,6 +1001,11 @@
   {
     "type": "error",
     "name": "NoClaimableFees",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotInitializing",
     "inputs": []
   },
   {

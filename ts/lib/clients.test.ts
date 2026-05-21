@@ -1,7 +1,7 @@
 import { strict as assert } from "node:assert";
 import test from "node:test";
 import { privateKeyToAccount } from "viem/accounts";
-import { ANVIL_CHAIN_ID, DEFAULT_ANVIL_RPC_URL, HASHKEYTEST_CHAIN_ID, XLAYER_CHAIN_ID } from "../config/chains.js";
+import { ANVIL_CHAIN_ID, DEFAULT_ANVIL_RPC_URL, HASHKEYTEST_CHAIN_ID, SEPOLIA_CHAIN_ID, XLAYER_CHAIN_ID } from "../config/chains.js";
 import { chainConfig, rpcUrl, walletClient } from "./clients.js";
 
 function restoreEnv(name: string, value: string | undefined): void {
@@ -74,6 +74,23 @@ test("rpcUrl uses temporary hashkeytest RPC and chain id", () => {
   } finally {
     restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
     restoreEnv("HASHKEYTEST_RPC_URL", originalHashKeyTestRpc);
+  }
+});
+
+test("rpcUrl uses Sepolia RPC and chain id for sepolia network", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalSepoliaRpc = process.env.SEPOLIA_RPC_URL;
+  process.env.DEPLOYMENT_NETWORK = "sepolia";
+  process.env.SEPOLIA_RPC_URL = "https://sepolia.example";
+
+  try {
+    withArgv(["node", "script"], () => {
+      assert.equal(rpcUrl(), "https://sepolia.example");
+      assert.equal(chainConfig().id, SEPOLIA_CHAIN_ID);
+    });
+  } finally {
+    restoreEnv("DEPLOYMENT_NETWORK", originalNetwork);
+    restoreEnv("SEPOLIA_RPC_URL", originalSepoliaRpc);
   }
 });
 

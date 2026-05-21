@@ -5,6 +5,8 @@ struct CurveParams {
     uint256 k;
     uint256 s;
     uint16 feeBps;
+    uint16 burnTaxMinBps;
+    uint16 burnTaxMaxBps;
     uint16 selfDeprecationBps;
     uint256 maxBuyOkb;
 }
@@ -18,6 +20,9 @@ struct BuyQuote {
     uint256 oldMinted;
     uint256 newMinted;
     uint256 tokensOut;
+    uint16 burnTaxBps;
+    uint256 grossTokensOut;
+    uint256 burnTaxTokens;
 }
 
 struct SellQuote {
@@ -29,4 +34,7 @@ struct SellQuote {
     uint256 newOkbCum;
     uint256 oldMinted;
     uint256 newMinted;
+    uint16 burnTaxBps;
+    uint256 burnTaxTokens;
+    uint256 effectiveTokensIn;
 }

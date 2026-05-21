@@ -14,6 +14,10 @@ type FactoryRouterImplementationReader = {
   readContract: (args: { address: `0x${string}`; abi: Abi; functionName: "routerImplementation" }) => Promise<unknown>;
 };
 
+type FactoryHookImplementationReader = {
+  readContract: (args: { address: `0x${string}`; abi: Abi; functionName: "hookImplementation" }) => Promise<unknown>;
+};
+
 export type TokenInfoTuple = readonly [
   `0x${string}`,
   `0x${string}`,
@@ -172,6 +176,29 @@ export async function readOptionalFactoryRouterImplementation(args: {
 
   if (!validAddress(value)) {
     throw new Error("Factory routerImplementation must be a valid address");
+  }
+
+  return value;
+}
+
+export async function readOptionalFactoryHookImplementation(args: {
+  client: FactoryHookImplementationReader;
+  factory: `0x${string}`;
+  abi: Abi;
+}): Promise<`0x${string}` | undefined> {
+  let value: unknown;
+  try {
+    value = await args.client.readContract({
+      address: args.factory,
+      abi: args.abi,
+      functionName: "hookImplementation",
+    });
+  } catch {
+    return undefined;
+  }
+
+  if (!validAddress(value)) {
+    throw new Error("Factory hookImplementation must be a valid address");
   }
 
   return value;

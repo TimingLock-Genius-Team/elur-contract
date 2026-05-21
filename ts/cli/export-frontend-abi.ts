@@ -75,6 +75,7 @@ type NetworkDeployment = {
   factory: `0x${string}`;
   proxyAdmin?: `0x${string}`;
   factoryImplementation?: `0x${string}`;
+  hookImplementation?: `0x${string}`;
   routerImplementation?: `0x${string}`;
   feeRecipient: `0x${string}`;
   migrationTarget: `0x${string}`;
@@ -253,6 +254,7 @@ function collectAddresses(): AddressesShape {
       factory: deployment.factory,
       proxyAdmin: deployment.proxyAdmin,
       factoryImplementation: deployment.factoryImplementation,
+      hookImplementation: deployment.hookImplementation,
       routerImplementation: deployment.routerImplementation,
       feeRecipient: deployment.feeRecipient,
       migrationTarget: deployment.migrationTarget,

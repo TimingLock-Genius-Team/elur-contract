@@ -79,6 +79,7 @@ const migrationTarget = await envOrDeploy(
   artifacts.localMigrationTarget,
 );
 
+const hookImplementation = await deploy(artifacts.hook);
 const routerImplementation = await deploy(artifacts.router);
 const factoryImplementation = await deploy(artifacts.factory);
 const factoryInitializer = encodeFunctionData({
@@ -98,6 +99,17 @@ const factory = await deploy(artifacts.transparentUpgradeableProxy, [
   factoryInitializer,
 ]);
 const proxyAdmin = await readProxyAdmin(publicRpc, factory);
+const setHookImplementationHash = await wallet.writeContract({
+  address: factory,
+  abi: abiOf(artifacts.factory),
+  functionName: "setHookImplementation",
+  args: [hookImplementation],
+});
+await waitForSuccessfulTransactionReceipt({
+  client: publicRpc,
+  hash: setHookImplementationHash,
+  label: "set Hook implementation",
+});
 
 writeDeployment({
   chainId,
@@ -107,6 +119,7 @@ writeDeployment({
   factory,
   proxyAdmin,
   factoryImplementation,
+  hookImplementation,
   routerImplementation,
   feeRecipient,
   uniswapV4PoolManager: poolManager,
@@ -124,6 +137,7 @@ printJson({
   factory,
   proxyAdmin,
   factoryImplementation,
+  hookImplementation,
   routerImplementation,
   feeRecipient,
   poolManager,

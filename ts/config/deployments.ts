@@ -11,6 +11,7 @@ export type Deployment = {
   factory: `0x${string}`;
   proxyAdmin?: `0x${string}`;
   factoryImplementation?: `0x${string}`;
+  hookImplementation?: `0x${string}`;
   routerImplementation?: `0x${string}`;
   feeRecipient: `0x${string}`;
   uniswapV4PoolManager: `0x${string}`;
@@ -20,6 +21,8 @@ export type Deployment = {
     k: string;
     s: string;
     feeBps: number;
+    burnTaxMinBps: number;
+    burnTaxMaxBps: number;
     selfDeprecationBps: number;
     maxBuyOkb: string;
   };
@@ -28,6 +31,10 @@ export type Deployment = {
     hook: `0x${string}`;
     router: `0x${string}`;
     curveS?: number;
+    feeBps?: number;
+    burnTaxMinBps?: number;
+    burnTaxMaxBps?: number;
+    hookImplementation?: `0x${string}`;
     routerImplementation?: `0x${string}`;
   }>;
 };
@@ -42,8 +49,8 @@ const deploymentAddressFields = [
 ] as const;
 
 const createdTokenAddressFields = ["token", "hook", "router"] as const;
-const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "routerImplementation"] as const;
-const optionalCreatedTokenAddressFields = ["routerImplementation"] as const;
+const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "hookImplementation", "routerImplementation"] as const;
+const optionalCreatedTokenAddressFields = ["hookImplementation", "routerImplementation"] as const;
 
 function assertDeploymentNetwork(network: string): string {
   if (!/^[a-z0-9][a-z0-9-]*$/i.test(network)) {
@@ -107,7 +114,26 @@ function parseDeployment(value: unknown): Deployment {
   requireNumericString(value.curve, "s");
   requireNumericString(value.curve, "maxBuyOkb");
   requireNumber(value.curve, "feeBps");
+  if (value.curve.burnTaxMinBps === undefined) {
+    value.curve.burnTaxMinBps = 0;
+  }
+  if (value.curve.burnTaxMaxBps === undefined) {
+    value.curve.burnTaxMaxBps = 0;
+  }
+  requireNumber(value.curve, "burnTaxMinBps");
+  requireNumber(value.curve, "burnTaxMaxBps");
   requireNumber(value.curve, "selfDeprecationBps");
+  const burnTaxMinBps = Number(value.curve.burnTaxMinBps);
+  const burnTaxMaxBps = Number(value.curve.burnTaxMaxBps);
+  if (burnTaxMinBps < 0 || burnTaxMinBps > 10_000) {
+    throw new Error("burnTaxMinBps must be between 0 and 10000");
+  }
+  if (burnTaxMaxBps < 0 || burnTaxMaxBps > 10_000) {
+    throw new Error("burnTaxMaxBps must be between 0 and 10000");
+  }
+  if (burnTaxMinBps > burnTaxMaxBps) {
+    throw new Error("burnTaxMinBps must be less than or equal to burnTaxMaxBps");
+  }
   if (!Array.isArray(value.createdTokens)) {
     throw new Error("createdTokens must be an array");
   }
@@ -128,6 +154,19 @@ function parseDeployment(value: unknown): Deployment {
     const curveS = entry.curveS;
     if (curveS !== undefined && (typeof curveS !== "number" || !Number.isInteger(curveS) || curveS < 1 || curveS > 1000)) {
       throw new Error(`createdTokens[${index}].curveS must be an integer between 1 and 1000`);
+    }
+    for (const field of ["feeBps", "burnTaxMinBps", "burnTaxMaxBps"] as const) {
+      const value = entry[field];
+      if (value !== undefined && (typeof value !== "number" || !Number.isInteger(value) || value < 0 || value > 10_000)) {
+        throw new Error(`createdTokens[${index}].${field} must be an integer between 0 and 10000`);
+      }
+    }
+    if (
+      typeof entry.burnTaxMinBps === "number" &&
+      typeof entry.burnTaxMaxBps === "number" &&
+      entry.burnTaxMinBps > entry.burnTaxMaxBps
+    ) {
+      throw new Error(`createdTokens[${index}].burnTaxMinBps must be less than or equal to burnTaxMaxBps`);
     }
   });
 

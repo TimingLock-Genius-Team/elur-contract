@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import {EulrTestBase} from "../helpers/EulrTestBase.sol";
-import {SellQuote} from "../../src/curve/CurveTypes.sol";
+import {BuyQuote, SellQuote} from "../../src/curve/CurveTypes.sol";
 import {Curve} from "../../src/curve/Curve.sol";
 import {EulrHook} from "../../src/hook/EulrHook.sol";
 import {EulrRouter} from "../../src/router/EulrRouter.sol";
@@ -12,6 +12,7 @@ import {IERC20Errors} from "@openzeppelin/contracts/interfaces/draft-IERC6093.so
 contract HookSellTest is EulrTestBase {
     function test_SellBurnsTokensAndPaysNetOkb() public {
         (EulrToken token, EulrHook hook, EulrRouter router) = createDemoToken();
+        BuyQuote memory buyQuote = hook.quoteBuy(2e18);
         uint256 tokensOut = buy(router, token, trader, 2e18);
 
         vm.roll(block.number + 1);
@@ -25,7 +26,8 @@ contract HookSellTest is EulrTestBase {
 
         assertEq(okbOut, quote.netOkbOut);
         assertEq(recipient.balance - balanceBefore, quote.netOkbOut);
-        assertEq(token.totalSupply(), quote.newMinted);
+        assertEq(hook.taxBurnedTokens(), quote.burnTaxTokens + buyQuote.burnTaxTokens);
+        assertEq(token.totalSupply() + hook.taxBurnedTokens(), quote.newMinted);
         assertEq(hook.okbCum(), quote.newOkbCum);
     }
 

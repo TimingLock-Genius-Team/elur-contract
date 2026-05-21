@@ -12,7 +12,7 @@ export function rpcUrl(network = deploymentNetwork()): string {
   if (network === "xlayer") {
     return rpcUrlFromEnv(network) ?? requiredEnv(process.env, "XLAYER_RPC_URL");
   }
-  if (network === "hashkeytest") {
+  if (network === "hashkeytest" || network === "sepolia") {
     return rpcUrlFromEnv(network) ?? requiredEnv(process.env, rpcEnvKeyForNetwork(network));
   }
 

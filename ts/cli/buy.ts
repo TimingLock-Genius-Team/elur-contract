@@ -12,6 +12,12 @@ const info = await resolveTokenInfo();
 const okb = parseOkb(getArg("okb"));
 const minOut = getRequiredMinOutArg();
 const recipient = getAddress(getArg("recipient", (await wallet.getAddresses())[0]));
+const quote = await client.readContract({
+  address: info.hook,
+  abi: hookAbi,
+  functionName: "quoteBuy",
+  args: [okb],
+});
 
 const hash = await wallet.writeContract({
   address: info.router,
@@ -33,6 +39,7 @@ printJson({
   token: info.token,
   inputOkb: okb,
   minOut,
+  quote,
   txHash: hash,
   blockNumber: receipt.blockNumber,
   okbCum,

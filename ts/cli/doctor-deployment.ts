@@ -25,6 +25,13 @@ const factoryAbi = [
   },
   {
     inputs: [],
+    name: "hookImplementation",
+    outputs: [{ internalType: "address", name: "", type: "address" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [],
     name: "routerImplementation",
     outputs: [{ internalType: "address", name: "", type: "address" }],
     stateMutability: "view",
@@ -72,6 +79,7 @@ function codeReaderForRpc(rpcUrl: string): DeploymentCodeReader {
     getFactoryConfig: async ({ address }) => ({
       feeRecipient: await client.readContract({ address, abi: factoryAbi, functionName: "feeRecipient" }),
       migrationTarget: await client.readContract({ address, abi: factoryAbi, functionName: "migrationTarget" }),
+      hookImplementation: await client.readContract({ address, abi: factoryAbi, functionName: "hookImplementation" }),
       routerImplementation: await client.readContract({ address, abi: factoryAbi, functionName: "routerImplementation" }),
       proxyAdmin: await readProxyAdmin(client, address),
       routerProxyOwner: await client.readContract({ address, abi: factoryAbi, functionName: "routerProxyOwner" }),

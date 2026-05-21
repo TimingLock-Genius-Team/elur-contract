@@ -19,6 +19,9 @@ contract QuoteBuy is EulrScriptBase {
         console2.log("newOkbCum", quote.newOkbCum);
         console2.log("oldMinted", quote.oldMinted);
         console2.log("newMinted", quote.newMinted);
+        console2.log("burnTaxBps", quote.burnTaxBps);
+        console2.log("grossTokensOut", quote.grossTokensOut);
+        console2.log("burnTaxTokens", quote.burnTaxTokens);
         console2.log("tokensOut", quote.tokensOut);
     }
 }

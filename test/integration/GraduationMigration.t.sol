@@ -31,8 +31,9 @@ contract GraduationMigrationTest is EulrTestBase {
         assertEq(liquidity, migrationTarget.liquidity());
         assertEq(address(hook).balance, claimableFees);
         assertEq(migrationTarget.lastOkbAmount(), reserve);
-        assertEq(migrationTarget.lastTokenAmount(), 21_000_000e18 - supplyBefore);
-        assertEq(token.balanceOf(address(migrationTarget)), 21_000_000e18 - supplyBefore);
+        uint256 expectedTokenAmount = 21_000_000e18 - hook.taxBurnedTokens() - supplyBefore;
+        assertEq(migrationTarget.lastTokenAmount(), expectedTokenAmount);
+        assertEq(token.balanceOf(address(migrationTarget)), expectedTokenAmount);
         assertTrue(hook.liquidityMigrated());
 
         uint256 recipientBefore = recipient.balance;

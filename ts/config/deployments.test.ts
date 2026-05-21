@@ -20,6 +20,8 @@ const deployment: Deployment = {
     k: "1",
     s: "2",
     feeBps: 30,
+    burnTaxMinBps: 100,
+    burnTaxMaxBps: 1000,
     selfDeprecationBps: 8000,
     maxBuyOkb: "3",
   },
@@ -70,6 +72,41 @@ test("readDeployment rejects malformed deployment JSON", () => {
     writeFileSync(path, `${JSON.stringify({ ...deployment, factory: "not-an-address" })}\n`);
 
     assert.throws(() => readDeployment(), /factory must be a valid address/);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("readDeployment rejects invalid burn tax bounds", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-invalid-burn-tax-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const path = deploymentPath();
+    mkdirSync(join(tempDir, "deployments", "xlayer"), { recursive: true });
+    writeFileSync(path, `${JSON.stringify({
+      ...deployment,
+      curve: {
+        ...deployment.curve,
+        burnTaxMinBps: 1001,
+        burnTaxMaxBps: 1000,
+      },
+    })}\n`);
+
+    assert.throws(() => readDeployment(), /burnTaxMinBps must be less than or equal to burnTaxMaxBps/);
   } finally {
     chdir(originalCwd);
     if (originalNetwork === undefined) {
@@ -135,6 +172,7 @@ test("readDeployment accepts proxy metadata for factory and created router proxi
       proxyAdmin: "0x0000000000000000000000000000000000000010",
       factoryImplementation: "0x0000000000000000000000000000000000000011",
       routerImplementation: "0x0000000000000000000000000000000000000012",
+      hookImplementation: "0x0000000000000000000000000000000000000013",
       createdTokens: [
         {
           token: "0x0000000000000000000000000000000000000007",
@@ -142,6 +180,7 @@ test("readDeployment accepts proxy metadata for factory and created router proxi
           router: "0x0000000000000000000000000000000000000009",
           curveS: 25,
           routerImplementation: "0x0000000000000000000000000000000000000012",
+          hookImplementation: "0x0000000000000000000000000000000000000013",
         },
       ],
     };

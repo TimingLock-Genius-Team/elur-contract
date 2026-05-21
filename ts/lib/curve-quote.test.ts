@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { curveParamsForS, deriveCurvePoint, quoteBuyAtOkbCum } from "./curve-quote.js";
+import {
+  burnTaxBpsAtOkbCum,
+  curveParamsForS,
+  deriveCurvePoint,
+  quoteBuyAtOkbCum,
+  quoteSellAtOkbCum,
+} from "./curve-quote.js";
 
 const params = {
   k: "21000000000000000000000000",
   s: "100000000000000000000",
   feeBps: 30,
+  burnTaxMinBps: 100,
+  burnTaxMaxBps: 1000,
   selfDeprecationBps: 8000,
   maxBuyOkb: "10000000000000000000",
 };
@@ -17,12 +25,36 @@ test("deriveCurvePoint matches backend fixture at small okbCum", () => {
 
 test("quoteBuyAtOkbCum matches minted delta at okbCum zero", () => {
   const gross = 1_000_000_000_000_000_000n;
-  const { fee, effectiveOkbIn, tokensOut } = quoteBuyAtOkbCum(0n, gross, params);
+  const { fee, effectiveOkbIn, grossTokensOut, burnTaxBps, burnTaxTokens, tokensOut } =
+    quoteBuyAtOkbCum(0n, gross, params);
   assert.equal(fee, 3_000_000_000_000_000n);
   assert.equal(effectiveOkbIn, gross - fee);
   const mint0 = deriveCurvePoint(0n, params).totalMinted;
   const mint1 = deriveCurvePoint(effectiveOkbIn, params).totalMinted;
-  assert.equal(tokensOut, mint1 - mint0);
+  assert.equal(grossTokensOut, mint1 - mint0);
+  assert.equal(burnTaxBps, 1000);
+  assert.equal(burnTaxTokens, grossTokensOut / 10n);
+  assert.equal(tokensOut, grossTokensOut - burnTaxTokens);
+});
+
+test("burnTaxBpsAtOkbCum falls toward the configured minimum near graduation", () => {
+  const low = burnTaxBpsAtOkbCum(0n, params);
+  const thresholdMinted = (BigInt(params.k) * BigInt(params.selfDeprecationBps)) / 10000n;
+  const nearGraduation = deriveCurvePoint(400_000_000_000_000_000_000n, params);
+
+  assert.equal(low, params.burnTaxMaxBps);
+  assert.ok(nearGraduation.totalMinted > thresholdMinted);
+  assert.equal(burnTaxBpsAtOkbCum(nearGraduation.okbCum, params), params.burnTaxMinBps);
+});
+
+test("quoteSellAtOkbCum applies burn tax before OKB redemption", () => {
+  const buy = quoteBuyAtOkbCum(0n, 1_000_000_000_000_000_000n, params);
+  const sell = quoteSellAtOkbCum(buy.newOkbCum, buy.tokensOut / 4n, params);
+
+  assert.equal(sell.burnTaxTokens, (sell.tokensIn * BigInt(sell.burnTaxBps)) / 10000n);
+  assert.equal(sell.effectiveTokensIn, sell.tokensIn - sell.burnTaxTokens);
+  assert.ok(sell.grossOkbOut > sell.netOkbOut);
+  assert.equal(sell.fee, (sell.grossOkbOut * BigInt(params.feeBps)) / 10000n);
 });
 
 test("quoteBuyAtOkbCum respects curveParamsForS slope", () => {

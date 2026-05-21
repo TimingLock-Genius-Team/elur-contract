@@ -29,6 +29,8 @@ const deployment: Deployment = {
     k: "1",
     s: "2",
     feeBps: 30,
+    burnTaxMinBps: 100,
+    burnTaxMaxBps: 1000,
     selfDeprecationBps: 8000,
     maxBuyOkb: "3",
   },

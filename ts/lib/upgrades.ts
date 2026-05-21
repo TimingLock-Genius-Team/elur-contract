@@ -6,6 +6,11 @@ export type RouterUpgradeTargets = {
   updateFactoryDefault: boolean;
 };
 
+export type HookUpgradeTargets = {
+  hooks: `0x${string}`[];
+  updateFactoryDefault: boolean;
+};
+
 function sameAddress(left: string, right: string): boolean {
   return left.toLowerCase() === right.toLowerCase();
 }
@@ -41,6 +46,37 @@ export function resolveRouterUpgradeTargets(
   return { routers: [router], updateFactoryDefault: false };
 }
 
+export function resolveHookUpgradeTargets(
+  deployment: Deployment,
+  options: { hook?: string; all?: boolean },
+): HookUpgradeTargets {
+  if (options.hook && options.all) {
+    throw new Error("Use either --hook or --all, not both");
+  }
+  if (!options.hook && !options.all) {
+    throw new Error("Specify --hook <address> or --all");
+  }
+  if (options.hook && !isAddress(options.hook)) {
+    throw new Error("--hook must be a valid address");
+  }
+
+  if (options.all) {
+    const hooks = deployment.createdTokens.map((entry) => entry.hook);
+    if (hooks.length === 0) {
+      throw new Error("No hook proxies recorded in deployment JSON");
+    }
+    return { hooks, updateFactoryDefault: true };
+  }
+
+  const hook = getAddress(options.hook!);
+  const recorded = deployment.createdTokens.some((entry) => sameAddress(entry.hook, hook));
+  if (!recorded) {
+    throw new Error(`Hook ${hook} is not recorded in deployment JSON`);
+  }
+
+  return { hooks: [hook], updateFactoryDefault: false };
+}
+
 export function applyRouterImplementationMetadata(
   deployment: Deployment,
   options: { routers: readonly `0x${string}`[]; implementation: `0x${string}`; updateFactoryDefault: boolean },
@@ -52,6 +88,21 @@ export function applyRouterImplementationMetadata(
   for (const entry of deployment.createdTokens) {
     if (options.routers.some((router) => sameAddress(router, entry.router))) {
       entry.routerImplementation = options.implementation;
+    }
+  }
+}
+
+export function applyHookImplementationMetadata(
+  deployment: Deployment,
+  options: { hooks: readonly `0x${string}`[]; implementation: `0x${string}`; updateFactoryDefault: boolean },
+): void {
+  if (options.updateFactoryDefault) {
+    deployment.hookImplementation = options.implementation;
+  }
+
+  for (const entry of deployment.createdTokens) {
+    if (options.hooks.some((hook) => sameAddress(hook, entry.hook))) {
+      entry.hookImplementation = options.implementation;
     }
   }
 }

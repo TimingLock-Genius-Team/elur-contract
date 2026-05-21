@@ -1,11 +1,18 @@
 export const ANVIL_CHAIN_ID = 31337;
 export const XLAYER_CHAIN_ID = 196;
 export const HASHKEYTEST_CHAIN_ID = 133;
+export const SEPOLIA_CHAIN_ID = 11155111;
 export const DEFAULT_ANVIL_RPC_URL = "http://127.0.0.1:8545";
 
 export const okbNativeCurrency = {
   name: "OKB",
   symbol: "OKB",
+  decimals: 18,
+} as const;
+
+export const ethNativeCurrency = {
+  name: "Ether",
+  symbol: "ETH",
   decimals: 18,
 } as const;
 
@@ -45,6 +52,15 @@ export function chainConfigFor(network: string, rpcUrl: string) {
     } as const;
   }
 
+  if (network === "sepolia") {
+    return {
+      id: SEPOLIA_CHAIN_ID,
+      name: "Sepolia",
+      nativeCurrency: ethNativeCurrency,
+      rpcUrls: { default: { http: [rpcUrl] } },
+    } as const;
+  }
+
   throw new Error(`Unsupported RPC network ${network}`);
 }
 
@@ -57,6 +73,9 @@ export function knownChainIdForNetwork(network: string): number | undefined {
   }
   if (network === "hashkeytest") {
     return HASHKEYTEST_CHAIN_ID;
+  }
+  if (network === "sepolia") {
+    return SEPOLIA_CHAIN_ID;
   }
 
   return undefined;

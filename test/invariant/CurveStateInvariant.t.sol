@@ -35,6 +35,8 @@ contract CurveStateInvariantTest is StdInvariant, EulrTestBase {
 
     function invariant_TokenSupplyTracksCurveMintedWithinDust() public view {
         uint256 curveMinted = Curve.totalMinted(hook.okbCum(), hook.getCurveParams());
-        assertApproxEqAbs(token.totalSupply(), curveMinted, 1e12, "supply must track curve minted");
+        assertApproxEqAbs(
+            token.totalSupply() + hook.taxBurnedTokens(), curveMinted, 1e12, "supply plus burns must track curve minted"
+        );
     }
 }

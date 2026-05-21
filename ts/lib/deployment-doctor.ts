@@ -13,6 +13,7 @@ export type DeploymentCodeReader = {
   getFactoryConfig?: (args: { address: `0x${string}` }) => Promise<{
     feeRecipient: `0x${string}`;
     migrationTarget: `0x${string}`;
+    hookImplementation?: `0x${string}`;
     routerImplementation?: `0x${string}`;
     proxyAdmin?: `0x${string}`;
     routerProxyOwner?: `0x${string}`;
@@ -42,8 +43,8 @@ const contractAddressFields = [
 ] as const;
 
 const createdTokenAddressFields = ["token", "hook", "router"] as const;
-const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "routerImplementation"] as const;
-const optionalCreatedTokenAddressFields = ["routerImplementation"] as const;
+const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "hookImplementation", "routerImplementation"] as const;
+const optionalCreatedTokenAddressFields = ["hookImplementation", "routerImplementation"] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -137,6 +138,15 @@ async function checkFactoryConfig(
       );
     }
     if (
+      validAddress(deployment.hookImplementation) &&
+      validAddress(config.hookImplementation) &&
+      !sameAddress(config.hookImplementation, deployment.hookImplementation)
+    ) {
+      errors.push(
+        `Factory hookImplementation ${config.hookImplementation} does not match deployment hookImplementation ${deployment.hookImplementation}`,
+      );
+    }
+    if (
       validAddress(deployment.routerImplementation) &&
       validAddress(config.routerImplementation) &&
       !sameAddress(config.routerImplementation, deployment.routerImplementation)
@@ -163,8 +173,21 @@ async function checkFactoryConfig(
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
+    if (isOptionalFactoryMetadataReadError(message)) {
+      warnings.push(`Could not check optional Factory upgrade metadata at ${deployment.factory}: ${message}`);
+      return;
+    }
     errors.push(`Could not check Factory config at ${deployment.factory}: ${message}`);
   }
+}
+
+function isOptionalFactoryMetadataReadError(message: string): boolean {
+  return (
+    message.includes("hookImplementation") ||
+    message.includes("routerImplementation") ||
+    message.includes("routerProxyOwner") ||
+    message.includes("upgradeAdmin")
+  );
 }
 
 export async function doctorDeployment(
@@ -201,6 +224,8 @@ export async function doctorDeployment(
     requireNumericString(curve, "s", errors);
     requireNumericString(curve, "maxBuyOkb", errors);
     requireNumber(curve, "feeBps", errors);
+    requireNumber(curve, "burnTaxMinBps", errors);
+    requireNumber(curve, "burnTaxMaxBps", errors);
     requireNumber(curve, "selfDeprecationBps", errors);
   }
 

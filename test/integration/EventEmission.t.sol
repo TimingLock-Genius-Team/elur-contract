@@ -24,6 +24,9 @@ contract EventEmissionTest is EulrTestBase {
         address indexed recipient,
         uint256 grossOkbIn,
         uint256 fee,
+        uint16 burnTaxBps,
+        uint256 grossTokensOut,
+        uint256 burnTaxTokens,
         uint256 tokensOut,
         uint256 oldOkbCum,
         uint256 newOkbCum
@@ -33,6 +36,9 @@ contract EventEmissionTest is EulrTestBase {
         address indexed user,
         address indexed recipient,
         uint256 tokensIn,
+        uint16 burnTaxBps,
+        uint256 burnTaxTokens,
+        uint256 effectiveTokensIn,
         uint256 grossOkbOut,
         uint256 fee,
         uint256 netOkbOut,
@@ -82,6 +88,9 @@ contract EventEmissionTest is EulrTestBase {
             recipient,
             buyQuote.grossOkbIn,
             buyQuote.fee,
+            buyQuote.burnTaxBps,
+            buyQuote.grossTokensOut,
+            buyQuote.burnTaxTokens,
             buyQuote.tokensOut,
             buyQuote.oldOkbCum,
             buyQuote.newOkbCum
@@ -101,6 +110,9 @@ contract EventEmissionTest is EulrTestBase {
             recipient,
             trader,
             tokensOut / 2,
+            sellQuote.burnTaxBps,
+            sellQuote.burnTaxTokens,
+            sellQuote.effectiveTokensIn,
             sellQuote.grossOkbOut,
             sellQuote.fee,
             sellQuote.netOkbOut,
@@ -125,7 +137,7 @@ contract EventEmissionTest is EulrTestBase {
         }
 
         uint256 okbAmount = address(hook).balance - hook.claimableFeeOkb();
-        uint256 tokenAmount = hook.getCurveParams().k - token.totalSupply();
+        uint256 tokenAmount = hook.getCurveParams().k - hook.taxBurnedTokens() - token.totalSupply();
         address pool = migrationTarget.pool();
         uint256 liquidity = migrationTarget.liquidity();
 

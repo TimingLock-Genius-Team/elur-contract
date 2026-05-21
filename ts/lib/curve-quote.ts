@@ -15,6 +15,8 @@ export type CurveParams = {
   k: string;
   s: string;
   feeBps: number;
+  burnTaxMinBps: number;
+  burnTaxMaxBps: number;
   selfDeprecationBps: number;
   maxBuyOkb: string;
 };
@@ -70,6 +72,34 @@ export function deriveCurvePoint(okbCum: bigint, params: CurveParams): CurvePoin
   };
 }
 
+function okbAtMinted(minted: bigint, params: CurveParams): bigint {
+  const k = BigInt(params.k);
+  if (minted >= k) {
+    throw new Error("minted amount must be below curve cap");
+  }
+  if (minted <= 0n) {
+    return 0n;
+  }
+
+  const ratio = wadToDecimal(k).div(wadToDecimal(k - minted));
+  return toWad(wadToDecimal(BigInt(params.s)).mul(ratio.ln()));
+}
+
+export function burnTaxBpsAtOkbCum(okbCum: bigint, params: CurveParams): number {
+  const minted = deriveCurvePoint(okbCum, params).totalMinted;
+  const threshold = (BigInt(params.k) * BigInt(params.selfDeprecationBps)) / 10000n;
+  if (threshold <= 0n) {
+    throw new Error("selfDeprecationBps must be positive");
+  }
+  if (minted >= threshold) {
+    return params.burnTaxMinBps;
+  }
+
+  const taxRange = BigInt(params.burnTaxMaxBps - params.burnTaxMinBps);
+  const taxDrop = (minted * taxRange) / threshold;
+  return Number(BigInt(params.burnTaxMaxBps) - taxDrop);
+}
+
 /** Mirrors on-chain `Curve.quoteBuy`. */
 export function quoteBuyAtOkbCum(
   okbCum: bigint,
@@ -78,6 +108,10 @@ export function quoteBuyAtOkbCum(
 ): {
   fee: bigint;
   effectiveOkbIn: bigint;
+  newOkbCum: bigint;
+  grossTokensOut: bigint;
+  burnTaxBps: number;
+  burnTaxTokens: bigint;
   tokensOut: bigint;
 } {
   const maxBuy = BigInt(params.maxBuyOkb);
@@ -96,5 +130,64 @@ export function quoteBuyAtOkbCum(
   const newOkbCum = okbCum + effectiveOkbIn;
   const oldMinted = deriveCurvePoint(okbCum, params).totalMinted;
   const newMinted = deriveCurvePoint(newOkbCum, params).totalMinted;
-  return { fee, effectiveOkbIn, tokensOut: newMinted - oldMinted };
+  const grossTokensOut = newMinted - oldMinted;
+  const burnTaxBps = burnTaxBpsAtOkbCum(okbCum, params);
+  const burnTaxTokens = (grossTokensOut * BigInt(burnTaxBps)) / 10000n;
+  return {
+    fee,
+    effectiveOkbIn,
+    newOkbCum,
+    grossTokensOut,
+    burnTaxBps,
+    burnTaxTokens,
+    tokensOut: grossTokensOut - burnTaxTokens,
+  };
+}
+
+export function quoteSellAtOkbCum(
+  okbCum: bigint,
+  tokensIn: bigint,
+  params: CurveParams,
+): {
+  tokensIn: bigint;
+  grossOkbOut: bigint;
+  fee: bigint;
+  netOkbOut: bigint;
+  oldOkbCum: bigint;
+  newOkbCum: bigint;
+  oldMinted: bigint;
+  newMinted: bigint;
+  burnTaxBps: number;
+  burnTaxTokens: bigint;
+  effectiveTokensIn: bigint;
+} {
+  if (tokensIn <= 0n) {
+    throw new Error("tokens in must be positive");
+  }
+
+  const oldMinted = deriveCurvePoint(okbCum, params).totalMinted;
+  const burnTaxBps = burnTaxBpsAtOkbCum(okbCum, params);
+  const burnTaxTokens = (tokensIn * BigInt(burnTaxBps)) / 10000n;
+  const effectiveTokensIn = tokensIn - burnTaxTokens;
+  if (effectiveTokensIn > oldMinted) {
+    throw new Error("effective tokens in exceeds curve minted amount");
+  }
+
+  const newMinted = oldMinted - effectiveTokensIn;
+  const newOkbCum = okbAtMinted(newMinted, params);
+  const grossOkbOut = okbCum - newOkbCum;
+  const fee = (grossOkbOut * BigInt(params.feeBps)) / 10000n;
+  return {
+    tokensIn,
+    grossOkbOut,
+    fee,
+    netOkbOut: grossOkbOut - fee,
+    oldOkbCum: okbCum,
+    newOkbCum,
+    oldMinted,
+    newMinted,
+    burnTaxBps,
+    burnTaxTokens,
+    effectiveTokensIn,
+  };
 }

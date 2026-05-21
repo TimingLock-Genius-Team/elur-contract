@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {EulrFactory} from "../src/factory/EulrFactory.sol";
+import {EulrHook} from "../src/hook/EulrHook.sol";
 import {EulrRouter} from "../src/router/EulrRouter.sol";
 import {TransparentUpgradeableProxy} from "@openzeppelin/contracts/proxy/transparent/TransparentUpgradeableProxy.sol";
 
@@ -37,6 +38,7 @@ contract LocalDeployFactory is Script {
 
         vm.startBroadcast(deployerKey);
         LocalMigrationTarget migrationTarget = new LocalMigrationTarget();
+        EulrHook hookImplementation = new EulrHook();
         EulrRouter routerImplementation = new EulrRouter();
         EulrFactory factoryImplementation = new EulrFactory();
         TransparentUpgradeableProxy factoryProxy = new TransparentUpgradeableProxy(
@@ -48,6 +50,7 @@ contract LocalDeployFactory is Script {
             )
         );
         factory = EulrFactory(address(factoryProxy));
+        factory.setHookImplementation(address(hookImplementation));
         vm.stopBroadcast();
         address proxyAdmin = _proxyAdmin(address(factoryProxy));
 
@@ -55,6 +58,7 @@ contract LocalDeployFactory is Script {
         console2.log("factory", address(factory));
         console2.log("proxyAdmin", proxyAdmin);
         console2.log("factoryImplementation", address(factoryImplementation));
+        console2.log("hookImplementation", address(hookImplementation));
         console2.log("routerImplementation", address(routerImplementation));
         console2.log("feeRecipient", feeRecipient);
         console2.log("migrationTarget", address(migrationTarget));

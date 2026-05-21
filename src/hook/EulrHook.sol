@@ -6,21 +6,23 @@ import {Curve} from "../curve/Curve.sol";
 import {IEulrHook} from "../interfaces/IEulrHook.sol";
 import {IMigrationTarget} from "../interfaces/IMigrationTarget.sol";
 import {EulrToken} from "../token/EulrToken.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 
-contract EulrHook is IEulrHook, ReentrancyGuard {
+contract EulrHook is IEulrHook, Initializable, ReentrancyGuard {
     using Address for address payable;
 
-    EulrToken public immutable token;
+    EulrToken public token;
     address public router;
-    address public immutable feeRecipient;
-    address public immutable factory;
-    address public immutable migrationTarget;
+    address public feeRecipient;
+    address public factory;
+    address public migrationTarget;
 
     CurveParams public curveParams;
     uint256 public okbCum;
     uint256 public claimableFeeOkb;
+    uint256 public taxBurnedTokens;
     bool public selfDeprecated;
     bool public liquidityMigrated;
 
@@ -32,6 +34,9 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
         address indexed recipient,
         uint256 grossOkbIn,
         uint256 fee,
+        uint16 burnTaxBps,
+        uint256 grossTokensOut,
+        uint256 burnTaxTokens,
         uint256 tokensOut,
         uint256 oldOkbCum,
         uint256 newOkbCum
@@ -41,6 +46,9 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
         address indexed user,
         address indexed recipient,
         uint256 tokensIn,
+        uint16 burnTaxBps,
+        uint256 burnTaxTokens,
+        uint256 effectiveTokensIn,
         uint256 grossOkbOut,
         uint256 fee,
         uint256 netOkbOut,
@@ -68,13 +76,17 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
     error NoClaimableFees();
     error TokenTransferFailed();
 
-    constructor(
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         EulrToken token_,
         address feeRecipient_,
         address factory_,
         address migrationTarget_,
         CurveParams memory curveParams_
-    ) {
+    ) external initializer {
         if (
             address(token_) == address(0) || feeRecipient_ == address(0) || factory_ == address(0)
                 || migrationTarget_ == address(0)
@@ -145,13 +157,20 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
 
         okbCum = quote.newOkbCum;
         claimableFeeOkb += quote.fee;
+        taxBurnedTokens += quote.burnTaxTokens;
         lastBuyBlock[payer] = block.number;
         lastBuyBlock[recipient] = block.number;
         if (deprecatedAfterBuy) {
             selfDeprecated = true;
         }
 
-        token.mint(recipient, quote.tokensOut);
+        token.mint(address(this), quote.grossTokensOut);
+        if (quote.burnTaxTokens != 0) {
+            token.burn(address(this), quote.burnTaxTokens);
+        }
+        if (!token.transfer(recipient, quote.tokensOut)) {
+            revert TokenTransferFailed();
+        }
 
         if (deprecatedAfterBuy) {
             emit SelfDeprecated(address(token), quote.newOkbCum, quote.newMinted);
@@ -163,6 +182,9 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
             recipient,
             quote.grossOkbIn,
             quote.fee,
+            quote.burnTaxBps,
+            quote.grossTokensOut,
+            quote.burnTaxTokens,
             quote.tokensOut,
             quote.oldOkbCum,
             quote.newOkbCum
@@ -195,6 +217,7 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
 
         okbCum = quote.newOkbCum;
         claimableFeeOkb += quote.fee;
+        taxBurnedTokens += quote.burnTaxTokens;
         token.burn(address(this), tokensIn);
 
         if (quote.netOkbOut != 0) {
@@ -206,6 +229,9 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
             seller,
             recipient,
             tokensIn,
+            quote.burnTaxBps,
+            quote.burnTaxTokens,
+            quote.effectiveTokensIn,
             quote.grossOkbOut,
             quote.fee,
             quote.netOkbOut,
@@ -242,6 +268,7 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
             totalMinted: Curve.totalMinted(okbCum, curveParams),
             currentPrice: Curve.marginalPrice(okbCum, curveParams),
             claimableFeeOkb: claimableFeeOkb,
+            taxBurnedTokens: taxBurnedTokens,
             selfDeprecated: selfDeprecated,
             liquidityMigrated: liquidityMigrated
         });
@@ -281,7 +308,8 @@ contract EulrHook is IEulrHook, ReentrancyGuard {
         liquidityMigrated = true;
 
         uint256 okbAmount = address(this).balance - claimableFeeOkb;
-        uint256 tokenAmount = curveParams.k > token.totalSupply() ? curveParams.k - token.totalSupply() : 0;
+        uint256 postBurnCap = curveParams.k > taxBurnedTokens ? curveParams.k - taxBurnedTokens : 0;
+        uint256 tokenAmount = postBurnCap > token.totalSupply() ? postBurnCap - token.totalSupply() : 0;
         if (tokenAmount > 0) {
             token.mint(address(this), tokenAmount);
             if (!token.transfer(migrationTarget, tokenAmount)) {

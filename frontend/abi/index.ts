@@ -229,6 +229,70 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "createToken",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "symbol",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "socialURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "feeBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMinBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMaxBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "hook",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "createTokenAndBuy",
     "inputs": [
       {
@@ -253,6 +317,80 @@ export const eulrFactoryAbi = [
       },
       {
         "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "minTokensOut",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "recipient",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "token",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "hook",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "router",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "payable"
+  },
+  {
+    "type": "function",
+    "name": "createTokenAndBuy",
+    "inputs": [
+      {
+        "name": "name",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "symbol",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "socialURI",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "curveS",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "feeBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMinBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMaxBps",
         "type": "uint16",
         "internalType": "uint16"
       },
@@ -362,6 +500,16 @@ export const eulrFactoryAbi = [
           },
           {
             "name": "feeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMinBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMaxBps",
             "type": "uint16",
             "internalType": "uint16"
           },
@@ -470,6 +618,19 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "hookImplementation",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "initialize",
     "inputs": [
       {
@@ -561,6 +722,19 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "function",
+    "name": "setHookImplementation",
+    "inputs": [
+      {
+        "name": "newHookImplementation",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setRouterImplementation",
     "inputs": [
       {
@@ -584,6 +758,25 @@ export const eulrFactoryAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "HookImplementationUpdated",
+    "inputs": [
+      {
+        "name": "oldImplementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      },
+      {
+        "name": "newImplementation",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -683,6 +876,11 @@ export const eulrFactoryAbi = [
   },
   {
     "type": "error",
+    "name": "HookImplementationMissing",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidCurveS",
     "inputs": []
   },
@@ -748,60 +946,7 @@ export const eulrFactoryAbi = [
 export const eulrHookAbi = [
   {
     "type": "constructor",
-    "inputs": [
-      {
-        "name": "token_",
-        "type": "address",
-        "internalType": "contract EulrToken"
-      },
-      {
-        "name": "feeRecipient_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "factory_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "migrationTarget_",
-        "type": "address",
-        "internalType": "address"
-      },
-      {
-        "name": "curveParams_",
-        "type": "tuple",
-        "internalType": "struct CurveParams",
-        "components": [
-          {
-            "name": "k",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "s",
-            "type": "uint256",
-            "internalType": "uint256"
-          },
-          {
-            "name": "feeBps",
-            "type": "uint16",
-            "internalType": "uint16"
-          },
-          {
-            "name": "selfDeprecationBps",
-            "type": "uint16",
-            "internalType": "uint16"
-          },
-          {
-            "name": "maxBuyOkb",
-            "type": "uint256",
-            "internalType": "uint256"
-          }
-        ]
-      }
-    ],
+    "inputs": [],
     "stateMutability": "nonpayable"
   },
   {
@@ -903,6 +1048,16 @@ export const eulrHookAbi = [
         "internalType": "uint16"
       },
       {
+        "name": "burnTaxMinBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxMaxBps",
+        "type": "uint16",
+        "internalType": "uint16"
+      },
+      {
         "name": "selfDeprecationBps",
         "type": "uint16",
         "internalType": "uint16"
@@ -942,6 +1097,11 @@ export const eulrHookAbi = [
           },
           {
             "name": "claimableFeeOkb",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "taxBurnedTokens",
             "type": "uint256",
             "internalType": "uint256"
           },
@@ -1012,6 +1172,16 @@ export const eulrHookAbi = [
             "internalType": "uint16"
           },
           {
+            "name": "burnTaxMinBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
             "name": "selfDeprecationBps",
             "type": "uint16",
             "internalType": "uint16"
@@ -1025,6 +1195,76 @@ export const eulrHookAbi = [
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "initialize",
+    "inputs": [
+      {
+        "name": "token_",
+        "type": "address",
+        "internalType": "contract EulrToken"
+      },
+      {
+        "name": "feeRecipient_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "factory_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "migrationTarget_",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "curveParams_",
+        "type": "tuple",
+        "internalType": "struct CurveParams",
+        "components": [
+          {
+            "name": "k",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "s",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "feeBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMinBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxMaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "selfDeprecationBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "maxBuyOkb",
+            "type": "uint256",
+            "internalType": "uint256"
+          }
+        ]
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
   },
   {
     "type": "function",
@@ -1163,6 +1403,21 @@ export const eulrHookAbi = [
             "name": "tokensOut",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "grossTokensOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
           }
         ]
       }
@@ -1222,6 +1477,21 @@ export const eulrHookAbi = [
           },
           {
             "name": "newMinted",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "effectiveTokensIn",
             "type": "uint256",
             "internalType": "uint256"
           }
@@ -1305,6 +1575,19 @@ export const eulrHookAbi = [
   },
   {
     "type": "function",
+    "name": "taxBurnedTokens",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "token",
     "inputs": [],
     "outputs": [
@@ -1364,6 +1647,24 @@ export const eulrHookAbi = [
         "internalType": "uint256"
       },
       {
+        "name": "burnTaxBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "grossTokensOut",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "burnTaxTokens",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
         "name": "tokensOut",
         "type": "uint256",
         "indexed": false,
@@ -1399,6 +1700,19 @@ export const eulrHookAbi = [
         "type": "uint256",
         "indexed": false,
         "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "Initialized",
+    "inputs": [
+      {
+        "name": "version",
+        "type": "uint64",
+        "indexed": false,
+        "internalType": "uint64"
       }
     ],
     "anonymous": false
@@ -1513,6 +1827,24 @@ export const eulrHookAbi = [
         "internalType": "uint256"
       },
       {
+        "name": "burnTaxBps",
+        "type": "uint16",
+        "indexed": false,
+        "internalType": "uint16"
+      },
+      {
+        "name": "burnTaxTokens",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
+        "name": "effectiveTokensIn",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      },
+      {
         "name": "grossOkbOut",
         "type": "uint256",
         "indexed": false,
@@ -1588,6 +1920,11 @@ export const eulrHookAbi = [
   },
   {
     "type": "error",
+    "name": "InvalidInitialization",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "InvalidMigrationResult",
     "inputs": []
   },
@@ -1609,6 +1946,11 @@ export const eulrHookAbi = [
   {
     "type": "error",
     "name": "NoClaimableFees",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "NotInitializing",
     "inputs": []
   },
   {
@@ -1926,6 +2268,21 @@ export const eulrRouterAbi = [
             "name": "tokensOut",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "grossTokensOut",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
           }
         ]
       }
@@ -1990,6 +2347,21 @@ export const eulrRouterAbi = [
           },
           {
             "name": "newMinted",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "burnTaxBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "burnTaxTokens",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "effectiveTokensIn",
             "type": "uint256",
             "internalType": "uint256"
           }
