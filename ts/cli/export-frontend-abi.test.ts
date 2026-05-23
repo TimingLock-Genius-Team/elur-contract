@@ -21,6 +21,7 @@ const expectedContracts = [
   { name: "ProxyAdmin", artifact: artifacts.proxyAdmin },
   { name: "TransparentUpgradeableProxy", artifact: artifacts.transparentUpgradeableProxy },
   { name: "UniswapV4MintPositionTarget", artifact: artifacts.uniswapV4MintPositionTarget },
+  { name: "EulrV4SellTaxHook", artifact: artifacts.v4SellTaxHook },
 ] as const;
 
 test("ABI bundles exist for frontend and backend packages", () => {

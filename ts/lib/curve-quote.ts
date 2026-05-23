@@ -86,18 +86,9 @@ function okbAtMinted(minted: bigint, params: CurveParams): bigint {
 }
 
 export function burnTaxBpsAtOkbCum(okbCum: bigint, params: CurveParams): number {
-  const minted = deriveCurvePoint(okbCum, params).totalMinted;
-  const threshold = (BigInt(params.k) * BigInt(params.selfDeprecationBps)) / 10000n;
-  if (threshold <= 0n) {
-    throw new Error("selfDeprecationBps must be positive");
-  }
-  if (minted >= threshold) {
-    return params.burnTaxMinBps;
-  }
-
-  const taxRange = BigInt(params.burnTaxMaxBps - params.burnTaxMinBps);
-  const taxDrop = (minted * taxRange) / threshold;
-  return Number(BigInt(params.burnTaxMaxBps) - taxDrop);
+  okbCum;
+  params;
+  return 0;
 }
 
 /** Mirrors on-chain `Curve.quoteBuy`. */
@@ -131,16 +122,14 @@ export function quoteBuyAtOkbCum(
   const oldMinted = deriveCurvePoint(okbCum, params).totalMinted;
   const newMinted = deriveCurvePoint(newOkbCum, params).totalMinted;
   const grossTokensOut = newMinted - oldMinted;
-  const burnTaxBps = burnTaxBpsAtOkbCum(okbCum, params);
-  const burnTaxTokens = (grossTokensOut * BigInt(burnTaxBps)) / 10000n;
   return {
     fee,
     effectiveOkbIn,
     newOkbCum,
     grossTokensOut,
-    burnTaxBps,
-    burnTaxTokens,
-    tokensOut: grossTokensOut - burnTaxTokens,
+    burnTaxBps: 0,
+    burnTaxTokens: 0n,
+    tokensOut: grossTokensOut,
   };
 }
 
@@ -166,9 +155,7 @@ export function quoteSellAtOkbCum(
   }
 
   const oldMinted = deriveCurvePoint(okbCum, params).totalMinted;
-  const burnTaxBps = burnTaxBpsAtOkbCum(okbCum, params);
-  const burnTaxTokens = (tokensIn * BigInt(burnTaxBps)) / 10000n;
-  const effectiveTokensIn = tokensIn - burnTaxTokens;
+  const effectiveTokensIn = tokensIn;
   if (effectiveTokensIn > oldMinted) {
     throw new Error("effective tokens in exceeds curve minted amount");
   }
@@ -186,8 +173,8 @@ export function quoteSellAtOkbCum(
     newOkbCum,
     oldMinted,
     newMinted,
-    burnTaxBps,
-    burnTaxTokens,
+    burnTaxBps: 0,
+    burnTaxTokens: 0n,
     effectiveTokensIn,
   };
 }

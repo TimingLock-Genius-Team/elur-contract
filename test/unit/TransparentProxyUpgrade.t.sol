@@ -140,7 +140,8 @@ contract TransparentProxyUpgradeTest is Test {
         factory.setHookImplementation(address(hookImplementation));
 
         vm.prank(creator);
-        (address tokenAddr, address hookAddr, address routerAddr) = factory.createToken("Demo", "DEMO", "ipfs://demo", "");
+        (address tokenAddr, address hookAddr, address routerAddr) =
+            factory.createToken("Demo", "DEMO", "ipfs://demo", "");
 
         EulrRouter router = EulrRouter(payable(routerAddr));
         EulrToken token = EulrToken(tokenAddr);

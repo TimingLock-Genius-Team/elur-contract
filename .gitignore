@@ -12,3 +12,4 @@ coverage/
 backend/.coverage-build/
 deployments/*/latest.json
 lcov.info
+.worktrees/

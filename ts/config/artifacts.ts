@@ -7,4 +7,6 @@ export const artifacts = {
   localExternalDependency: "LocalExternalDependency.sol/LocalExternalDependency.json",
   localMigrationTarget: "LocalMigrationTarget.sol/LocalMigrationTarget.json",
   uniswapV4MintPositionTarget: "UniswapV4MintPositionTarget.sol/UniswapV4MintPositionTarget.json",
+  v4SellTaxHook: "EulrV4SellTaxHook.sol/EulrV4SellTaxHook.json",
+  v4SellTaxHookDeployer: "EulrV4SellTaxHookDeployer.sol/EulrV4SellTaxHookDeployer.json",
 } as const;

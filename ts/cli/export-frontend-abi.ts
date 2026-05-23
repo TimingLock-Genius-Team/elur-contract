@@ -1,4 +1,4 @@
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Abi } from "viem";
 import ts from "typescript";
@@ -48,6 +48,11 @@ const CONTRACT_EXPORTS: ExportContract[] = [
     name: "UniswapV4MintPositionTarget",
     artifact: artifacts.uniswapV4MintPositionTarget,
     description: "Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and sends the LP position to the configured recipient.",
+  },
+  {
+    name: "EulrV4SellTaxHook",
+    artifact: artifacts.v4SellTaxHook,
+    description: "Post-graduation Uniswap v4 hook. Taxes exact-input EULR sells and leaves buys untaxed.",
   },
 ];
 
@@ -269,12 +274,44 @@ function collectAddresses(): AddressesShape {
     byChainId[chainKey] = list;
   }
 
+  if (Object.keys(byNetwork).length === 0) {
+    const existing = readExistingAddressesSnapshot();
+    if (existing && Object.keys(existing.byNetwork).length > 0) {
+      return existing;
+    }
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     generatedFrom: "deployments/<network>/latest.json + out/<Contract>.sol/<Contract>.json",
     byNetwork,
     byChainId,
   };
+}
+
+function readExistingAddressesSnapshot(): AddressesShape | undefined {
+  const path = join(outputDirs[0], "addresses.json");
+  if (!existsSync(path)) {
+    return undefined;
+  }
+
+  try {
+    const snapshot = JSON.parse(readFileSync(path, "utf8")) as AddressesShape;
+    if (
+      typeof snapshot.generatedAt === "string" &&
+      typeof snapshot.generatedFrom === "string" &&
+      typeof snapshot.byNetwork === "object" &&
+      snapshot.byNetwork !== null &&
+      typeof snapshot.byChainId === "object" &&
+      snapshot.byChainId !== null
+    ) {
+      return snapshot;
+    }
+  } catch {
+    return undefined;
+  }
+
+  return undefined;
 }
 
 function camelCase(name: string): string {

@@ -157,7 +157,6 @@ contract EulrHook is IEulrHook, Initializable, ReentrancyGuard {
 
         okbCum = quote.newOkbCum;
         claimableFeeOkb += quote.fee;
-        taxBurnedTokens += quote.burnTaxTokens;
         lastBuyBlock[payer] = block.number;
         lastBuyBlock[recipient] = block.number;
         if (deprecatedAfterBuy) {
@@ -165,9 +164,6 @@ contract EulrHook is IEulrHook, Initializable, ReentrancyGuard {
         }
 
         token.mint(address(this), quote.grossTokensOut);
-        if (quote.burnTaxTokens != 0) {
-            token.burn(address(this), quote.burnTaxTokens);
-        }
         if (!token.transfer(recipient, quote.tokensOut)) {
             revert TokenTransferFailed();
         }
@@ -217,7 +213,6 @@ contract EulrHook is IEulrHook, Initializable, ReentrancyGuard {
 
         okbCum = quote.newOkbCum;
         claimableFeeOkb += quote.fee;
-        taxBurnedTokens += quote.burnTaxTokens;
         token.burn(address(this), tokensIn);
 
         if (quote.netOkbOut != 0) {
@@ -308,8 +303,7 @@ contract EulrHook is IEulrHook, Initializable, ReentrancyGuard {
         liquidityMigrated = true;
 
         uint256 okbAmount = address(this).balance - claimableFeeOkb;
-        uint256 postBurnCap = curveParams.k > taxBurnedTokens ? curveParams.k - taxBurnedTokens : 0;
-        uint256 tokenAmount = postBurnCap > token.totalSupply() ? postBurnCap - token.totalSupply() : 0;
+        uint256 tokenAmount = curveParams.k > token.totalSupply() ? curveParams.k - token.totalSupply() : 0;
         if (tokenAmount > 0) {
             token.mint(address(this), tokenAmount);
             if (!token.transfer(migrationTarget, tokenAmount)) {

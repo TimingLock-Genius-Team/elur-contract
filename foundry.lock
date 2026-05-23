@@ -1,0 +1,14 @@
+{
+  "backend": {
+    "rev": "68b397fe5eee013af6da5c5bf29d14d55049c5f4"
+  },
+  "lib/v4-core": {
+    "tag": {
+      "name": "v4.0.0",
+      "rev": "e50237c43811bd9b526eff40f26772152a42daba"
+    }
+  },
+  "web": {
+    "rev": "af83837399de3a8dd025ad2ee93df065ff323f9c"
+  }
+}

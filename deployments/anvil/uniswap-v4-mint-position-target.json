@@ -1,0 +1,20 @@
+{
+  "chainId": 31337,
+  "commit": "a4e4ecc",
+  "deployedAt": "2026-05-23T06:18:09.075Z",
+  "deployer": "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266",
+  "migrationTarget": "0xD5ac451B0c50B9476107823Af206eD814a2e2580",
+  "transactionHash": "0x38a1acdc2d3c63efa5d20dd2a936fb7bf44c78e4f1f9d68318687b25f61448ec",
+  "uniswapV4PoolManager": "0x9d4454B023096f34B160D6B654540c56A1F81688",
+  "uniswapV4PositionManager": "0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00",
+  "lpRecipient": "0x000000000000000000000000000000000000dEaD",
+  "migrationPool": {
+    "hooks": "0xE2b07a4aA5103a3b3D2A18660dF7eb2F15AeC088",
+    "poolFee": 3000,
+    "tickSpacing": 60,
+    "tickLower": -887220,
+    "tickUpper": 887220,
+    "migrationLiquidity": "1000000000000000000",
+    "hookDataHash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+  }
+}

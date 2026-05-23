@@ -19,8 +19,8 @@ library Curve {
             k: 21_000_000e18,
             s: 100e18,
             feeBps: 30,
-            burnTaxMinBps: 100,
-            burnTaxMaxBps: 1_000,
+            burnTaxMinBps: 0,
+            burnTaxMaxBps: 0,
             selfDeprecationBps: 8000,
             maxBuyOkb: 10e18
         });
@@ -87,8 +87,6 @@ library Curve {
         uint256 newOkbCum = okbCum + effectiveOkbIn;
         uint256 newMinted = totalMinted(newOkbCum, params);
         uint256 grossTokensOut = newMinted - oldMinted;
-        uint16 burnTaxBps_ = burnTaxBps(okbCum, params);
-        uint256 burnTaxTokens = (grossTokensOut * burnTaxBps_) / BPS_DENOMINATOR;
 
         quote = BuyQuote({
             grossOkbIn: grossOkbIn,
@@ -98,10 +96,10 @@ library Curve {
             newOkbCum: newOkbCum,
             oldMinted: oldMinted,
             newMinted: newMinted,
-            tokensOut: grossTokensOut - burnTaxTokens,
-            burnTaxBps: burnTaxBps_,
+            tokensOut: grossTokensOut,
+            burnTaxBps: 0,
             grossTokensOut: grossTokensOut,
-            burnTaxTokens: burnTaxTokens
+            burnTaxTokens: 0
         });
     }
 
@@ -116,9 +114,7 @@ library Curve {
         }
 
         uint256 oldMinted = totalMinted(okbCum, params);
-        uint16 burnTaxBps_ = burnTaxBps(okbCum, params);
-        uint256 burnTaxTokens = (tokensIn * burnTaxBps_) / BPS_DENOMINATOR;
-        uint256 effectiveTokensIn = tokensIn - burnTaxTokens;
+        uint256 effectiveTokensIn = tokensIn;
         if (effectiveTokensIn > oldMinted) {
             revert MintedOutOfRange();
         }
@@ -137,25 +133,16 @@ library Curve {
             newOkbCum: newOkbCum,
             oldMinted: oldMinted,
             newMinted: newMinted,
-            burnTaxBps: burnTaxBps_,
-            burnTaxTokens: burnTaxTokens,
+            burnTaxBps: 0,
+            burnTaxTokens: 0,
             effectiveTokensIn: effectiveTokensIn
         });
     }
 
     function burnTaxBps(uint256 okbCum, CurveParams memory params) internal pure returns (uint16) {
         validateParams(params);
-        uint256 minted = totalMinted(okbCum, params);
-        uint256 threshold = (params.k * params.selfDeprecationBps) / BPS_DENOMINATOR;
-        if (minted >= threshold) {
-            return params.burnTaxMinBps;
-        }
-
-        uint256 taxRange = params.burnTaxMaxBps - params.burnTaxMinBps;
-        uint256 taxDrop = (minted * taxRange) / threshold;
-        // casting to uint16 is safe because params are bounded to BPS_DENOMINATOR and taxDrop cannot exceed taxRange.
-        // forge-lint: disable-next-line(unsafe-typecast)
-        return uint16(params.burnTaxMaxBps - taxDrop);
+        okbCum;
+        return 0;
     }
 
     function isSelfDeprecated(uint256 okbCum, CurveParams memory params) internal pure returns (bool) {

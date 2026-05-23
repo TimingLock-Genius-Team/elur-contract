@@ -87,8 +87,8 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.k, 21_000_000e18);
         assertEq(params.s, 100e18);
         assertEq(params.feeBps, 30);
-        assertEq(params.burnTaxMinBps, 100);
-        assertEq(params.burnTaxMaxBps, 1_000);
+        assertEq(params.burnTaxMinBps, 0);
+        assertEq(params.burnTaxMaxBps, 0);
         assertEq(params.selfDeprecationBps, 8000);
         assertEq(params.maxBuyOkb, 10e18);
 
@@ -109,8 +109,8 @@ contract FactoryValidationTest is EulrTestBase {
         assertEq(params.k, 21_000_000e18);
         assertEq(params.s, 25e18);
         assertEq(params.feeBps, 30);
-        assertEq(params.burnTaxMinBps, 100);
-        assertEq(params.burnTaxMaxBps, 1_000);
+        assertEq(params.burnTaxMinBps, 0);
+        assertEq(params.burnTaxMaxBps, 0);
         assertEq(params.selfDeprecationBps, 8000);
         assertEq(params.maxBuyOkb, 10e18);
     }

@@ -7,6 +7,7 @@ import {
 } from "../config/migration-target-deployments.js";
 import { abiOf, bytecodeOf } from "../lib/artifacts.js";
 import { publicClient, walletClient } from "../lib/clients.js";
+import { resolveDeploymentTimestamp } from "../lib/deployment-provenance.js";
 import { printJson } from "../lib/json.js";
 import { migrationPoolConfigFromEnv } from "../lib/migration-data.js";
 import { waitForSuccessfulTransactionReceipt } from "../lib/transactions.js";
@@ -59,7 +60,7 @@ const chainId = await publicRpc.getChainId();
 const deployer = getAddress((await wallet.getAddresses())[0]);
 const lpRecipient = optionalAddressEnv("LP_RECIPIENT") ?? deployer;
 const commit = currentCommit();
-const deployedAt = process.env.DEPLOYED_AT ?? new Date().toISOString();
+const deployedAt = resolveDeploymentTimestamp();
 
 const hash = await wallet.deployContract({
   abi: abiOf(artifact),

@@ -200,6 +200,35 @@ contract UniswapV4MintPositionTargetTest is Test {
         target.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
     }
 
+    function test_MigrateAcceptsConfiguredSellTaxHookAddress() public {
+        address sellTaxHook = makeAddr("sell-tax-hook");
+        UniswapV4MintPositionTarget sellTaxTarget = new UniswapV4MintPositionTarget(
+            poolManager,
+            address(positionManager),
+            lpRecipient,
+            sellTaxHook,
+            3000,
+            60,
+            -887_220,
+            887_220,
+            keccak256(bytes(""))
+        );
+        MigrationData.Params memory params = _validParams();
+        params.hooks = sellTaxHook;
+        token.mint(address(sellTaxTarget), 1_000e18);
+
+        (address pool, uint256 liquidity) =
+            sellTaxTarget.migrate{value: 10e18}(address(token), 10e18, 1_000e18, abi.encode(params));
+
+        assertEq(pool, poolManager);
+        assertEq(liquidity, 1e18);
+        (UniswapV4PoolKey.Key memory key,,,,,,,) = abi.decode(
+            positionManager.lastParams(0),
+            (UniswapV4PoolKey.Key, int24, int24, uint256, uint128, uint128, address, bytes)
+        );
+        assertEq(key.hooks, sellTaxHook);
+    }
+
     function test_RevertWhen_MigrationUsesUnapprovedPoolFee() public {
         MigrationData.Params memory params = _validParams();
         params.poolFee = 500;

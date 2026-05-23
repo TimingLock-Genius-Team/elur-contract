@@ -66,40 +66,40 @@ contract CurveTest is Test {
         assertEq(sellQuote.fee, (sellQuote.grossOkbOut * params.feeBps) / 10_000);
     }
 
-    function test_DefaultParamsIncludeDynamicBurnTaxBounds() public view {
-        assertEq(params.burnTaxMinBps, 100);
-        assertEq(params.burnTaxMaxBps, 1_000);
+    function test_DefaultParamsDisableCurveBurnTax() public view {
+        assertEq(params.burnTaxMinBps, 0);
+        assertEq(params.burnTaxMaxBps, 0);
     }
 
-    function test_QuoteBuyReturnsGrossNetAndBurnTax() public view {
+    function test_QuoteBuyReturnsGrossAsNetWithoutCurveBurnTax() public view {
         BuyQuote memory quote = curve.quoteBuy(0, 1e18);
 
-        assertEq(quote.burnTaxBps, params.burnTaxMaxBps);
-        assertGt(quote.grossTokensOut, quote.tokensOut);
-        assertEq(quote.burnTaxTokens, quote.grossTokensOut - quote.tokensOut);
-        assertEq(quote.burnTaxTokens, (quote.grossTokensOut * quote.burnTaxBps) / 10_000);
+        assertEq(quote.burnTaxBps, 0);
+        assertEq(quote.burnTaxTokens, 0);
+        assertEq(quote.tokensOut, quote.grossTokensOut);
     }
 
-    function test_QuoteBuyBurnTaxFallsAsCurveApproachesGraduation() public view {
+    function test_QuoteBuyCurveBurnTaxStaysZeroNearGraduation() public view {
         uint256 thresholdMinted = (params.k * params.selfDeprecationBps) / 10_000;
         uint256 nearGraduationOkb = curve.okbAtMinted(thresholdMinted - 1_000e18);
 
         BuyQuote memory lowQuote = curve.quoteBuy(0, 1e18);
         BuyQuote memory highQuote = curve.quoteBuy(nearGraduationOkb, 1e18);
 
-        assertEq(lowQuote.burnTaxBps, params.burnTaxMaxBps);
-        assertApproxEqAbs(highQuote.burnTaxBps, params.burnTaxMinBps, 1);
-        assertLt(highQuote.burnTaxBps, lowQuote.burnTaxBps);
+        assertEq(lowQuote.burnTaxBps, 0);
+        assertEq(highQuote.burnTaxBps, 0);
+        assertEq(lowQuote.burnTaxTokens, 0);
+        assertEq(highQuote.burnTaxTokens, 0);
     }
 
-    function test_QuoteSellBurnTaxReducesEffectiveTokensBeforeCurveRedemption() public view {
+    function test_QuoteSellUsesFullInputWithoutCurveBurnTax() public view {
         BuyQuote memory buyQuote = curve.quoteBuy(0, 1e18);
         uint256 tokensIn = buyQuote.tokensOut / 4;
         SellQuote memory sellQuote = curve.quoteSell(buyQuote.newOkbCum, tokensIn);
 
-        assertEq(sellQuote.burnTaxTokens, (tokensIn * sellQuote.burnTaxBps) / 10_000);
-        assertEq(sellQuote.effectiveTokensIn, tokensIn - sellQuote.burnTaxTokens);
-        assertLt(sellQuote.effectiveTokensIn, tokensIn);
+        assertEq(sellQuote.burnTaxBps, 0);
+        assertEq(sellQuote.burnTaxTokens, 0);
+        assertEq(sellQuote.effectiveTokensIn, tokensIn);
         assertGt(sellQuote.grossOkbOut, 0);
     }
 

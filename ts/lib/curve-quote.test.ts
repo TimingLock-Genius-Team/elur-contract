@@ -12,8 +12,8 @@ const params = {
   k: "21000000000000000000000000",
   s: "100000000000000000000",
   feeBps: 30,
-  burnTaxMinBps: 100,
-  burnTaxMaxBps: 1000,
+  burnTaxMinBps: 0,
+  burnTaxMaxBps: 0,
   selfDeprecationBps: 8000,
   maxBuyOkb: "10000000000000000000",
 };
@@ -32,27 +32,35 @@ test("quoteBuyAtOkbCum matches minted delta at okbCum zero", () => {
   const mint0 = deriveCurvePoint(0n, params).totalMinted;
   const mint1 = deriveCurvePoint(effectiveOkbIn, params).totalMinted;
   assert.equal(grossTokensOut, mint1 - mint0);
-  assert.equal(burnTaxBps, 1000);
-  assert.equal(burnTaxTokens, grossTokensOut / 10n);
-  assert.equal(tokensOut, grossTokensOut - burnTaxTokens);
+  assert.equal(burnTaxBps, 0);
+  assert.equal(burnTaxTokens, 0n);
+  assert.equal(tokensOut, grossTokensOut);
 });
 
-test("burnTaxBpsAtOkbCum falls toward the configured minimum near graduation", () => {
+test("burnTaxBpsAtOkbCum stays zero through graduation", () => {
   const low = burnTaxBpsAtOkbCum(0n, params);
   const thresholdMinted = (BigInt(params.k) * BigInt(params.selfDeprecationBps)) / 10000n;
   const nearGraduation = deriveCurvePoint(400_000_000_000_000_000_000n, params);
 
-  assert.equal(low, params.burnTaxMaxBps);
+  assert.equal(low, 0);
   assert.ok(nearGraduation.totalMinted > thresholdMinted);
-  assert.equal(burnTaxBpsAtOkbCum(nearGraduation.okbCum, params), params.burnTaxMinBps);
+  assert.equal(burnTaxBpsAtOkbCum(nearGraduation.okbCum, params), 0);
 });
 
-test("quoteSellAtOkbCum applies burn tax before OKB redemption", () => {
+test("burnTaxBpsAtOkbCum ignores legacy nonzero burn tax params", () => {
+  const legacyParams = { ...params, burnTaxMinBps: 100, burnTaxMaxBps: 1000 };
+
+  assert.equal(burnTaxBpsAtOkbCum(0n, legacyParams), 0);
+  assert.equal(quoteBuyAtOkbCum(0n, 1_000_000_000_000_000_000n, legacyParams).burnTaxTokens, 0n);
+});
+
+test("quoteSellAtOkbCum uses full token input without curve burn tax", () => {
   const buy = quoteBuyAtOkbCum(0n, 1_000_000_000_000_000_000n, params);
   const sell = quoteSellAtOkbCum(buy.newOkbCum, buy.tokensOut / 4n, params);
 
-  assert.equal(sell.burnTaxTokens, (sell.tokensIn * BigInt(sell.burnTaxBps)) / 10000n);
-  assert.equal(sell.effectiveTokensIn, sell.tokensIn - sell.burnTaxTokens);
+  assert.equal(sell.burnTaxBps, 0);
+  assert.equal(sell.burnTaxTokens, 0n);
+  assert.equal(sell.effectiveTokensIn, sell.tokensIn);
   assert.ok(sell.grossOkbOut > sell.netOkbOut);
   assert.equal(sell.fee, (sell.grossOkbOut * BigInt(params.feeBps)) / 10000n);
 });
