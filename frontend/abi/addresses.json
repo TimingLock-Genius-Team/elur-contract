@@ -72,15 +72,15 @@
     "sepolia": {
       "network": "sepolia",
       "chainId": 11155111,
-      "commit": "71515d5",
-      "deployedAt": "2026-05-16T12:46:02Z",
-      "factory": "0x659B9e6BC036535f34597c8BCBC2051B964e4a7F",
-      "proxyAdmin": "0x4dDAd72B990aA5b434A5B653556D420A232E5a81",
-      "factoryImplementation": "0x347f98942EE95Db4A887aa892Be5B77322ac3d02",
-      "hookImplementation": "0x7462d9c9522e66C824990f4E6805F3262093526c",
-      "routerImplementation": "0x4Dd48d5929baFaBd10d18D976C8F6Af35f221852",
+      "commit": "a4e4ecc",
+      "deployedAt": "2026-05-23T06:52:18.759Z",
+      "factory": "0xB5AC20Fca4A268eA0eb3455147dCdf07EB1c3B5e",
+      "proxyAdmin": "0x4bB53e32aB795A45FFa198D544452D817503b569",
+      "factoryImplementation": "0x78DbdDA83541FB3d5E30D0476057d93289BA94C3",
+      "hookImplementation": "0xFC3362B298d4fF867B7AE869f8eDAa2f0fA808d7",
+      "routerImplementation": "0xb2BdF78924754F14557B126f7F54335A3838aA75",
       "feeRecipient": "0x956A587c0e0A879c179939be9907E82aB8a7CB36",
-      "migrationTarget": "0x8ca7F9C9D739C582c95B3A48f9F7668AFf1A2E78",
+      "migrationTarget": "0xCb7562a48f3b677777f7E003868846402a6C06cf",
       "uniswapV4PoolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
       "uniswapV4PositionManager": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
       "curve": {
@@ -89,8 +89,8 @@
         "maxBuyOkb": "10000000000000000000",
         "s": "100000000000000000000",
         "selfDeprecationBps": 8000,
-        "burnTaxMinBps": 100,
-        "burnTaxMaxBps": 1000
+        "burnTaxMinBps": 0,
+        "burnTaxMaxBps": 0
       }
     }
   },
@@ -170,15 +170,15 @@
       {
         "network": "sepolia",
         "chainId": 11155111,
-        "commit": "71515d5",
-        "deployedAt": "2026-05-16T12:46:02Z",
-        "factory": "0x659B9e6BC036535f34597c8BCBC2051B964e4a7F",
-        "proxyAdmin": "0x4dDAd72B990aA5b434A5B653556D420A232E5a81",
-        "factoryImplementation": "0x347f98942EE95Db4A887aa892Be5B77322ac3d02",
-        "hookImplementation": "0x7462d9c9522e66C824990f4E6805F3262093526c",
-        "routerImplementation": "0x4Dd48d5929baFaBd10d18D976C8F6Af35f221852",
+        "commit": "a4e4ecc",
+        "deployedAt": "2026-05-23T06:52:18.759Z",
+        "factory": "0xB5AC20Fca4A268eA0eb3455147dCdf07EB1c3B5e",
+        "proxyAdmin": "0x4bB53e32aB795A45FFa198D544452D817503b569",
+        "factoryImplementation": "0x78DbdDA83541FB3d5E30D0476057d93289BA94C3",
+        "hookImplementation": "0xFC3362B298d4fF867B7AE869f8eDAa2f0fA808d7",
+        "routerImplementation": "0xb2BdF78924754F14557B126f7F54335A3838aA75",
         "feeRecipient": "0x956A587c0e0A879c179939be9907E82aB8a7CB36",
-        "migrationTarget": "0x8ca7F9C9D739C582c95B3A48f9F7668AFf1A2E78",
+        "migrationTarget": "0xCb7562a48f3b677777f7E003868846402a6C06cf",
         "uniswapV4PoolManager": "0xE03A1074c86CFeDd5C142C4F04F1a1536e203543",
         "uniswapV4PositionManager": "0x429ba70129df741B2Ca2a85BC3A2a3328e5c09b4",
         "curve": {
@@ -187,8 +187,8 @@
           "maxBuyOkb": "10000000000000000000",
           "s": "100000000000000000000",
           "selfDeprecationBps": 8000,
-          "burnTaxMinBps": 100,
-          "burnTaxMaxBps": 1000
+          "burnTaxMinBps": 0,
+          "burnTaxMaxBps": 0
         }
       }
     ]
