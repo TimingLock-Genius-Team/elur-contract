@@ -127,15 +127,13 @@ contract HookRouterValidationTest is Test {
         CurveParams memory params
     ) internal returns (EulrHook) {
         return EulrHook(
-            payable(
-                address(
+            payable(address(
                     new TransparentUpgradeableProxy(
                         address(hookImplementation),
                         address(this),
                         abi.encodeCall(EulrHook.initialize, (token_, feeRecipient_, factory_, migrationTarget_, params))
                     )
-                )
-            )
+                ))
         );
     }
 }

@@ -239,10 +239,12 @@ contract XLayerAddressForkTest is Test {
         return abi.encode(params);
     }
 
-    function _assertPositionOwner(address positionManager, uint256 positionId, address expectedRecipient) internal view {
-        (bool ok, bytes memory data) = positionManager.staticcall(
-            abi.encodeCall(IPositionManagerRead.ownerOf, (positionId))
-        );
+    function _assertPositionOwner(address positionManager, uint256 positionId, address expectedRecipient)
+        internal
+        view
+    {
+        (bool ok, bytes memory data) =
+            positionManager.staticcall(abi.encodeCall(IPositionManagerRead.ownerOf, (positionId)));
         assertTrue(ok, "PositionManager ownerOf unavailable");
         assertEq(data.length, 32, "PositionManager ownerOf invalid response");
 
