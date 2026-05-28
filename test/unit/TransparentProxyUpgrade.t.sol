@@ -71,6 +71,23 @@ contract TransparentProxyUpgradeTest is Test {
         );
     }
 
+    function test_FactoryStorageLayoutPreservesV1TokenRegistrySlots() public {
+        address token = makeAddr("existingToken");
+        bytes32 oldAllTokensSlot = bytes32(uint256(6));
+        bytes32 oldAllTokensFirstElementSlot = keccak256(abi.encode(uint256(6)));
+        bytes32 oldIsTokenSlot = keccak256(abi.encode(token, uint256(8)));
+
+        vm.store(address(factory), oldAllTokensSlot, bytes32(uint256(1)));
+        vm.store(address(factory), oldAllTokensFirstElementSlot, bytes32(uint256(uint160(token))));
+        vm.store(address(factory), oldIsTokenSlot, bytes32(uint256(1)));
+
+        assertEq(factory.allTokensLength(), 1);
+        address[] memory tokens = factory.getTokens(0, 1);
+        assertEq(tokens.length, 1);
+        assertEq(tokens[0], token);
+        assertTrue(factory.isToken(token));
+    }
+
     function test_CreateTokenRevertsUntilHookImplementationIsConfigured() public {
         vm.prank(creator);
         vm.expectRevert(EulrFactory.HookImplementationMissing.selector);
@@ -140,7 +157,8 @@ contract TransparentProxyUpgradeTest is Test {
         factory.setHookImplementation(address(hookImplementation));
 
         vm.prank(creator);
-        (address tokenAddr, address hookAddr, address routerAddr) = factory.createToken("Demo", "DEMO", "ipfs://demo", "");
+        (address tokenAddr, address hookAddr, address routerAddr) =
+            factory.createToken("Demo", "DEMO", "ipfs://demo", "");
 
         EulrRouter router = EulrRouter(payable(routerAddr));
         EulrToken token = EulrToken(tokenAddr);
