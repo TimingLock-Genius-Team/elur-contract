@@ -15,6 +15,10 @@ function sameAddress(left: string, right: string): boolean {
   return left.toLowerCase() === right.toLowerCase();
 }
 
+function proxyLaunches(deployment: Deployment): Deployment["createdTokens"] {
+  return deployment.createdTokens.filter((entry) => entry.launchMode !== "DIRECT_V4_HOOK_POOL");
+}
+
 export function resolveRouterUpgradeTargets(
   deployment: Deployment,
   options: { router?: string; all?: boolean },
@@ -30,7 +34,7 @@ export function resolveRouterUpgradeTargets(
   }
 
   if (options.all) {
-    const routers = deployment.createdTokens.map((entry) => entry.router);
+    const routers = proxyLaunches(deployment).map((entry) => entry.router);
     if (routers.length === 0) {
       throw new Error("No router proxies recorded in deployment JSON");
     }
@@ -38,7 +42,7 @@ export function resolveRouterUpgradeTargets(
   }
 
   const router = getAddress(options.router!);
-  const recorded = deployment.createdTokens.some((entry) => sameAddress(entry.router, router));
+  const recorded = proxyLaunches(deployment).some((entry) => sameAddress(entry.router, router));
   if (!recorded) {
     throw new Error(`Router ${router} is not recorded in deployment JSON`);
   }
@@ -61,7 +65,7 @@ export function resolveHookUpgradeTargets(
   }
 
   if (options.all) {
-    const hooks = deployment.createdTokens.map((entry) => entry.hook);
+    const hooks = proxyLaunches(deployment).map((entry) => entry.hook);
     if (hooks.length === 0) {
       throw new Error("No hook proxies recorded in deployment JSON");
     }
@@ -69,7 +73,7 @@ export function resolveHookUpgradeTargets(
   }
 
   const hook = getAddress(options.hook!);
-  const recorded = deployment.createdTokens.some((entry) => sameAddress(entry.hook, hook));
+  const recorded = proxyLaunches(deployment).some((entry) => sameAddress(entry.hook, hook));
   if (!recorded) {
     throw new Error(`Hook ${hook} is not recorded in deployment JSON`);
   }
@@ -85,7 +89,7 @@ export function applyRouterImplementationMetadata(
     deployment.routerImplementation = options.implementation;
   }
 
-  for (const entry of deployment.createdTokens) {
+  for (const entry of proxyLaunches(deployment)) {
     if (options.routers.some((router) => sameAddress(router, entry.router))) {
       entry.routerImplementation = options.implementation;
     }
@@ -100,7 +104,7 @@ export function applyHookImplementationMetadata(
     deployment.hookImplementation = options.implementation;
   }
 
-  for (const entry of deployment.createdTokens) {
+  for (const entry of proxyLaunches(deployment)) {
     if (options.hooks.some((hook) => sameAddress(hook, entry.hook))) {
       entry.hookImplementation = options.implementation;
     }

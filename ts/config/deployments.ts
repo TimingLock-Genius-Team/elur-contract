@@ -17,6 +17,9 @@ export type Deployment = {
   uniswapV4PoolManager: `0x${string}`;
   uniswapV4PositionManager: `0x${string}`;
   migrationTarget: `0x${string}`;
+  hookRegistry?: `0x${string}`;
+  directV4LaunchFactory?: `0x${string}`;
+  directV4LiquidityTarget?: `0x${string}`;
   curve: {
     k: string;
     s: string;
@@ -36,6 +39,10 @@ export type Deployment = {
     burnTaxMaxBps?: number;
     hookImplementation?: `0x${string}`;
     routerImplementation?: `0x${string}`;
+    v4MigrationProfileId?: string;
+    v4Hooks?: `0x${string}`;
+    v4MigrationTarget?: `0x${string}`;
+    launchMode?: "CURVE_FIRST_V4_HOOK_MIGRATION" | "DIRECT_V4_HOOK_POOL";
   }>;
 };
 
@@ -49,8 +56,16 @@ const deploymentAddressFields = [
 ] as const;
 
 const createdTokenAddressFields = ["token", "hook", "router"] as const;
-const optionalDeploymentAddressFields = ["proxyAdmin", "factoryImplementation", "hookImplementation", "routerImplementation"] as const;
-const optionalCreatedTokenAddressFields = ["hookImplementation", "routerImplementation"] as const;
+const optionalDeploymentAddressFields = [
+  "proxyAdmin",
+  "factoryImplementation",
+  "hookImplementation",
+  "routerImplementation",
+  "hookRegistry",
+  "directV4LaunchFactory",
+  "directV4LiquidityTarget",
+] as const;
+const optionalCreatedTokenAddressFields = ["hookImplementation", "routerImplementation", "v4Hooks", "v4MigrationTarget"] as const;
 
 function assertDeploymentNetwork(network: string): string {
   if (!/^[a-z0-9][a-z0-9-]*$/i.test(network)) {
@@ -168,6 +183,19 @@ function parseDeployment(value: unknown): Deployment {
     ) {
       throw new Error(`createdTokens[${index}].burnTaxMinBps must be less than or equal to burnTaxMaxBps`);
     }
+    if (entry.v4MigrationProfileId !== undefined && (typeof entry.v4MigrationProfileId !== "string" || !/^\d+$/.test(entry.v4MigrationProfileId))) {
+      throw new Error(`createdTokens[${index}].v4MigrationProfileId must be a decimal string`);
+    }
+    if (
+      entry.launchMode !== undefined &&
+      entry.launchMode !== "CURVE_FIRST_V4_HOOK_MIGRATION" &&
+      entry.launchMode !== "DIRECT_V4_HOOK_POOL"
+    ) {
+      throw new Error(`createdTokens[${index}].launchMode is invalid`);
+    }
+    if (entry.v4MigrationProfileId !== undefined && entry.launchMode === undefined) {
+      throw new Error(`createdTokens[${index}].launchMode is required for v4 migration profile launches`);
+    }
   });
 
   return value as Deployment;
@@ -192,9 +220,16 @@ export function writeDeployment(deployment: Deployment, network = deploymentNetw
 }
 
 export function latestToken(deployment: Deployment): `0x${string}` {
-  const entry = deployment.createdTokens.at(-1);
+  let entry: Deployment["createdTokens"][number] | undefined;
+  for (let i = deployment.createdTokens.length - 1; i >= 0; i--) {
+    const createdToken = deployment.createdTokens[i];
+    if (createdToken.launchMode !== "DIRECT_V4_HOOK_POOL") {
+      entry = createdToken;
+      break;
+    }
+  }
   if (!entry) {
-    throw new Error("No created token found in deployment JSON");
+    throw new Error("No curve-created token found in deployment JSON");
   }
   return entry.token;
 }

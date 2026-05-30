@@ -46,7 +46,7 @@ async function requireCode(label: string, address: `0x${string}`) {
 
 async function envOrDeploy(label: string, envName: string, localArtifact: string) {
   const configured = process.env[envName];
-  if (configured) {
+  if (configured && process.env.DEPLOYMENT_NETWORK !== "anvil") {
     const address = getAddress(configured);
     await requireCode(label, address);
     return address;
@@ -110,6 +110,52 @@ await waitForSuccessfulTransactionReceipt({
   hash: setHookImplementationHash,
   label: "set Hook implementation",
 });
+const hookRegistry = await deploy(artifacts.eulrHookRegistry, [deployer]);
+const setHookRegistryHash = await wallet.writeContract({
+  address: factory,
+  abi: abiOf(artifacts.factory),
+  functionName: "setHookRegistry",
+  args: [hookRegistry],
+});
+await waitForSuccessfulTransactionReceipt({
+  client: publicRpc,
+  hash: setHookRegistryHash,
+  label: "set Hook registry",
+});
+const setFactoryFeeCollectorHash = await wallet.writeContract({
+  address: hookRegistry,
+  abi: abiOf(artifacts.eulrHookRegistry),
+  functionName: "setFeeCollector",
+  args: [factory, true],
+});
+await waitForSuccessfulTransactionReceipt({
+  client: publicRpc,
+  hash: setFactoryFeeCollectorHash,
+  label: "allow factory template fee collection",
+});
+
+let directV4LaunchFactory: `0x${string}` | undefined;
+let directV4LiquidityTarget: `0x${string}` | undefined;
+if (process.env.DIRECT_V4_LIQUIDITY_TARGET) {
+  directV4LiquidityTarget = getAddress(process.env.DIRECT_V4_LIQUIDITY_TARGET);
+  await requireCode("DIRECT_V4_LIQUIDITY_TARGET", directV4LiquidityTarget);
+  directV4LaunchFactory = await deploy(artifacts.eulrDirectV4LaunchFactory, [
+    hookRegistry,
+    poolManager,
+    directV4LiquidityTarget,
+  ]);
+  const setDirectFactoryFeeCollectorHash = await wallet.writeContract({
+    address: hookRegistry,
+    abi: abiOf(artifacts.eulrHookRegistry),
+    functionName: "setFeeCollector",
+    args: [directV4LaunchFactory, true],
+  });
+  await waitForSuccessfulTransactionReceipt({
+    client: publicRpc,
+    hash: setDirectFactoryFeeCollectorHash,
+    label: "allow direct v4 factory template fee collection",
+  });
+}
 
 writeDeployment({
   chainId,
@@ -125,6 +171,9 @@ writeDeployment({
   uniswapV4PoolManager: poolManager,
   uniswapV4PositionManager: positionManager,
   migrationTarget,
+  hookRegistry,
+  ...(directV4LaunchFactory ? { directV4LaunchFactory } : {}),
+  ...(directV4LiquidityTarget ? { directV4LiquidityTarget } : {}),
   curve: defaultCurveParams,
   createdTokens: [],
 });
@@ -143,4 +192,7 @@ printJson({
   poolManager,
   positionManager,
   migrationTarget,
+  hookRegistry,
+  ...(directV4LaunchFactory ? { directV4LaunchFactory } : {}),
+  ...(directV4LiquidityTarget ? { directV4LiquidityTarget } : {}),
 });

@@ -1,10 +1,15 @@
-import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Abi } from "viem";
 import ts from "typescript";
 import { readArtifact } from "../lib/artifacts.js";
 import { artifacts } from "../config/artifacts.js";
 import { readDeployment, type Deployment } from "../config/deployments.js";
+import {
+  generatedV4HookManifestToPlugin,
+  loadV4HookTemplateAbiExports,
+} from "../config/v4-hook-plugin-manifest.js";
+import type { GeneratedV4HookManifest } from "../../custom-hook/ts/config/generated-v4-hook-schema.js";
 import { getArg, hasArg } from "../lib/args.js";
 
 type ExportContract = {
@@ -13,42 +18,66 @@ type ExportContract = {
   description: string;
 };
 
-const CONTRACT_EXPORTS: ExportContract[] = [
+const CORE_CONTRACT_EXPORTS: ExportContract[] = [
   {
     name: "EulrFactory",
     artifact: artifacts.factory,
-    description: "Singleton factory. Creates per-token (token, hook, router) trios and exposes the read registry.",
+    description:
+      "Singleton factory. Creates per-token (token, hook, router) trios and exposes the read registry.",
   },
   {
     name: "EulrHook",
     artifact: "EulrHook.sol/EulrHook.json",
-    description: "Per-token bonding-curve engine. Owns curve state, fee accrual, self-deprecation, and one-shot migration.",
+    description:
+      "Per-token bonding-curve engine. Owns curve state, fee accrual, self-deprecation, and one-shot migration.",
   },
   {
     name: "EulrRouter",
     artifact: "EulrRouter.sol/EulrRouter.json",
-    description: "Per-token user entrypoint. Wraps buy/sell so frontends interact with a stable interface per token.",
+    description:
+      "Per-token user entrypoint. Wraps buy/sell so frontends interact with a stable interface per token.",
   },
   {
     name: "EulrToken",
     artifact: "EulrToken.sol/EulrToken.json",
-    description: "Per-token ERC-20. Mint and burn are gated to the bound hook; transfer/approve match the standard ABI.",
+    description:
+      "Per-token ERC-20. Mint and burn are gated to the bound hook; transfer/approve match the standard ABI.",
   },
   {
     name: "ProxyAdmin",
     artifact: artifacts.proxyAdmin,
-    description: "OZ v5 transparent proxy admin ABI. Each proxy owns a distinct ProxyAdmin; deployment metadata records the Factory proxy admin.",
+    description:
+      "OZ v5 transparent proxy admin ABI. Each proxy owns a distinct ProxyAdmin; deployment metadata records the Factory proxy admin.",
   },
   {
     name: "TransparentUpgradeableProxy",
     artifact: artifacts.transparentUpgradeableProxy,
-    description: "Transparent proxy shell used for the singleton Factory and each per-token Router.",
+    description:
+      "Transparent proxy shell used for the singleton Factory and each per-token Router.",
   },
   {
     name: "UniswapV4MintPositionTarget",
     artifact: artifacts.uniswapV4MintPositionTarget,
-    description: "Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and sends the LP position to the configured recipient.",
+    description:
+      "Reference migration adapter. Encodes Uniswap v4 MINT_POSITION/SETTLE_PAIR and sends the LP position to the configured recipient.",
   },
+  {
+    name: "EulrHookRegistry",
+    artifact: artifacts.eulrHookRegistry,
+    description:
+      "On-chain custom v4 hook registry. Stores lifecycle, approval, launch eligibility, metadata hashes, and template fee config.",
+  },
+  {
+    name: "EulrDirectV4LaunchFactory",
+    artifact: artifacts.eulrDirectV4LaunchFactory,
+    description:
+      "Direct v4 launch factory. Creates launched tokens, initializes approved-hook pools, and routes initial liquidity.",
+  },
+];
+
+const CONTRACT_EXPORTS: ExportContract[] = [
+  ...CORE_CONTRACT_EXPORTS,
+  ...loadConfiguredV4HookAbiExports(),
 ];
 
 type AbiOutput = {
@@ -79,22 +108,33 @@ type NetworkDeployment = {
   routerImplementation?: `0x${string}`;
   feeRecipient: `0x${string}`;
   migrationTarget: `0x${string}`;
+  hookRegistry?: `0x${string}`;
+  directV4LaunchFactory?: `0x${string}`;
+  directV4LiquidityTarget?: `0x${string}`;
   uniswapV4PoolManager: `0x${string}`;
   uniswapV4PositionManager: `0x${string}`;
   curve: Deployment["curve"];
 };
 
-const outputDirs = [join(process.cwd(), getArg("out", "frontend/abi"))];
+const outputDirs = hasArg("out")
+  ? [join(process.cwd(), getArg("out"))]
+  : [];
 if (!hasArg("out") || hasArg("backend-out")) {
   outputDirs.push(join(process.cwd(), getArg("backend-out", "backend/abi")));
 }
 if (!hasArg("out") || hasArg("backend-package-out")) {
-  outputDirs.push(join(process.cwd(), getArg("backend-package-out", "backend/frontend/abi")));
+  outputDirs.push(
+    join(process.cwd(), getArg("backend-package-out", "backend/frontend/abi")),
+  );
 }
 
 const abiOutputs: AbiOutput[] = CONTRACT_EXPORTS.map((entry) => {
   const artifact = readArtifact(entry.artifact);
-  return { name: entry.name, description: entry.description, abi: artifact.abi };
+  return {
+    name: entry.name,
+    description: entry.description,
+    abi: artifact.abi,
+  };
 });
 
 const indexTs = renderIndexTs(abiOutputs);
@@ -103,13 +143,17 @@ const readme = renderReadme(abiOutputs, addresses);
 
 for (const outputDir of [...new Set(outputDirs)]) {
   mkdirSync(outputDir, { recursive: true });
+  removeStaleV4HookAbiFiles(outputDir, abiOutputs);
   for (const entry of abiOutputs) {
     const path = join(outputDir, `${entry.name}.json`);
     writeFileSync(path, `${JSON.stringify(entry.abi, null, 2)}\n`);
   }
   writeFileSync(join(outputDir, "index.ts"), indexTs);
   writeFileSync(join(outputDir, "index.js"), renderIndexJs(indexTs));
-  writeFileSync(join(outputDir, "addresses.json"), `${JSON.stringify(addresses, null, 2)}\n`);
+  writeFileSync(
+    join(outputDir, "addresses.json"),
+    `${JSON.stringify(addresses, null, 2)}\n`,
+  );
   writeFileSync(join(outputDir, "addresses.ts"), renderAddressesTs(addresses));
   writeFileSync(join(outputDir, "README.md"), readme);
 }
@@ -130,6 +174,20 @@ console.log(
     2,
   ),
 );
+
+function loadConfiguredV4HookAbiExports(): ExportContract[] {
+  const plugins = hasArg("generated-v4-hook-manifest")
+    ? [
+        generatedV4HookManifestToPlugin(
+          JSON.parse(readFileSync(getArg("generated-v4-hook-manifest"), "utf8")) as GeneratedV4HookManifest,
+        ),
+      ]
+    : [];
+  return [
+    ...(hasArg("no-v4-hook-plugins") ? [] : loadV4HookTemplateAbiExports()),
+    ...loadV4HookTemplateAbiExports(plugins),
+  ];
+}
 
 function renderIndexTs(entries: AbiOutput[]): string {
   const header = [
@@ -190,8 +248,9 @@ function renderIndexJs(indexTs: string): string {
 
 function renderReadme(entries: AbiOutput[], addresses: AddressesShape): string {
   const networkLines = Object.values(addresses.byNetwork)
-    .map((deployment) =>
-      `| ${deployment.network} | ${deployment.chainId} | ${deployment.factory} | ${deployment.proxyAdmin ?? ""} | ${deployment.migrationTarget} |`,
+    .map(
+      (deployment) =>
+        `| ${deployment.network} | ${deployment.chainId} | ${deployment.factory} | ${deployment.proxyAdmin ?? ""} | ${deployment.migrationTarget} |`,
     )
     .join("\n");
 
@@ -258,6 +317,9 @@ function collectAddresses(): AddressesShape {
       routerImplementation: deployment.routerImplementation,
       feeRecipient: deployment.feeRecipient,
       migrationTarget: deployment.migrationTarget,
+      hookRegistry: deployment.hookRegistry,
+      directV4LaunchFactory: deployment.directV4LaunchFactory,
+      directV4LiquidityTarget: deployment.directV4LiquidityTarget,
       uniswapV4PoolManager: deployment.uniswapV4PoolManager,
       uniswapV4PositionManager: deployment.uniswapV4PositionManager,
       curve: deployment.curve,
@@ -271,10 +333,25 @@ function collectAddresses(): AddressesShape {
 
   return {
     generatedAt: new Date().toISOString(),
-    generatedFrom: "deployments/<network>/latest.json + out/<Contract>.sol/<Contract>.json",
+    generatedFrom:
+      "deployments/<network>/latest.json + out/<Contract>.sol/<Contract>.json",
     byNetwork,
     byChainId,
   };
+}
+
+function removeStaleV4HookAbiFiles(
+  outputDir: string,
+  entries: AbiOutput[],
+): void {
+  const exportedAbiFiles = new Set(
+    entries.map((entry) => `${entry.name}.json`),
+  );
+  for (const file of readdirSync(outputDir)) {
+    if (/^EulrV4.*Hook\.json$/.test(file) && !exportedAbiFiles.has(file)) {
+      unlinkSync(join(outputDir, file));
+    }
+  }
 }
 
 function camelCase(name: string): string {

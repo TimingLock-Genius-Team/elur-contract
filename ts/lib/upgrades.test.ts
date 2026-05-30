@@ -70,6 +70,34 @@ test("resolveHookUpgradeTargets returns all recorded hooks for --all", () => {
   });
 });
 
+test("upgrade target resolution ignores direct v4 launch metadata", () => {
+  const next: Deployment = JSON.parse(JSON.stringify(deployment)) as Deployment;
+  next.createdTokens.push({
+    token: "0x0000000000000000000000000000000000000030",
+    hook: "0x0000000000000000000000000000000000000031",
+    router: "0x0000000000000000000000000000000000000031",
+    v4Hooks: "0x0000000000000000000000000000000000000032",
+    launchMode: "DIRECT_V4_HOOK_POOL",
+  });
+
+  assert.deepEqual(resolveHookUpgradeTargets(next, { all: true }).hooks, [
+    "0x0000000000000000000000000000000000000011",
+    "0x0000000000000000000000000000000000000014",
+  ]);
+  assert.deepEqual(resolveRouterUpgradeTargets(next, { all: true }).routers, [
+    "0x0000000000000000000000000000000000000012",
+    "0x0000000000000000000000000000000000000015",
+  ]);
+  assert.throws(
+    () => resolveHookUpgradeTargets(next, { hook: "0x0000000000000000000000000000000000000031" }),
+    /not recorded in deployment JSON/,
+  );
+  assert.throws(
+    () => resolveRouterUpgradeTargets(next, { router: "0x0000000000000000000000000000000000000031" }),
+    /not recorded in deployment JSON/,
+  );
+});
+
 test("applyHookImplementationMetadata updates targeted hooks and optionally default", () => {
   const next: Deployment = JSON.parse(JSON.stringify(deployment)) as Deployment;
   applyHookImplementationMetadata(next, {

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chdir, cwd } from "node:process";
 import test from "node:test";
-import { deploymentPath, readDeployment, writeDeployment, type Deployment } from "./deployments.js";
+import { deploymentPath, latestToken, readDeployment, writeDeployment, type Deployment } from "./deployments.js";
 
 const deployment: Deployment = {
   chainId: 196,
@@ -197,6 +197,72 @@ test("readDeployment accepts proxy metadata for factory and created router proxi
     process.argv = originalArgv;
     rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test("readDeployment accepts v4 migration profile metadata for created tokens", () => {
+  const originalNetwork = process.env.DEPLOYMENT_NETWORK;
+  const originalArgv = process.argv;
+  const originalCwd = cwd();
+  const tempDir = mkdtempSync(join(tmpdir(), "eulr-config-deployments-v4-profile-"));
+
+  process.env.DEPLOYMENT_NETWORK = "xlayer";
+  process.argv = ["node", "script"];
+  chdir(tempDir);
+
+  try {
+    const withV4Profile: Deployment = {
+      ...deployment,
+      createdTokens: [
+        {
+          token: "0x0000000000000000000000000000000000000007",
+          hook: "0x0000000000000000000000000000000000000008",
+          router: "0x0000000000000000000000000000000000000009",
+          curveS: 25,
+          v4MigrationProfileId: "7",
+          v4Hooks: "0x00000000000000000000000000000000000000c8",
+          v4MigrationTarget: "0x00000000000000000000000000000000000000f1",
+          launchMode: "CURVE_FIRST_V4_HOOK_MIGRATION",
+        },
+      ],
+    };
+    writeDeployment(withV4Profile);
+
+    assert.deepEqual(readDeployment(), withV4Profile);
+  } finally {
+    chdir(originalCwd);
+    if (originalNetwork === undefined) {
+      delete process.env.DEPLOYMENT_NETWORK;
+    } else {
+      process.env.DEPLOYMENT_NETWORK = originalNetwork;
+    }
+    process.argv = originalArgv;
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
+test("latestToken skips direct v4 launches for curve CLI defaults", () => {
+  const curveToken = "0x0000000000000000000000000000000000000007";
+  const directToken = "0x0000000000000000000000000000000000000010";
+  const withDirectLaunch: Deployment = {
+    ...deployment,
+    createdTokens: [
+      {
+        token: curveToken,
+        hook: "0x0000000000000000000000000000000000000008",
+        router: "0x0000000000000000000000000000000000000009",
+        curveS: 25,
+      },
+      {
+        token: directToken,
+        hook: "0x0000000000000000000000000000000000000011",
+        router: "0x0000000000000000000000000000000000000011",
+        v4Hooks: "0x00000000000000000000000000000000000000c8",
+        launchMode: "DIRECT_V4_HOOK_POOL",
+      },
+    ],
+  };
+
+  assert.equal(latestToken(withDirectLaunch), curveToken);
 });
 
 test("readDeployment rejects invalid proxy metadata addresses", () => {

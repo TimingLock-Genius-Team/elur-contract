@@ -51,6 +51,17 @@ export const tokenCreatedEventAbi = {
   ],
 } as const;
 
+export const tokenV4MigrationProfileBoundEventAbi = {
+  type: "event",
+  name: "TokenV4MigrationProfileBound",
+  inputs: [
+    { name: "token", type: "address", indexed: true },
+    { name: "profileId", type: "uint256", indexed: true },
+    { name: "hooks", type: "address", indexed: true },
+    { name: "migrationTarget", type: "address", indexed: false },
+  ],
+} as const;
+
 type EventLog = {
   address: `0x${string}`;
   data: `0x${string}`;
@@ -158,6 +169,49 @@ export function extractCreatedTokenFromLogs(logs: readonly EventLog[], factoryAd
   throw new Error("TokenCreated event not found in transaction receipt");
 }
 
+export function extractV4MigrationProfileBindingFromLogs(
+  logs: readonly EventLog[],
+  factoryAddress?: `0x${string}`,
+): {
+  token: `0x${string}`;
+  profileId: string;
+  hooks: `0x${string}`;
+  migrationTarget: `0x${string}`;
+} {
+  for (const log of logs) {
+    if (factoryAddress && log.address.toLowerCase() !== factoryAddress.toLowerCase()) {
+      continue;
+    }
+
+    try {
+      const decoded = decodeEventLog({
+        abi: [tokenV4MigrationProfileBoundEventAbi],
+        data: log.data,
+        topics: [...log.topics] as [] | [`0x${string}`, ...`0x${string}`[]],
+      });
+      if (decoded.eventName !== "TokenV4MigrationProfileBound") {
+        continue;
+      }
+
+      const args = decoded.args as Record<string, unknown>;
+      if (!validAddress(args.token) || !validAddress(args.hooks) || !validAddress(args.migrationTarget)) {
+        throw new Error("TokenV4MigrationProfileBound contains malformed addresses");
+      }
+
+      return {
+        token: args.token,
+        profileId: String(args.profileId),
+        hooks: args.hooks,
+        migrationTarget: args.migrationTarget,
+      };
+    } catch {
+      continue;
+    }
+  }
+
+  throw new Error("TokenV4MigrationProfileBound event not found in transaction receipt");
+}
+
 export async function readOptionalFactoryRouterImplementation(args: {
   client: FactoryRouterImplementationReader;
   factory: `0x${string}`;
@@ -207,6 +261,7 @@ export async function readOptionalFactoryHookImplementation(args: {
 export async function resolveTokenInfo() {
   const deployment = readDeployment();
   const token = getArg("token", latestToken(deployment)) as `0x${string}`;
+  const createdToken = deployment.createdTokens.find((entry) => entry.token.toLowerCase() === token.toLowerCase());
   const client = publicClient();
   const info = normalizeTokenInfo(await client.readContract({
     address: deployment.factory,
@@ -224,5 +279,9 @@ export async function resolveTokenInfo() {
     metadataURI: info.metadataURI,
     socialURI: info.socialURI,
     curveS: info.curveS,
+    v4MigrationProfileId: createdToken?.v4MigrationProfileId,
+    v4Hooks: createdToken?.v4Hooks,
+    v4MigrationTarget: createdToken?.v4MigrationTarget,
+    launchMode: createdToken?.launchMode,
   };
 }

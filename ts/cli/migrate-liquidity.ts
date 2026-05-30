@@ -51,7 +51,8 @@ async function resolveMigrationData(): Promise<Hex> {
   }
 
   const migrationTargetDeployment = readMigrationTargetDeployment(network);
-  if (migrationTargetDeployment.migrationTarget.toLowerCase() !== info.deployment.migrationTarget.toLowerCase()) {
+  const expectedMigrationTarget = info.v4MigrationTarget ?? info.deployment.migrationTarget;
+  if (migrationTargetDeployment.migrationTarget.toLowerCase() !== expectedMigrationTarget.toLowerCase()) {
     throw new Error("migration target deployment record does not match factory deployment");
   }
 

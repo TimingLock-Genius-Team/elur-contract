@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { isAbsolute, join } from "node:path";
 import type { Abi } from "viem";
 
 type Artifact = {
@@ -8,7 +8,10 @@ type Artifact = {
 };
 
 export function readArtifact(relativePath: string): Artifact {
-  const artifactPath = join(process.cwd(), "out", relativePath);
+  const artifactPath =
+    isAbsolute(relativePath) || relativePath.startsWith("custom-hook/out/")
+      ? join(process.cwd(), relativePath)
+      : join(process.cwd(), "out", relativePath);
   return JSON.parse(readFileSync(artifactPath, "utf8")) as Artifact;
 }
 

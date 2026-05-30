@@ -2,9 +2,11 @@ import { strict as assert } from "node:assert";
 import test from "node:test";
 import { encodeAbiParameters, encodeEventTopics } from "viem";
 import {
+  extractV4MigrationProfileBindingFromLogs,
   extractCreatedTokenFromLogs,
   normalizeTokenInfo,
   readOptionalFactoryRouterImplementation,
+  tokenV4MigrationProfileBoundEventAbi,
   tokenCreatedEventAbi,
 } from "./contracts.js";
 
@@ -63,6 +65,42 @@ test("extractCreatedTokenFromLogs returns token addresses from TokenCreated logs
 
 test("extractCreatedTokenFromLogs rejects receipts without TokenCreated logs", () => {
   assert.throws(() => extractCreatedTokenFromLogs([]), /TokenCreated event not found/);
+});
+
+test("extractV4MigrationProfileBindingFromLogs returns profile binding from factory logs", () => {
+  const token = tokenInfo.token;
+  const hooks = "0x00000000000000000000000000000000000000C8";
+  const migrationTarget = "0x00000000000000000000000000000000000000f1";
+  const topics = encodeEventTopics({
+    abi: [tokenV4MigrationProfileBoundEventAbi],
+    eventName: "TokenV4MigrationProfileBound",
+    args: {
+      token,
+      profileId: 7n,
+      hooks,
+    },
+  }) as readonly [`0x${string}`, ...`0x${string}`[]];
+  const data = encodeAbiParameters([{ name: "migrationTarget", type: "address" }], [migrationTarget]);
+
+  const binding = extractV4MigrationProfileBindingFromLogs([{
+    address: "0x00000000000000000000000000000000000000f0",
+    data,
+    topics,
+  }]);
+
+  assert.deepEqual(binding, {
+    token,
+    profileId: "7",
+    hooks,
+    migrationTarget,
+  });
+});
+
+test("extractV4MigrationProfileBindingFromLogs rejects receipts without profile binding logs", () => {
+  assert.throws(
+    () => extractV4MigrationProfileBindingFromLogs([]),
+    /TokenV4MigrationProfileBound event not found/,
+  );
 });
 
 test("readOptionalFactoryRouterImplementation returns undefined for legacy factories", async () => {
